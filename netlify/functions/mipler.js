@@ -24,7 +24,7 @@ exports.handler = async (event) => {
       'limit': '5000'
     });
 
-    const url = `https://app.mipler.com/api/reports/${reportId}/run?${params}`;
+   const url = `https://app.mipler.com/api/v1/reports/${reportId}/export?format=json&${params}`;
 
     const resp = await fetch(url, {
       headers: {
