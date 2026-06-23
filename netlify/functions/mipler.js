@@ -11,27 +11,19 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { apiKey, reportId, dateFrom, dateTo } = JSON.parse(event.body);
+    const { shareUrl, dateFrom, dateTo } = JSON.parse(event.body);
 
-    if (!apiKey || !reportId) {
-      return { statusCode: 400, headers, body: JSON.stringify({ error: 'Faltan parámetros' }) };
+    if (!shareUrl) {
+      return { statusCode: 400, headers, body: JSON.stringify({ error: 'Falta la URL' }) };
     }
 
     const params = new URLSearchParams({
       'filters[orders.processed_at][gte]': dateFrom + 'T00:00:00',
       'filters[orders.processed_at][lte]': dateTo + 'T23:59:59',
-      'format': 'json',
-      'limit': '5000'
     });
 
-   const url = `https://app.mipler.com/api/v1/reports/${reportId}/export?format=json&${params}`;
-
-    const resp = await fetch(url, {
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      }
-    });
+    const url = `${shareUrl}?${params}`;
+    const resp = await fetch(url);
 
     if (!resp.ok) {
       const text = await resp.text();
