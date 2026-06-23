@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard de reportes — E-commerce</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{--bg:#f7f6f3;--surface:#fff;--border:rgba(0,0,0,0.1);--border-strong:rgba(0,0,0,0.18);--text:#1a1a18;--muted:#6b6a65;--hint:#9e9d98;--blue:#185FA5;--blue-bg:#E6F1FB;--blue-t:#0C447C;--green:#3B6D11;--green-bg:#EAF3DE;--green-t:#27500A;--amber:#854F0B;--amber-bg:#FAEEDA;--amber-t:#633806;--red:#A32D2D;--red-bg:#FCEBEB;--red-t:#791F1F;--purple:#534AB7;--purple-bg:#EEEDFE;--purple-t:#3C3489;--r:10px;--rl:14px;}
+@media(prefers-color-scheme:dark){:root{--bg:#1a1a18;--surface:#242422;--border:rgba(255,255,255,0.1);--border-strong:rgba(255,255,255,0.18);--text:#e8e7e2;--muted:#9e9d98;--hint:#6b6a65;--blue-bg:#0c2540;--blue-t:#85B7EB;--green-bg:#172804;--green-t:#97C459;--amber-bg:#2a1c06;--amber-t:#EF9F27;--red-bg:#2a0f0f;--red-t:#F09595;--purple-bg:#1e1b40;--purple-t:#AFA9EC;}}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;}
+.app{max-width:980px;margin:0 auto;padding:24px 16px 60px;}
+header{margin-bottom:28px;}
+header h1{font-size:22px;font-weight:600;letter-spacing:-.3px;}
+header p{color:var(--muted);font-size:13px;margin-top:4px;}
+.section-title{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--hint);margin-bottom:10px;}
+.card{background:var(--surface);border:.5px solid var(--border);border-radius:var(--rl);padding:18px 20px;margin-bottom:16px;}
+.keys-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-bottom:14px;}
+.field-group{display:flex;flex-direction:column;gap:6px;}
+.field-group label{font-size:12px;font-weight:500;color:var(--muted);display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.badge{font-size:10px;padding:2px 7px;border-radius:20px;font-weight:600;}
+.b-meta{background:var(--blue-bg);color:var(--blue-t);}
+.b-shopify{background:var(--green-bg);color:var(--green-t);}
+.b-claude{background:var(--amber-bg);color:var(--amber-t);}
+.b-opt{background:var(--border);color:var(--muted);font-style:italic;}
+input[type=text],input[type=password],input[type=date],select{width:100%;padding:9px 12px;border:.5px solid var(--border-strong);border-radius:var(--r);background:var(--bg);color:var(--text);font-size:13px;outline:none;transition:border-color .15s;}
+input:focus,select:focus{border-color:var(--blue);}
+.input-row{display:flex;gap:8px;align-items:center;}
+.input-row input{flex:1;}
+.toggle-vis{background:none;border:none;cursor:pointer;color:var(--hint);font-size:12px;padding:0 4px;white-space:nowrap;}
+.toggle-vis:hover{color:var(--text);}
+.date-row{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end;margin-top:10px;}
+.date-row label{font-size:12px;color:var(--muted);display:block;margin-bottom:4px;}
+.btn-primary{background:var(--text);color:var(--bg);border:none;border-radius:var(--r);padding:10px 22px;font-size:14px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:8px;transition:opacity .15s;white-space:nowrap;}
+.btn-primary:hover{opacity:.82;}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed;}
+.btn-secondary{background:none;border:.5px solid var(--border-strong);color:var(--text);border-radius:var(--r);padding:8px 14px;font-size:13px;cursor:pointer;transition:background .12s;}
+.btn-secondary:hover{background:var(--border);}
+.spinner{width:14px;height:14px;border:2px solid transparent;border-top-color:currentColor;border-radius:50%;animation:spin .7s linear infinite;display:none;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.status-bar{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--muted);margin-top:10px;min-height:20px;}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--hint);flex-shrink:0;}
+.dot.ok{background:var(--green);}
+.dot.err{background:var(--red);}
+.dot.loading{background:var(--amber);animation:pulse 1s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.metrics-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px;}
+.mc{background:var(--bg);border-radius:var(--r);padding:14px 15px;}
+.mc .lbl{font-size:11px;color:var(--hint);margin-bottom:6px;font-weight:500;text-transform:uppercase;letter-spacing:.04em;}
+.mc .val{font-size:22px;font-weight:600;letter-spacing:-.5px;line-height:1.1;}
+.mc .sub{font-size:11px;color:var(--muted);margin-top:3px;}
+.mc.blue .val{color:var(--blue);}
+.mc.green .val{color:var(--green);}
+.mc.red .val{color:var(--red);}
+.mc.amber .val{color:var(--amber);}
+hr.div{border:none;border-top:.5px solid var(--border);margin:18px 0;}
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{text-align:left;font-size:11px;font-weight:600;color:var(--hint);text-transform:uppercase;letter-spacing:.05em;padding:8px 12px;border-bottom:.5px solid var(--border);}
+td{padding:9px 12px;border-bottom:.5px solid var(--border);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:var(--bg);}
+.pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;}
+.pg{background:var(--green-bg);color:var(--green-t);}
+.pa{background:var(--amber-bg);color:var(--amber-t);}
+.pr{background:var(--red-bg);color:var(--red-t);}
+.pb{background:var(--blue-bg);color:var(--blue-t);}
+.pp{background:var(--purple-bg);color:var(--purple-t);}
+.reporte-box{background:var(--bg);border:.5px solid var(--border);border-radius:var(--r);padding:16px;font-size:13px;line-height:1.8;color:var(--text);white-space:pre-wrap;font-family:inherit;}
+.empty-state{text-align:center;padding:36px 20px;color:var(--hint);}
+.tabs{display:flex;gap:2px;margin-bottom:16px;border-bottom:.5px solid var(--border);}
+.tab{padding:8px 16px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-.5px;transition:all .12s;}
+.tab.active{color:var(--text);border-bottom-color:var(--text);}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+.alert{border-radius:var(--r);padding:10px 14px;font-size:13px;margin-bottom:12px;}
+.alert-warn{background:var(--amber-bg);color:var(--amber-t);border:.5px solid rgba(186,117,23,.2);}
+.alert-info{background:var(--blue-bg);color:var(--blue-t);border:.5px solid rgba(24,95,165,.2);}
+.src-hdr{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.src-hdr h3{font-size:15px;font-weight:600;}
+.progress-wrap{margin:8px 0;}
+.progress-lbl{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:4px;}
+.progress-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:3px;transition:width .4s ease;}
+.fill-g{background:#639922;}.fill-a{background:#BA7517;}.fill-r{background:#E24B4A;}
+.actions-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px;}
+.upload-zone{border:1.5px dashed var(--border-strong);border-radius:var(--rl);padding:28px;text-align:center;cursor:pointer;transition:all .15s;margin-bottom:14px;}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--blue);background:var(--blue-bg);}
+.upload-zone p{font-size:13px;color:var(--muted);}
+.upload-zone strong{color:var(--text);}
+.upload-zone input{display:none;}
+.file-loaded{display:flex;align-items:center;gap:10px;background:var(--green-bg);border-radius:var(--r);padding:10px 14px;font-size:13px;color:var(--green-t);margin-bottom:14px;}
+.claude-banner{background:var(--amber-bg);border:.5px solid rgba(186,117,23,.2);border-radius:var(--r);padding:12px 14px;font-size:12px;color:var(--amber-t);margin-top:8px;}
+.claude-banner a{color:var(--amber-t);font-weight:600;}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <h1>Dashboard de reportes</h1>
+  <p>Shopify · Meta Ads · Dropi · Colombia</p>
+</header>
+
+<p class="section-title">Credenciales</p>
+<div class="card">
+  <div class="keys-grid">
+    <div class="field-group">
+      <label><span class="badge b-shopify">Shopify</span> Admin API Token</label>
+      <div class="input-row">
+        <input type="password" id="shopify-token" placeholder="shpat_xxxxxxxxxxxx" autocomplete="off">
+        <button class="toggle-vis" onclick="tv('shopify-token')">Ver</button>
+      </div>
+      <input type="text" id="shopify-store" placeholder="mi-tienda.myshopify.com" style="margin-top:6px">
+    </div>
+    <div class="field-group">
+      <label><span class="badge b-meta">Meta Ads</span> Access Token</label>
+      <div class="input-row">
+        <input type="password" id="meta-token" placeholder="EAAxxxxxxxxxxxxx" autocomplete="off">
+        <button class="toggle-vis" onclick="tv('meta-token')">Ver</button>
+      </div>
+      <input type="text" id="meta-adaccount" placeholder="act_123456789" style="margin-top:6px">
+    </div>
+    <div class="field-group">
+      <label><span class="badge b-claude">Claude IA</span> API Key <span class="badge b-opt">Opcional</span></label>
+      <div class="input-row">
+        <input type="password" id="claude-key" placeholder="sk-ant-... (opcional)" autocomplete="off">
+        <button class="toggle-vis" onclick="tv('claude-key')">Ver</button>
+      </div>
+      <div class="claude-banner">Sin API Key igual funciona todo. Consíguela en <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a></div>
+    </div>
+  </div>
+  <div class="date-row">
+    <div><label>Desde</label><input type="date" id="date-from"></div>
+    <div><label>Hasta</label><input type="date" id="date-to"></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn-secondary" onclick="saveKeys()">Guardar</button>
+      <button class="btn-primary" id="btn-run" onclick="fetchAll()">
+        <span class="spinner" id="spinner"></span>Actualizar datos
+      </button>
+    </div>
+  </div>
+  <div class="status-bar">
+    <div class="dot" id="sdot"></div>
+    <span id="stxt">Listo — ingresa tus credenciales y presiona Actualizar datos</span>
+  </div>
+</div>
+
+<p class="section-title">Reporte Dropi (Excel)</p>
+<div class="card">
+  <div id="dropi-upload-area">
+    <div class="upload-zone" id="dropzone" onclick="document.getElementById('dropi-file').click()"
+      ondragover="event.preventDefault();this.classList.add('drag')"
+      ondragleave="this.classList.remove('drag')"
+      ondrop="handleDrop(event)">
+      <p style="font-size:28px;margin-bottom:8px">📊</p>
+      <p><strong>Haz clic o arrastra</strong> el Excel exportado de Dropi</p>
+      <p style="margin-top:4px;font-size:12px">Exporta desde tu panel Dropi → Reportes → Guías</p>
+      <input type="file" id="dropi-file" accept=".xlsx,.xls,.csv" onchange="handleDropiFile(this.files[0])">
+    </div>
+  </div>
+  <div id="dropi-loaded" style="display:none"></div>
+  <div id="dropi-col-map" style="display:none">
+    <p style="font-size:12px;color:var(--muted);margin-bottom:8px">¿Qué columna del Excel corresponde a cada dato?</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;">
+      <div class="field-group"><label>Número de guía</label><select id="col-guia"></select></div>
+      <div class="field-group"><label>Estado</label><select id="col-estado"></select></div>
+      <div class="field-group"><label>Destinatario</label><select id="col-dest"></select></div>
+      <div class="field-group"><label>Ciudad</label><select id="col-ciudad"></select></div>
+      <div class="field-group"><label>Fecha</label><select id="col-fecha"></select></div>
+    </div>
+    <button class="btn-secondary" style="margin-top:12px" onclick="procesarDropi()">Procesar Excel</button>
+  </div>
+</div>
+
+<div id="results-section" style="display:none">
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(0)">Resumen</div>
+    <div class="tab" onclick="switchTab(1)">Shopify</div>
+    <div class="tab" onclick="switchTab(2)">Meta Ads</div>
+    <div class="tab" onclick="switchTab(3)">Dropi</div>
+    <div class="tab" onclick="switchTab(4)">Reporte IA</div>
+  </div>
+
+  <div class="tab-panel active" id="tp0">
+    <div class="card">
+      <div class="src-hdr"><h3>Resumen general</h3></div>
+      <div class="metrics-grid" id="m-resumen"></div>
+      <hr class="div">
+      <div id="progress-section"></div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="tp1">
+    <div class="card">
+      <div class="src-hdr"><span class="badge b-shopify" style="font-size:13px;padding:4px 12px">Shopify</span><h3>Pedidos</h3></div>
+      <div class="metrics-grid" id="m-shopify"></div>
+      <hr class="div">
+      <div class="table-wrap">
+        <table><thead><tr><th>Orden</th><th>Cliente</th><th>Total</th><th>Pago</th><th>Despacho</th><th>Fecha</th></tr></thead>
+        <tbody id="tb-shopify"></tbody></table>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="tp2">
+    <div class="card">
+      <div class="src-hdr"><span class="badge b-meta" style="font-size:13px;padding:4px 12px">Meta Ads</span><h3>Campañas</h3></div>
+      <div class="metrics-grid" id="m-meta"></div>
+      <hr class="div">
+      <div class="table-wrap">
+        <table><thead><tr><th>Campaña</th><th>Gasto</th><th>Impresiones</th><th>Clics</th><th>CTR</th><th>CPC</th></tr></thead>
+        <tbody id="tb-meta"></tbody></table>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="tp3">
+    <div class="card">
+      <div class="src-hdr"><span class="badge" style="font-size:13px;padding:4px 12px;background:var(--purple-bg);color:var(--purple-t)">Dropi</span><h3>Logística</h3></div>
+      <div class="metrics-grid" id="m-dropi"></div>
+      <hr class="div">
+      <div class="table-wrap">
+        <table><thead><tr><th>Guía</th><th>Destinatario</th><th>Ciudad</th><th>Estado</th><th>Fecha</th></tr></thead>
+        <tbody id="tb-dropi"></tbody></table>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="tp4">
+    <div class="card">
+      <div class="src-hdr"><span class="badge b-claude" style="font-size:13px;padding:4px 12px">Claude IA</span><h3>Análisis inteligente</h3></div>
+      <div id="ia-content"><div class="empty-state"><p style="font-size:28px;margin-bottom:10px">🤖</p><p>Presiona "Actualizar datos" para generar el análisis</p></div></div>
+      <div class="actions-row" id="ia-actions" style="display:none">
+        <button class="btn-secondary" onclick="exportTxt()">Exportar .txt</button>
+        <button class="btn-secondary" onclick="copiarReporte()">Copiar</button>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+const LS='ecom_v3';
+let dropiRows=[],dropiCols=[],gDropi={};
+const $=id=>document.getElementById(id);
+const fmt=n=>'$'+Math.round(n).toLocaleString('es-CO');
+const pct=n=>parseFloat(n).toFixed(1)+'%';
+function tv(id){const e=$(id);e.type=e.type==='password'?'text':'password';}
+function setStatus(s,m){$('sdot').className='dot '+(s||'');$('stxt').textContent=m;}
+
+function saveKeys(){
+  localStorage.setItem(LS,JSON.stringify({
+    st:$('shopify-token').value,ss:$('shopify-store').value,
+    mt:$('meta-token').value,ma:$('meta-adaccount').value,ck:$('claude-key').value
+  }));
+  setStatus('ok','Credenciales guardadas');
+}
+function loadKeys(){
+  const d=JSON.parse(localStorage.getItem(LS)||'{}');
+  if(d.st)$('shopify-token').value=d.st;
+  if(d.ss)$('shopify-store').value=d.ss;
+  if(d.mt)$('meta-token').value=d.mt;
+  if(d.ma)$('meta-adaccount').value=d.ma;
+  if(d.ck)$('claude-key').value=d.ck;
+}
+function setDates(){
+  const t=new Date(),f=new Date(t.getFullYear(),t.getMonth(),1);
+  $('date-to').value=t.toISOString().slice(0,10);
+  $('date-from').value=f.toISOString().slice(0,10);
+}
+function switchTab(i){
+  document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',i===j));
+  document.querySelectorAll('.tab-panel').forEach((p,j)=>p.classList.toggle('active',i===j));
+}
+
+function handleDrop(e){e.preventDefault();$('dropzone').classList.remove('drag');const f=e.dataTransfer.files[0];if(f)handleDropiFile(f);}
+function handleDropiFile(file){
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const wb=XLSX.read(e.target.result,{type:'binary'});
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    const data=XLSX.utils.sheet_to_json(ws,{header:1});
+    if(data.length<2){alert('El archivo no tiene datos');return;}
+    dropiCols=data[0].map(String);
+    dropiRows=data.slice(1).filter(r=>r.some(c=>c!=null&&c!==''));
+    showColMap(file.name);
+  };
+  reader.readAsBinaryString(file);
+}
+function showColMap(fname){
+  $('dropi-upload-area').style.display='none';
+  $('dropi-loaded').style.display='block';
+  $('dropi-loaded').innerHTML=`<div class="file-loaded">✅ <span><strong>${fname}</strong> — ${dropiRows.length} filas. Confirma las columnas:</span></div>`;
+  $('dropi-col-map').style.display='block';
+  const opts=['<option value="">— Selecciona —</option>',...dropiCols.map((c,i)=>`<option value="${i}">${c}</option>`)].join('');
+  ['col-guia','col-estado','col-dest','col-ciudad','col-fecha'].forEach(id=>$(id).innerHTML=opts);
+  autoMapCols();
+}
+function autoMapCols(){
+  const map={'col-guia':['guia','guide','numero','tracking'],'col-estado':['estado','status','novedad'],'col-dest':['destinatario','cliente','nombre'],'col-ciudad':['ciudad','municipio','destino'],'col-fecha':['fecha','date','despacho']};
+  dropiCols.forEach((col,i)=>{
+    const c=col.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    Object.entries(map).forEach(([selId,keys])=>{if(keys.some(k=>c.includes(k))){const s=$(selId);if(!s.value)s.value=String(i);}});
+  });
+}
+function procesarDropi(){
+  const gi=parseInt($('col-guia').value),ei=parseInt($('col-estado').value),di=parseInt($('col-dest').value),ci=parseInt($('col-ciudad').value),fi=parseInt($('col-fecha').value);
+  if(isNaN(gi)||isNaN(ei)){alert('Selecciona al menos Guía y Estado');return;}
+  const norm=s=>{if(!s)return'desconocido';const v=String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');if(v.includes('entreg'))return'entregado';if(v.includes('transito')||v.includes('camino')||v.includes('despacha'))return'en_transito';if(v.includes('devuel')||v.includes('retorn'))return'devuelto';if(v.includes('cancel'))return'cancelado';if(v.includes('pendiente'))return'pendiente';return String(s);};
+  const guias=dropiRows.map(r=>({guia:r[gi]||'—',estado:norm(r[ei]),dest:isNaN(di)?'':String(r[di]||''),ciudad:isNaN(ci)?'':String(r[ci]||''),fecha:isNaN(fi)?'':String(r[fi]||'')}));
+  const total=guias.length,entregados=guias.filter(g=>g.estado==='entregado').length,transito=guias.filter(g=>g.estado==='en_transito').length,devueltos=guias.filter(g=>g.estado==='devuelto'||g.estado==='cancelado').length,pendientes=guias.filter(g=>g.estado==='pendiente').length;
+  const pctE=total>0?(entregados/total*100):0,pctD=total>0?(devueltos/total*100):0;
+  gDropi={total,entregados,transito,devueltos,pendientes,pctEntrega:pctE,pctDevolucion:pctD,guias};
+  $('m-dropi').innerHTML=`<div class="mc green"><div class="lbl">Entregados</div><div class="val">${entregados}</div><div class="sub">${pct(pctE)}</div></div><div class="mc blue"><div class="lbl">En tránsito</div><div class="val">${transito}</div></div><div class="mc red"><div class="lbl">Devueltos</div><div class="val">${devueltos}</div><div class="sub">${pct(pctD)}</div></div><div class="mc amber"><div class="lbl">Pendientes</div><div class="val">${pendientes}</div></div><div class="mc"><div class="lbl">Total guías</div><div class="val">${total}</div></div>`;
+  const em={entregado:['Entregado','pg'],en_transito:['En tránsito','pb'],devuelto:['Devuelto','pr'],cancelado:['Cancelado','pr'],pendiente:['Pendiente','pa']};
+  $('tb-dropi').innerHTML=guias.slice(0,100).map(g=>{const[l,c]=em[g.estado]||[g.estado,'pb'];return`<tr><td style="font-family:monospace;font-size:12px">${g.guia}</td><td>${g.dest}</td><td style="color:var(--muted)">${g.ciudad}</td><td><span class="pill ${c}">${l}</span></td><td style="color:var(--muted)">${g.fecha}</td></tr>`;}).join('');
+  $('dropi-col-map').style.display='none';
+  $('dropi-loaded').innerHTML=`<div class="file-loaded">✅ <strong>${total} guías cargadas</strong> — ${entregados} entregadas · ${transito} en tránsito · ${devueltos} devueltas <button class="btn-secondary" style="margin-left:auto;font-size:12px" onclick="resetDropi()">Cambiar archivo</button></div>`;
+  setStatus('ok',`Dropi: ${total} guías procesadas`);
+}
+function resetDropi(){dropiRows=[];dropiCols=[];gDropi={};$('dropi-upload-area').style.display='block';$('dropi-loaded').style.display='none';$('dropi-loaded').innerHTML='';$('dropi-col-map').style.display='none';$('dropi-file').value='';}
+
+async function fetchShopify(token,store,df,dt){
+  const resp=await fetch('/.netlify/functions/shopify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token,store,dateFrom:df,dateTo:dt})});
+  const data=await resp.json();
+  if(data.error)throw new Error(data.error);
+  return data.orders||[];
+}
+function renderShopify(orders){
+  const total=orders.length,confirmados=orders.filter(o=>o.financial_status==='paid').length,pendientes=orders.filter(o=>o.financial_status==='pending').length,cancelados=orders.filter(o=>['voided','refunded'].includes(o.financial_status)).length,entregados=orders.filter(o=>o.fulfillment_status==='fulfilled').length,ingresos=orders.reduce((s,o)=>s+parseFloat(o.total_price||0),0),pctE=total>0?(entregados/total*100):0,pctC=total>0?(cancelados/total*100):0;
+  $('m-shopify').innerHTML=`<div class="mc blue"><div class="lbl">Total pedidos</div><div class="val">${total}</div></div><div class="mc green"><div class="lbl">Pagados</div><div class="val">${confirmados}</div></div><div class="mc amber"><div class="lbl">Pendientes</div><div class="val">${pendientes}</div></div><div class="mc green"><div class="lbl">Entregados</div><div class="val">${entregados}</div></div><div class="mc red"><div class="lbl">Cancelados</div><div class="val">${cancelados}</div></div><div class="mc blue"><div class="lbl">Ingresos</div><div class="val" style="font-size:15px">${fmt(ingresos)}</div></div>`;
+  const sm={paid:['Pagado','pg'],pending:['Pendiente','pa'],refunded:['Devuelto','pr'],voided:['Cancelado','pr'],partially_paid:['Parcial','pa']};
+  const fm={fulfilled:['Entregado','pg'],partial:['Parcial','pa'],null:['Sin despachar','pp'],unfulfilled:['Sin despachar','pp']};
+  $('tb-shopify').innerHTML=orders.slice(0,60).map(o=>{const[sl,sc]=sm[o.financial_status]||[o.financial_status,'pb'];const[fl,fc]=fm[o.fulfillment_status||'null']||[o.fulfillment_status,'pb'];const fecha=new Date(o.created_at).toLocaleDateString('es-CO',{day:'2-digit',month:'short'});const cliente=o.customer?(o.customer.first_name+' '+(o.customer.last_name||'')).trim():(o.email||'—');return`<tr><td style="font-weight:500">${o.name}</td><td style="color:var(--muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cliente}</td><td>${fmt(parseFloat(o.total_price||0))}</td><td><span class="pill ${sc}">${sl}</span></td><td><span class="pill ${fc}">${fl}</span></td><td style="color:var(--muted)">${fecha}</td></tr>`;}).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--hint);padding:20px">Sin pedidos</td></tr>';
+  return{total,confirmados,pendientes,cancelados,entregados,ingresos,pctEntrega:pctE,pctCancel:pctC};
+}
+
+async function fetchMeta(token,adAccount,df,dt){
+  const resp=await fetch('/.netlify/functions/meta',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token,adAccount,dateFrom:df,dateTo:dt})});
+  const data=await resp.json();
+  if(data.error)throw new Error(data.error);
+  return data.data||[];
+}
+function renderMeta(campaigns){
+  const tG=campaigns.reduce((s,c)=>s+parseFloat(c.spend||0),0),tI=campaigns.reduce((s,c)=>s+parseInt(c.impressions||0),0),tC=campaigns.reduce((s,c)=>s+parseInt(c.clicks||0),0),ctr=tI>0?(tC/tI*100):0,cpc=tC>0?(tG/tC):0;
+  $('m-meta').innerHTML=`<div class="mc amber"><div class="lbl">Gasto total</div><div class="val" style="font-size:15px">${fmt(tG)}</div></div><div class="mc blue"><div class="lbl">Impresiones</div><div class="val" style="font-size:18px">${tI.toLocaleString('es-CO')}</div></div><div class="mc"><div class="lbl">Clics</div><div class="val">${tC.toLocaleString('es-CO')}</div></div><div class="mc"><div class="lbl">CTR prom.</div><div class="val">${pct(ctr)}</div></div><div class="mc"><div class="lbl">CPC prom.</div><div class="val" style="font-size:15px">${fmt(cpc)}</div></div>`;
+  $('tb-meta').innerHTML=campaigns.map(c=>{const sp=parseFloat(c.spend||0),im=parseInt(c.impressions||0),cl=parseInt(c.clicks||0);return`<tr><td style="font-weight:500;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.campaign_name}</td><td>${fmt(sp)}</td><td>${im.toLocaleString('es-CO')}</td><td>${cl.toLocaleString('es-CO')}</td><td>${pct(im>0?cl/im*100:0)}</td><td>${fmt(cl>0?sp/cl:0)}</td></tr>`;}).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--hint);padding:20px">Sin campañas</td></tr>';
+  return{totalGasto:tG,totalImpresiones:tI,totalClics:tC,ctrProm:ctr,cpcProm:cpc};
+}
+
+function renderResumen(s,m,d){
+  const cpaTotal=m.totalGasto>0&&s.total>0?m.totalGasto/s.total:0,cpaEnt=m.totalGasto>0&&s.entregados>0?m.totalGasto/s.entregados:0,cpaGuia=m.totalGasto>0&&d.total>0?m.totalGasto/d.total:0;
+  $('m-resumen').innerHTML=`<div class="mc blue"><div class="lbl">Pedidos</div><div class="val">${s.total}</div></div><div class="mc green"><div class="lbl">Ingresos</div><div class="val" style="font-size:14px">${fmt(s.ingresos)}</div></div><div class="mc amber"><div class="lbl">Gasto Meta</div><div class="val" style="font-size:14px">${fmt(m.totalGasto)}</div></div><div class="mc"><div class="lbl">CPA/pedido</div><div class="val" style="font-size:14px">${fmt(cpaTotal)}</div></div><div class="mc"><div class="lbl">CPA/entregado</div><div class="val" style="font-size:14px">${fmt(cpaEnt)}</div></div><div class="mc"><div class="lbl">CPA/guía</div><div class="val" style="font-size:14px">${fmt(cpaGuia)}</div></div><div class="mc green"><div class="lbl">% entrega</div><div class="val">${pct(d.pctEntrega)}</div></div><div class="mc red"><div class="lbl">% devolución</div><div class="val">${pct(d.pctDevolucion)}</div></div><div class="mc red"><div class="lbl">% cancelación</div><div class="val">${pct(s.pctCancel)}</div></div>`;
+  $('progress-section').innerHTML=`<div class="progress-wrap"><div class="progress-lbl"><span>Tasa de entrega</span><span>${pct(d.pctEntrega)}</span></div><div class="progress-bar"><div class="progress-fill fill-g" style="width:${Math.min(d.pctEntrega,100)}%"></div></div></div><div class="progress-wrap"><div class="progress-lbl"><span>Pedidos pagados vs total</span><span>${s.confirmados}/${s.total}</span></div><div class="progress-bar"><div class="progress-fill fill-g" style="width:${s.total>0?Math.min(s.confirmados/s.total*100,100):0}%"></div></div></div><div class="progress-wrap"><div class="progress-lbl"><span>Tasa de devolución</span><span>${pct(d.pctDevolucion)}</span></div><div class="progress-bar"><div class="progress-fill fill-r" style="width:${Math.min(d.pctDevolucion,100)}%"></div></div></div><div class="progress-wrap"><div class="progress-lbl"><span>Tasa de cancelación</span><span>${pct(s.pctCancel)}</span></div><div class="progress-bar"><div class="progress-fill fill-a" style="width:${Math.min(s.pctCancel,100)}%"></div></div></div>`;
+  return{cpaTotal,cpaEntregado:cpaEnt,cpaGuia};
+}
+
+async function generarIA(ck,s,m,d,cpa,df,dt){
+  const el=$('ia-content');
+  if(!ck){el.innerHTML=`<div class="alert alert-warn">Sin API Key de Claude no se genera el análisis IA. Consíguela en <a href="https://console.anthropic.com" target="_blank" style="color:inherit;font-weight:600">console.anthropic.com</a></div><div class="alert alert-info" style="margin-top:8px">Todos los datos de Shopify, Meta y Dropi sí están disponibles en las otras pestañas.</div>`;return;}
+  el.innerHTML='<div class="reporte-box" style="color:var(--hint);font-style:italic">Analizando datos...</div>';
+  const prompt=`Eres analista experto en e-commerce colombiano con dropshipping contra entrega.\nPeríodo: ${df} al ${dt}\n\nSHOPIFY — Pedidos: ${s.total} | Pagados: ${s.confirmados} | Pendientes: ${s.pendientes} | Cancelados: ${s.cancelados} | Entregados: ${s.entregados} | Ingresos: ${fmt(s.ingresos)} | % entrega: ${pct(s.pctEntrega)} | % cancelación: ${pct(s.pctCancel)}\n\nMETA ADS — Gasto: ${fmt(m.totalGasto)} | Impresiones: ${m.totalImpresiones.toLocaleString()} | Clics: ${m.totalClics.toLocaleString()} | CTR: ${pct(m.ctrProm)} | CPC: ${fmt(m.cpcProm)}\n\nDROPI — Total: ${d.total} | Entregadas: ${d.entregados} (${pct(d.pctEntrega)}) | En tránsito: ${d.transito} | Devueltas: ${d.devueltos} (${pct(d.pctDevolucion)})\n\nMÉTRICAS — CPA/pedido: ${fmt(cpa.cpaTotal)} | CPA/entregado: ${fmt(cpa.cpaEntregado)} | CPA/guía: ${fmt(cpa.cpaGuia)}\n\nRedacta reporte ejecutivo con estas secciones:\n📊 RESUMEN EJECUTIVO\n✅ PUNTOS POSITIVOS\n🚨 ALERTAS\n🎯 RECOMENDACIONES (3 acciones concretas para mañana)\n💬 CONCLUSIÓN`;
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':ck,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
+    const data=await r.json();
+    if(data.error)throw new Error(data.error.message);
+    const texto=data.content[0].text;
+    el.innerHTML=`<div class="reporte-box">${texto}</div>`;
+    $('ia-actions').style.display='flex';
+    window._rpt=texto;
+  }catch(e){el.innerHTML=`<div class="alert alert-warn">Error Claude IA: ${e.message}</div>`;}
+}
+
+function exportTxt(){if(!window._rpt)return;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([window._rpt],{type:'text/plain;charset=utf-8'}));a.download='reporte-'+$('date-to').value+'.txt';a.click();}
+function copiarReporte(){if(!window._rpt)return;navigator.clipboard.writeText(window._rpt).then(()=>setStatus('ok','Copiado'));}
+
+async function fetchAll(){
+  const st=$('shopify-token').value.trim(),ss=$('shopify-store').value.trim(),mt=$('meta-token').value.trim(),ma=$('meta-adaccount').value.trim(),ck=$('claude-key').value.trim(),df=$('date-from').value,dt=$('date-to').value;
+  if(!df||!dt){setStatus('err','Selecciona el rango de fechas');return;}
+  $('btn-run').disabled=true;$('spinner').style.display='block';
+  $('results-section').style.display='none';
+  const errors=[];
+  let s={total:0,confirmados:0,pendientes:0,cancelados:0,entregados:0,ingresos:0,pctEntrega:0,pctCancel:0};
+  let m={totalGasto:0,totalImpresiones:0,totalClics:0,ctrProm:0,cpcProm:0};
+  if(st&&ss){setStatus('loading','Consultando Shopify...');try{const orders=await fetchShopify(st,ss,df,dt);s=renderShopify(orders);}catch(e){errors.push('Shopify: '+e.message);}}else{errors.push('Shopify: credenciales no configuradas');}
+  if(mt&&ma){setStatus('loading','Consultando Meta Ads...');try{const camps=await fetchMeta(mt,ma,df,dt);m=renderMeta(camps);}catch(e){errors.push('Meta: '+e.message);}}else{errors.push('Meta Ads: credenciales no configuradas');}
+  const d=Object.keys(gDropi).length>0?gDropi:{total:0,entregados:0,transito:0,devueltos:0,pendientes:0,pctEntrega:0,pctDevolucion:0};
+  if(d.total===0)errors.push('Dropi: sube el Excel para ver logística');
+  const cpa=renderResumen(s,m,d);
+  setStatus('loading','Generando análisis IA...');
+  await generarIA(ck,s,m,d,cpa,df,dt);
+  $('results-section').style.display='block';
+  $('btn-run').disabled=false;$('spinner').style.display='none';
+  switchTab(0);
+  if(errors.length>0)setStatus('err','Parcial — '+errors[0]+(errors.length>1?' (+'+(errors.length-1)+' más)':''));
+  else setStatus('ok','Actualizado · '+new Date().toLocaleTimeString('es-CO'));
+}
+
+loadKeys();
+setDates();
+</script>
+</body>
+</html>
