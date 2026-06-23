@@ -113,7 +113,8 @@ tr:hover td{background:var(--bg);}
         <input type="password" id="mipler-key" placeholder="6429xxxx-xxxx:xxxxxxxxxx" autocomplete="off">
         <button class="toggle-vis" onclick="tv('mipler-key')">Ver</button>
       </div>
-      <input type="text" id="mipler-report" placeholder="ID del reporte Orders Detail" style="margin-top:6px">
+      <input type="text" id="mipler-key" placeholder="https://app.mipler.com/public/xxx/view/xxx.json"
+Cambio 2: Busca: style="margin-top:6px">
     </div>
 
     <div class="field-group">
@@ -279,10 +280,10 @@ function switchTab(i){
   document.querySelectorAll('.tab-panel').forEach((p,j)=>p.classList.toggle('active',i===j));
 }
 
-async function fetchMipler(apiKey,reportId,df,dt){
+async function fetchMipler(shareUrl,df,dt){
   const resp=await fetch('/.netlify/functions/mipler',{
     method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({apiKey,reportId,dateFrom:df,dateTo:dt})
+    body:JSON.stringify({shareUrl,dateFrom:df,dateTo:dt})
   });
   const data=await resp.json();
   if(data.error)throw new Error(data.error);
@@ -451,7 +452,7 @@ async function fetchAll(){
 
   if(mk&&mr){
     setStatus('loading','Consultando Shopify via Mipler...');
-    try{const rows=await fetchMipler(mk,mr,df,dt);s=renderShopify(rows);}
+    try{const rows=await fetchMipler(mk,df,dt);s=renderShopify(rows);}
     catch(e){errors.push('Shopify/Mipler: '+e.message);}
   }else{errors.push('Mipler: ingresa la API Key y el ID del reporte');}
 
