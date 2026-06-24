@@ -7,195 +7,169 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
-:root{--bg:#0f0f0f;--bg2:#161616;--bg3:#1e1e1e;--border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.12);--text:#f0f0f0;--muted:#888;--hint:#555;--orange:#FF6B35;--orange-dim:rgba(255,107,53,0.12);--orange-b:rgba(255,107,53,0.3);--green:#22c55e;--green-dim:rgba(34,197,94,0.12);--red:#ef4444;--red-dim:rgba(239,68,68,0.12);--blue:#3b82f6;--blue-dim:rgba(59,130,246,0.12);--amber:#f59e0b;--amber-dim:rgba(245,158,11,0.12);--purple:#a855f7;--purple-dim:rgba(168,85,247,0.12);--r:8px;--rl:12px;}
+:root{--bg:#0f0f0f;--bg2:#161616;--bg3:#1e1e1e;--border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.12);--text:#f0f0f0;--muted:#888;--hint:#555;--orange:#FF6B35;--od:rgba(255,107,53,0.12);--ob:rgba(255,107,53,0.3);--green:#22c55e;--gd:rgba(34,197,94,0.12);--red:#ef4444;--rd:rgba(239,68,68,0.12);--blue:#3b82f6;--bd:rgba(59,130,246,0.12);--amber:#f59e0b;--ad:rgba(245,158,11,0.12);--purple:#a855f7;--pd:rgba(168,85,247,0.12);--r:8px;--rl:12px;}
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-size:13px;line-height:1.5;min-height:100vh;}
 .shell{max-width:1100px;margin:0 auto;padding:28px 20px 80px;}
-.header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:12px;}
-.header h1{font-size:20px;font-weight:600;letter-spacing:-.3px;}
-.header p{font-size:11px;color:var(--muted);margin-top:3px;font-family:'JetBrains Mono',monospace;}
-.hbadge{background:var(--orange-dim);border:1px solid var(--orange-b);color:var(--orange);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;}
+.hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:12px;}
+.hdr h1{font-size:20px;font-weight:600;letter-spacing:-.3px;}
+.hdr p{font-size:11px;color:var(--muted);margin-top:3px;font-family:'JetBrains Mono',monospace;}
+.hbadge{background:var(--od);border:1px solid var(--ob);color:var(--orange);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;}
 .card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:16px 20px;margin-bottom:12px;}
-.ctitle{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--hint);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
-.ctitle::after{content:'';flex:1;height:1px;background:var(--border);}
-.cgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-bottom:14px;}
-.field{display:flex;flex-direction:column;gap:5px;}
-.field label{font-size:11px;font-weight:500;color:var(--muted);display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.ct{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--hint);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.ct::after{content:'';flex:1;height:1px;background:var(--border);}
+.cg{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-bottom:14px;}
+.fl{display:flex;flex-direction:column;gap:5px;}
+.fl label{font-size:11px;font-weight:500;color:var(--muted);display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
 .tag{font-size:9px;font-weight:700;letter-spacing:.06em;padding:2px 6px;border-radius:4px;text-transform:uppercase;}
-.t-meta{background:var(--blue-dim);color:var(--blue);}
-.t-dropi{background:var(--purple-dim);color:var(--purple);}
-.t-mipler{background:var(--orange-dim);color:var(--orange);}
-.t-claude{background:var(--amber-dim);color:var(--amber);}
-.t-tiktok{background:#111;color:#fff;border:1px solid #333;}
-.t-opt{background:transparent;color:var(--hint);border:1px solid var(--border2);}
-.irow{display:flex;align-items:center;gap:6px;}
-.irow input{flex:1;}
-input[type=text],input[type=password],input[type=number]{width:100%;padding:8px 11px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-size:12px;font-family:'Inter',sans-serif;outline:none;transition:border-color .15s;}
+.tm{background:var(--bd);color:var(--blue);}.td{background:var(--pd);color:var(--purple);}.ts{background:var(--od);color:var(--orange);}.tc{background:var(--ad);color:var(--amber);}.tt{background:#111;color:#fff;border:1px solid #333;}.to{background:transparent;color:var(--hint);border:1px solid var(--border2);}
+.ir{display:flex;align-items:center;gap:6px;}.ir input{flex:1;}
+input[type=text],input[type=password],input[type=number],input[type=date]{width:100%;padding:8px 11px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-size:12px;font-family:'Inter',sans-serif;outline:none;transition:border-color .15s;}
 input:focus{border-color:var(--orange);}
-.vbtn{background:none;border:none;cursor:pointer;color:var(--hint);font-size:11px;padding:0 3px;}
-.vbtn:hover{color:var(--text);}
-.drow{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end;}
-.drow label{font-size:11px;color:var(--muted);display:block;margin-bottom:4px;}
-.btns{display:flex;gap:8px;}
-.btn-p{background:var(--orange);color:#fff;border:none;border-radius:var(--r);padding:9px 20px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:7px;transition:opacity .15s;white-space:nowrap;font-family:'Inter',sans-serif;}
-.btn-p:hover{opacity:.85;}
-.btn-p:disabled{opacity:.4;cursor:not-allowed;}
-.btn-s{background:transparent;border:1px solid var(--border2);color:var(--muted);border-radius:var(--r);padding:8px 14px;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;}
-.btn-s:hover{color:var(--text);background:var(--bg3);}
-.spin{width:13px;height:13px;border:2px solid transparent;border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:none;}
+input[type=date]{cursor:pointer;}
+input[type=date]::-webkit-calendar-picker-indicator{filter:invert(0.6);cursor:pointer;}
+.vb{background:none;border:none;cursor:pointer;color:var(--hint);font-size:11px;padding:0 3px;}
+.vb:hover{color:var(--text);}
+.dr{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end;}
+.dr label{font-size:11px;color:var(--muted);display:block;margin-bottom:4px;}
+.bts{display:flex;gap:8px;}
+.bp{background:var(--orange);color:#fff;border:none;border-radius:var(--r);padding:9px 20px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:7px;transition:opacity .15s;white-space:nowrap;font-family:'Inter',sans-serif;}
+.bp:hover{opacity:.85;}.bp:disabled{opacity:.4;cursor:not-allowed;}
+.bs{background:transparent;border:1px solid var(--border2);color:var(--muted);border-radius:var(--r);padding:8px 14px;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;}
+.bs:hover{color:var(--text);background:var(--bg3);}
+.sp{width:13px;height:13px;border:2px solid transparent;border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:none;}
 @keyframes spin{to{transform:rotate(360deg);}}
-.srow{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);margin-top:10px;min-height:18px;}
+.sr{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);margin-top:10px;min-height:18px;}
 .dot{width:6px;height:6px;border-radius:50%;background:var(--hint);flex-shrink:0;}
-.dot.ok{background:var(--green);}
-.dot.err{background:var(--red);}
-.dot.loading{background:var(--orange);animation:pulse 1s infinite;}
+.dot.ok{background:var(--green);}.dot.err{background:var(--red);}.dot.loading{background:var(--orange);animation:pulse 1s infinite;}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-.ugrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-@media(max-width:600px){.ugrid{grid-template-columns:1fr;}}
-.uzone{border:1.5px dashed var(--border2);border-radius:var(--rl);padding:18px;text-align:center;cursor:pointer;transition:all .15s;}
-.uzone:hover,.uzone.drag{border-color:var(--orange);background:var(--orange-dim);}
-.uzone .ico{font-size:20px;margin-bottom:5px;}
-.uzone p{font-size:12px;color:var(--muted);}
-.uzone strong{color:var(--text);}
-.uzone input{display:none;}
-.fok{background:var(--green-dim);border:1px solid rgba(34,197,94,0.2);border-radius:var(--r);padding:8px 12px;font-size:12px;color:var(--green);display:flex;align-items:center;gap:8px;margin-top:6px;}
+.ug{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+@media(max-width:600px){.ug{grid-template-columns:1fr;}}
+.uz{border:1.5px dashed var(--border2);border-radius:var(--rl);padding:18px;text-align:center;cursor:pointer;transition:all .15s;}
+.uz:hover,.uz.drag{border-color:var(--orange);background:var(--od);}
+.uz p{font-size:12px;color:var(--muted);}
+.uz strong{color:var(--text);}
+.uz input{display:none;}
+.fok{background:var(--gd);border:1px solid rgba(34,197,94,.2);border-radius:var(--r);padding:8px 12px;font-size:12px;color:var(--green);display:flex;align-items:center;gap:8px;margin-top:6px;}
 .fok button{margin-left:auto;background:none;border:none;cursor:pointer;color:var(--muted);font-size:13px;}
 .tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:16px;overflow-x:auto;}
-.tab{padding:9px 16px;font-size:12px;font-weight:500;color:var(--hint);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .12s;white-space:nowrap;}
+.tab{padding:9px 15px;font-size:12px;font-weight:500;color:var(--hint);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .12s;white-space:nowrap;}
 .tab.active{color:var(--orange);border-bottom-color:var(--orange);}
-.tab-panel{display:none;}
-.tab-panel.active{display:block;}
-.mgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(115px,1fr));gap:8px;margin-bottom:14px;}
+.tp{display:none;}.tp.active{display:block;}
+.mg{display:grid;grid-template-columns:repeat(auto-fit,minmax(115px,1fr));gap:8px;margin-bottom:14px;}
 .mc{background:var(--bg3);border-radius:var(--r);padding:12px 14px;border:1px solid var(--border);}
-.mc .lbl{font-size:9px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--hint);margin-bottom:5px;}
-.mc .val{font-size:19px;font-weight:700;letter-spacing:-.5px;line-height:1;font-family:'JetBrains Mono',monospace;}
-.mc .sub{font-size:10px;color:var(--muted);margin-top:3px;}
-.mc.g .val{color:var(--green);}.mc.r .val{color:var(--red);}.mc.b .val{color:var(--blue);}.mc.o .val{color:var(--orange);}.mc.a .val{color:var(--amber);}.mc.p .val{color:var(--purple);}
-.sdiv{border:none;border-top:1px solid var(--border);margin:14px 0;}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-@media(max-width:700px){.two{grid-template-columns:1fr;}}
-.slbl{font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--hint);margin-bottom:8px;display:block;}
+.mc .lb{font-size:9px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--hint);margin-bottom:5px;}
+.mc .vl{font-size:19px;font-weight:700;letter-spacing:-.5px;line-height:1;font-family:'JetBrains Mono',monospace;}
+.mc .sb{font-size:10px;color:var(--muted);margin-top:3px;}
+.mc.g .vl{color:var(--green);}.mc.r .vl{color:var(--red);}.mc.b .vl{color:var(--blue);}.mc.o .vl{color:var(--orange);}.mc.a .vl{color:var(--amber);}.mc.p .vl{color:var(--purple);}
+.sdv{border:none;border-top:1px solid var(--border);margin:14px 0;}
+.tw{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+@media(max-width:700px){.tw{grid-template-columns:1fr;}}
+.sl{font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--hint);margin-bottom:8px;display:block;}
 .slist{display:flex;flex-direction:column;gap:5px;}
 .si{display:flex;align-items:center;gap:8px;}
-.si-name{font-size:12px;color:var(--muted);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.si-bar{flex:2;background:var(--bg3);border-radius:3px;height:5px;overflow:hidden;}
-.si-fill{height:100%;border-radius:3px;transition:width .4s;}
-.si-n{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--text);width:36px;text-align:right;}
-.si-p{font-size:10px;color:var(--hint);width:36px;text-align:right;}
-.tw{overflow-x:auto;}
+.sn{font-size:12px;color:var(--muted);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sb2{flex:2;background:var(--bg3);border-radius:3px;height:5px;overflow:hidden;}
+.sf{height:100%;border-radius:3px;transition:width .4s;}
+.snn{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--text);width:36px;text-align:right;}
+.sp2{font-size:10px;color:var(--hint);width:36px;text-align:right;}
+.tw2{overflow-x:auto;}
 table{width:100%;border-collapse:collapse;font-size:12px;}
 th{text-align:left;font-size:9px;font-weight:600;color:var(--hint);text-transform:uppercase;letter-spacing:.07em;padding:6px 10px;border-bottom:1px solid var(--border);white-space:nowrap;}
 td{padding:7px 10px;border-bottom:1px solid var(--border);vertical-align:middle;}
 tr:last-child td{border-bottom:none;}
 tr:hover td{background:var(--bg3);}
 .pill{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600;}
-.pg{background:var(--green-dim);color:var(--green);}.pr{background:var(--red-dim);color:var(--red);}.pa{background:var(--amber-dim);color:var(--amber);}.pb{background:var(--blue-dim);color:var(--blue);}.pp{background:var(--purple-dim);color:var(--purple);}.po{background:var(--orange-dim);color:var(--orange);}.pgr{background:var(--bg3);color:var(--hint);}
-.pbox{background:var(--orange-dim);border:1px solid var(--orange-b);border-radius:var(--rl);padding:16px 20px;margin-bottom:12px;}
-.pbox-title{font-size:10px;font-weight:600;color:var(--orange);margin-bottom:12px;letter-spacing:.05em;text-transform:uppercase;}
-.pgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;}
-.pi .lbl{font-size:10px;color:rgba(255,107,53,.7);margin-bottom:3px;}
-.pi .val{font-size:17px;font-weight:700;color:var(--orange);font-family:'JetBrains Mono',monospace;letter-spacing:-.3px;}
-.alert{border-radius:var(--r);padding:9px 13px;font-size:12px;margin-bottom:10px;}
-.aw{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(245,158,11,.2);}
-.ai{background:var(--blue-dim);color:var(--blue);border:1px solid rgba(59,130,246,.2);}
-.ao{background:var(--green-dim);color:var(--green);border:1px solid rgba(34,197,94,.2);}
+.pg{background:var(--gd);color:var(--green);}.pr{background:var(--rd);color:var(--red);}.pa{background:var(--ad);color:var(--amber);}.pb{background:var(--bd);color:var(--blue);}.pp{background:var(--pd);color:var(--purple);}.po{background:var(--od);color:var(--orange);}.pgr{background:var(--bg3);color:var(--hint);}
+.pbox{background:var(--od);border:1px solid var(--ob);border-radius:var(--rl);padding:16px 20px;margin-bottom:12px;}
+.pt{font-size:10px;font-weight:600;color:var(--orange);margin-bottom:12px;letter-spacing:.05em;text-transform:uppercase;}
+.pg2{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;}
+.pi .lb{font-size:10px;color:rgba(255,107,53,.7);margin-bottom:3px;}
+.pi .vl{font-size:17px;font-weight:700;color:var(--orange);font-family:'JetBrains Mono',monospace;letter-spacing:-.3px;}
+.al{border-radius:var(--r);padding:9px 13px;font-size:12px;margin-bottom:10px;}
+.aw{background:var(--ad);color:var(--amber);border:1px solid rgba(245,158,11,.2);}
+.ai{background:var(--bd);color:var(--blue);border:1px solid rgba(59,130,246,.2);}
+.ao{background:var(--gd);color:var(--green);border:1px solid rgba(34,197,94,.2);}
 .iabox{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:16px;font-size:13px;line-height:1.85;color:var(--text);white-space:pre-wrap;}
 .empty{text-align:center;padding:28px;color:var(--hint);font-size:12px;}
-.crow{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);}
-.crow:last-child{border-bottom:none;}
-.cl{font-size:12px;color:var(--muted);}
+.cr{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);}
+.cr:last-child{border-bottom:none;}
+.cl2{font-size:12px;color:var(--muted);}
 .cv{font-size:12px;font-family:'JetBrains Mono',monospace;}
 .ar{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}
-.banner{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:9px 13px;font-size:11px;color:var(--muted);margin-top:6px;}
-.banner a{color:var(--orange);}
-
+.bnr{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:9px 13px;font-size:11px;color:var(--muted);margin-top:6px;}
+.bnr a{color:var(--orange);}
 /* PRODUCT FILTER */
-.pf-wrap{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:12px;margin-bottom:14px;}
-.pf-title{font-size:11px;font-weight:600;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;}
-.pf-tags{display:flex;flex-wrap:wrap;gap:6px;}
-.pf-tag{padding:4px 10px;border-radius:20px;font-size:11px;cursor:pointer;border:1px solid var(--border2);color:var(--muted);background:transparent;transition:all .12s;user-select:none;}
-.pf-tag:hover{border-color:var(--orange);color:var(--orange);}
-.pf-tag.active{background:var(--orange-dim);border-color:var(--orange-b);color:var(--orange);font-weight:600;}
-.pf-tag.all-tag{border-color:var(--border2);}
-.pf-tag.all-tag.active{background:var(--bg2);border-color:var(--border2);color:var(--text);}
-
-/* DATE PICKER */
-input[type=date]{padding:8px 11px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-size:12px;font-family:'Inter',sans-serif;outline:none;width:100%;transition:border-color .15s;cursor:pointer;}
-input[type=date]:focus{border-color:var(--orange);}
-input[type=date]::-webkit-calendar-picker-indicator{filter:invert(0.6);cursor:pointer;}
+.pfw{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:12px;margin-bottom:14px;}
+.pft{font-size:11px;font-weight:600;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;}
+.pftags{display:flex;flex-wrap:wrap;gap:6px;}
+.pftag{padding:4px 10px;border-radius:20px;font-size:11px;cursor:pointer;border:1px solid var(--border2);color:var(--muted);background:transparent;transition:all .12s;user-select:none;}
+.pftag:hover{border-color:var(--orange);color:var(--orange);}
+.pftag.active{background:var(--od);border-color:var(--ob);color:var(--orange);font-weight:600;}
+.pftag.all{border-color:var(--border2);}
+.pftag.all.active{background:var(--bg2);border-color:var(--border2);color:var(--text);}
 </style>
 </head>
 <body>
 <div class="shell">
 
-<div class="header">
-  <div>
-    <h1>Dashboard de reportes</h1>
-    <p id="hdate">Shopify · Meta Ads · Dropi · Colombia</p>
-  </div>
+<div class="hdr">
+  <div><h1>Dashboard de reportes</h1><p id="hdate">Shopify · Meta Ads · Dropi · Colombia</p></div>
   <div class="hbadge" id="hbadge">Sin datos</div>
 </div>
 
-<!-- CREDENCIALES -->
 <div class="card">
-  <div class="ctitle">Credenciales</div>
-  <div class="cgrid">
-    <div class="field">
-      <label><span class="tag t-mipler">Shopify</span> URL reporte Mipler</label>
-      <div class="irow"><input type="password" id="mipler-url" placeholder="https://app.mipler.com/public/xxx/view/xxx.json" autocomplete="off"><button class="vbtn" onclick="tv('mipler-url')">ver</button></div>
+  <div class="ct">Credenciales</div>
+  <div class="cg">
+    <div class="fl">
+      <label><span class="tag ts">Shopify</span> URL reporte Mipler</label>
+      <div class="ir"><input type="password" id="mipler-url" placeholder="https://app.mipler.com/public/xxx/view/xxx.json" autocomplete="off"><button class="vb" onclick="tv('mipler-url')">ver</button></div>
     </div>
-    <div class="field">
-      <label><span class="tag t-meta">Meta Ads</span> Access Token</label>
-      <div class="irow"><input type="password" id="meta-token" placeholder="EAAxxxxxxxxxxxxx" autocomplete="off"><button class="vbtn" onclick="tv('meta-token')">ver</button></div>
+    <div class="fl">
+      <label><span class="tag tm">Meta Ads</span> Access Token</label>
+      <div class="ir"><input type="password" id="meta-token" placeholder="EAAxxxxxxxxxxxxx" autocomplete="off"><button class="vb" onclick="tv('meta-token')">ver</button></div>
     </div>
-    <div class="field">
-      <label><span class="tag t-tiktok">TikTok</span> Gasto del período <span class="tag t-opt">Opcional</span></label>
+    <div class="fl">
+      <label><span class="tag tt">TikTok</span> Gasto del período <span class="tag to">Opcional</span></label>
       <input type="number" id="tiktok-spend" placeholder="0 COP" min="0" step="1000">
     </div>
-    <div class="field">
-      <label><span class="tag t-claude">Claude IA</span> API Key <span class="tag t-opt">Opcional</span></label>
-      <div class="irow"><input type="password" id="claude-key" placeholder="sk-ant-..." autocomplete="off"><button class="vbtn" onclick="tv('claude-key')">ver</button></div>
-      <div class="banner">Sin Claude funciona todo excepto el análisis narrativo. <a href="https://console.anthropic.com" target="_blank">Obtener →</a></div>
+    <div class="fl">
+      <label><span class="tag tc">Claude IA</span> API Key <span class="tag to">Opcional</span></label>
+      <div class="ir"><input type="password" id="claude-key" placeholder="sk-ant-..." autocomplete="off"><button class="vb" onclick="tv('claude-key')">ver</button></div>
+      <div class="bnr">Sin Claude funciona todo excepto el análisis narrativo. <a href="https://console.anthropic.com" target="_blank">Obtener →</a></div>
     </div>
   </div>
-  <div class="drow">
+  <div class="dr">
     <div><label>Desde</label><input type="date" id="date-from"></div>
     <div><label>Hasta</label><input type="date" id="date-to"></div>
-    <div class="btns">
-      <button class="btn-s" onclick="saveKeys()">Guardar</button>
-      <button class="btn-p" id="btn-run" onclick="fetchAll()"><span class="spin" id="spin"></span>Generar reporte</button>
+    <div class="bts">
+      <button class="bs" onclick="saveKeys()">Guardar</button>
+      <button class="bp" id="btn-run" onclick="fetchAll()"><span class="sp" id="spin"></span>Generar reporte</button>
     </div>
   </div>
-  <div class="srow"><div class="dot" id="sdot"></div><span id="stxt">Ingresa tus credenciales y sube los archivos de Dropi</span></div>
+  <div class="sr"><div class="dot" id="sdot"></div><span id="stxt">Ingresa tus credenciales y sube los archivos de Dropi</span></div>
 </div>
 
-<!-- DROPI FILES -->
 <div class="card">
-  <div class="ctitle">Archivos Dropi</div>
-  <div class="ugrid">
+  <div class="ct">Archivos Dropi</div>
+  <div class="ug">
     <div>
-      <span class="slbl">Órdenes — una orden por fila</span>
-      <div id="ua-ord"><div class="uzone" onclick="document.getElementById('uf-ord').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="df(event,'ord')"><div class="ico">📋</div><p><strong>Clic o arrastra</strong> el archivo ordenes_xxx.xlsx</p><input type="file" id="uf-ord" accept=".xlsx,.xls" onchange="hf(this.files[0],'ord')"></div></div>
+      <span class="sl">Órdenes — una orden por fila</span>
+      <div id="ua-ord"><div class="uz" onclick="document.getElementById('uf-ord').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="df(event,'ord')"><p style="font-size:20px;margin-bottom:5px">📋</p><p><strong>Clic o arrastra</strong> — ordenes_xxx.xlsx</p><input type="file" id="uf-ord" accept=".xlsx,.xls" onchange="hf(this.files[0],'ord')"></div></div>
       <div id="ok-ord" style="display:none"></div>
     </div>
     <div>
-      <span class="slbl">Órdenes con productos — un producto por fila</span>
-      <div id="ua-prod"><div class="uzone" onclick="document.getElementById('uf-prod').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="df(event,'prod')"><div class="ico">📦</div><p><strong>Clic o arrastra</strong> el archivo ordenes_productos_xxx.xlsx</p><input type="file" id="uf-prod" accept=".xlsx,.xls" onchange="hf(this.files[0],'prod')"></div></div>
+      <span class="sl">Órdenes con productos — un producto por fila</span>
+      <div id="ua-prod"><div class="uz" onclick="document.getElementById('uf-prod').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="df(event,'prod')"><p style="font-size:20px;margin-bottom:5px">📦</p><p><strong>Clic o arrastra</strong> — ordenes_productos_xxx.xlsx</p><input type="file" id="uf-prod" accept=".xlsx,.xls" onchange="hf(this.files[0],'prod')"></div></div>
       <div id="ok-prod" style="display:none"></div>
     </div>
   </div>
 </div>
 
-<!-- RESULTADOS -->
 <div id="results" style="display:none">
-
-  <!-- FILTRO PRODUCTOS -->
-  <div class="pf-wrap" id="pf-wrap" style="display:none">
-    <div class="pf-title">
-      <span>🔍 Filtrar por producto</span>
-      <button class="btn-s" style="font-size:11px;padding:4px 10px" onclick="clearPF()">Limpiar filtros</button>
-    </div>
-    <div class="pf-tags" id="pf-tags"></div>
+  <div class="pfw" id="pfw" style="display:none">
+    <div class="pft"><span>🔍 Filtrar por producto</span><button class="bs" style="font-size:11px;padding:4px 10px" onclick="clearPF()">Limpiar</button></div>
+    <div class="pftags" id="pftags"></div>
   </div>
 
   <div class="tabs">
@@ -209,116 +183,56 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(0.6);cursor:po
     <div class="tab" onclick="st(7)">Reporte IA</div>
   </div>
 
-  <!-- TAB 0: RESUMEN -->
-  <div class="tab-panel active" id="tp0">
-    <div class="card">
-      <div class="ctitle">KPIs principales</div>
-      <div class="mgrid" id="m-res"></div>
-      <hr class="sdiv">
-      <div class="two">
-        <div><span class="slbl">Logística (Dropi)</span><div id="res-log"></div></div>
-        <div><span class="slbl">Publicidad</span><div id="res-pub"></div></div>
+  <div class="tp active" id="tp0">
+    <div class="card"><div class="ct">KPIs principales</div><div class="mg" id="m-res"></div><hr class="sdv"><div class="tw"><div><span class="sl">Logística (Dropi)</span><div id="res-log"></div></div><div><span class="sl">Publicidad</span><div id="res-pub"></div></div></div></div>
+  </div>
+
+  <div class="tp" id="tp1">
+    <div class="card"><div class="ct">Logística Dropi</div><div class="mg" id="m-log"></div><hr class="sdv"><span class="sl">Detalle de órdenes</span><div class="tw2"><table><thead><tr><th>ID Dropi</th><th>Cliente</th><th>Teléfono</th><th>Ciudad</th><th>Producto</th><th>Valor</th><th>Estado</th><th>Guía</th></tr></thead><tbody id="tb-log"></tbody></table></div></div>
+  </div>
+
+  <div class="tp" id="tp2">
+    <div class="card"><div class="ct">Desglose por estado</div><div class="tw">
+      <div><span class="sl">Todos los estados</span><div class="slist" id="est-list"></div></div>
+      <div>
+        <span class="sl">Pedidos en movimiento</span><div class="slist" id="mov-list"></div>
+        <hr class="sdv">
+        <span class="sl">Métricas clave separadas</span><div id="sep-met"></div>
       </div>
-    </div>
+    </div></div>
   </div>
 
-  <!-- TAB 1: LOGÍSTICA -->
-  <div class="tab-panel" id="tp1">
-    <div class="card">
-      <div class="ctitle">Métricas de logística Dropi</div>
-      <div class="mgrid" id="m-log"></div>
-      <hr class="sdiv">
-      <span class="slbl">Detalle de órdenes</span>
-      <div class="tw"><table><thead><tr><th>ID Dropi</th><th>Cliente</th><th>Ciudad</th><th>Producto</th><th>Valor</th><th>Estado</th><th>Guía</th><th>Transportadora</th></tr></thead><tbody id="tb-log"></tbody></table></div>
-    </div>
+  <div class="tp" id="tp3">
+    <div class="card"><div class="ct">Pedidos Shopify</div><div class="mg" id="m-shop"></div><hr class="sdv"><div class="tw2"><table><thead><tr><th>Orden</th><th>Cliente</th><th>Total neto</th><th>Estado pago</th><th>Fecha</th></tr></thead><tbody id="tb-shop"></tbody></table></div></div>
   </div>
 
-  <!-- TAB 2: POR ESTADO -->
-  <div class="tab-panel" id="tp2">
-    <div class="card">
-      <div class="ctitle">Desglose por estado — separación cancelación vs devolución</div>
-      <div class="two">
-        <div>
-          <span class="slbl">Todos los estados</span>
-          <div class="slist" id="est-list"></div>
-        </div>
-        <div>
-          <span class="slbl">Pedidos en movimiento</span>
-          <div class="slist" id="mov-list"></div>
-          <hr class="sdiv">
-          <span class="slbl">Métricas separadas</span>
-          <div id="sep-metricas"></div>
-        </div>
-      </div>
-    </div>
+  <div class="tp" id="tp4">
+    <div class="card"><div class="ct">Meta Ads — todas las cuentas</div><div class="mg" id="m-meta"></div><hr class="sdv"><div id="meta-tt" style="margin-bottom:12px"></div><div class="tw2"><table><thead><tr><th>Cuenta</th><th>Campaña</th><th>Gasto</th><th>Impresiones</th><th>Clics</th><th>CTR</th><th>CPC</th></tr></thead><tbody id="tb-meta"></tbody></table></div></div>
   </div>
 
-  <!-- TAB 3: SHOPIFY -->
-  <div class="tab-panel" id="tp3">
-    <div class="card">
-      <div class="ctitle">Pedidos Shopify</div>
-      <div class="mgrid" id="m-shop"></div>
-      <hr class="sdiv">
-      <div class="tw"><table><thead><tr><th>Orden</th><th>Cliente</th><th>Total neto</th><th>Pago</th><th>Despacho</th><th>Fecha</th><th>En Dropi</th></tr></thead><tbody id="tb-shop"></tbody></table></div>
-    </div>
+  <div class="tp" id="tp5">
+    <div class="card"><div class="ct">Pedidos WhatsApp & Orgánicos</div><div class="mg" id="m-wp"></div><hr class="sdv"><div class="al ai" style="margin-bottom:12px">Pedidos en Dropi sin ID de orden de tienda — llegaron por WhatsApp u otro canal externo a Shopify</div><div class="tw2"><table><thead><tr><th>ID Dropi</th><th>Cliente</th><th>Teléfono</th><th>Ciudad</th><th>Producto</th><th>Valor</th><th>Estado</th></tr></thead><tbody id="tb-wp"></tbody></table></div></div>
   </div>
 
-  <!-- TAB 4: META -->
-  <div class="tab-panel" id="tp4">
-    <div class="card">
-      <div class="ctitle">Meta Ads — todas las cuentas</div>
-      <div class="mgrid" id="m-meta"></div>
-      <hr class="sdiv">
-      <div id="meta-tt" style="margin-bottom:12px"></div>
-      <div class="tw"><table><thead><tr><th>Cuenta</th><th>Campaña</th><th>Gasto</th><th>Impresiones</th><th>Clics</th><th>CTR</th><th>CPC</th></tr></thead><tbody id="tb-meta"></tbody></table></div>
-    </div>
+  <div class="tp" id="tp6">
+    <div class="card"><div class="ct">Proyección de ingresos</div><div class="pbox" id="pbox"></div><div class="al ai" style="margin-bottom:12px">Proyección = 85% × pedidos en movimiento. Ingreso neto = (Valor − Flete − Costo proveedor) × 0.85</div><div class="tw2"><table><thead><tr><th>ID</th><th>Cliente</th><th>Producto</th><th>Estado</th><th>Valor</th><th>Costo prov.</th><th>Flete</th><th>Ing. neto est.</th></tr></thead><tbody id="tb-proy"></tbody></table></div></div>
   </div>
 
-  <!-- TAB 5: WHATSAPP -->
-  <div class="tab-panel" id="tp5">
-    <div class="card">
-      <div class="ctitle">Pedidos WhatsApp & Orgánicos</div>
-      <div class="mgrid" id="m-wp"></div>
-      <hr class="sdiv">
-      <div class="alert ai" style="margin-bottom:12px">Pedidos encontrados en Dropi sin orden correspondiente en Shopify — considerados orgánicos o por WhatsApp</div>
-      <div class="tw"><table><thead><tr><th>ID Dropi</th><th>Cliente</th><th>Teléfono</th><th>Ciudad</th><th>Valor</th><th>Estado</th><th>Fecha</th></tr></thead><tbody id="tb-wp"></tbody></table></div>
-    </div>
+  <div class="tp" id="tp7">
+    <div class="card"><div class="ct">Análisis IA</div><div id="ia-c"><div class="empty">Presiona Generar reporte para el análisis</div></div><div class="ar" id="ia-ar" style="display:none"><button class="bs" onclick="expTxt()">Exportar .txt</button><button class="bs" onclick="copIA()">Copiar</button></div></div>
   </div>
-
-  <!-- TAB 6: PROYECCIÓN -->
-  <div class="tab-panel" id="tp6">
-    <div class="card">
-      <div class="ctitle">Proyección de ingresos</div>
-      <div class="pbox" id="pbox"></div>
-      <div class="alert ai" style="margin-top:12px;margin-bottom:12px">Proyección = 85% sobre pedidos en movimiento. Ingreso neto = (Valor orden − Flete − Costo proveedor) × 0.85</div>
-      <div class="tw"><table><thead><tr><th>ID</th><th>Cliente</th><th>Producto</th><th>Estado</th><th>Valor orden</th><th>Costo prov.</th><th>Flete</th><th>Ing. neto est.</th></tr></thead><tbody id="tb-proy"></tbody></table></div>
-    </div>
-  </div>
-
-  <!-- TAB 7: IA -->
-  <div class="tab-panel" id="tp7">
-    <div class="card">
-      <div class="ctitle">Análisis inteligente — Claude IA</div>
-      <div id="ia-c"><div class="empty">Presiona "Generar reporte" para el análisis</div></div>
-      <div class="ar" id="ia-ar" style="display:none">
-        <button class="btn-s" onclick="expTxt()">Exportar .txt</button>
-        <button class="btn-s" onclick="copIA()">Copiar</button>
-      </div>
-    </div>
-  </div>
-
 </div>
 </div>
 
 <script>
-const LS='eco_v8';
+const LS='eco_v9';
 const $=id=>document.getElementById(id);
 const fmt=n=>'$'+Math.round(n||0).toLocaleString('es-CO');
 const pct=n=>(parseFloat(n)||0).toFixed(1)+'%';
 const mono=n=>Math.round(n||0).toLocaleString('es-CO');
 
-let dropiOrd=[],dropiProd=[],selectedProds=new Set();
-let gD={},gS={},gM={},gW={},gP={},allOrds=[];
+let dOrd=[],dProd=[],selProds=new Set(),allOrds=[];
+let gD={},gS={},gM={},gW={},gP={};
 
 const EST_ENT=['ENTREGADO'];
 const EST_DEV=['DEVOLUCION','RECHAZADO'];
@@ -326,39 +240,17 @@ const EST_CAN=['CANCELADO'];
 const EST_PEND=['PENDIENTE CONFIRMACION'];
 const EST_MOV=['DESPACHADA','EN REPARTO','EN BODEGA DESTINO','EN BODEGA TRANSPORTADORA','INTENTO DE ENTREGA','NOVEDAD SOLUCIONADA','GUIA_GENERADA','EN PROCESAMIENTO','PREPARADO PARA TRANSPORTADORA','RECLAME EN OFICINA','NOVEDAD'];
 
-const COLORES_EST={
-  'ENTREGADO':'#22c55e','CANCELADO':'#ef4444','PENDIENTE CONFIRMACION':'#f59e0b',
-  'DEVOLUCION':'#f87171','RECHAZADO':'#dc2626','NOVEDAD':'#a855f7',
-  'DESPACHADA':'#3b82f6','EN REPARTO':'#60a5fa','RECLAME EN OFICINA':'#c084fc',
-  'GUIA_GENERADA':'#818cf8','EN PROCESAMIENTO':'#6366f1',
-  'PREPARADO PARA TRANSPORTADORA':'#8b5cf6','EN BODEGA DESTINO':'#7c3aed',
-  'EN BODEGA TRANSPORTADORA':'#6d28d9','INTENTO DE ENTREGA':'#4f46e5',
-  'NOVEDAD SOLUCIONADA':'#22d3ee'
-};
+const CEST={'ENTREGADO':'#22c55e','CANCELADO':'#ef4444','PENDIENTE CONFIRMACION':'#f59e0b','DEVOLUCION':'#f87171','RECHAZADO':'#dc2626','NOVEDAD':'#a855f7','DESPACHADA':'#3b82f6','EN REPARTO':'#60a5fa','RECLAME EN OFICINA':'#c084fc','GUIA_GENERADA':'#818cf8','EN PROCESAMIENTO':'#6366f1','PREPARADO PARA TRANSPORTADORA':'#8b5cf6','EN BODEGA DESTINO':'#7c3aed','EN BODEGA TRANSPORTADORA':'#6d28d9','INTENTO DE ENTREGA':'#4f46e5','NOVEDAD SOLUCIONADA':'#22d3ee'};
 
 function tv(id){const e=$(id);e.type=e.type==='password'?'text':'password';}
 function setS(s,m){$('sdot').className='dot '+(s||'');$('stxt').textContent=m;}
-function st(i){document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',i===j));document.querySelectorAll('.tab-panel').forEach((p,j)=>p.classList.toggle('active',i===j));}
+function st(i){document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',i===j));document.querySelectorAll('.tp').forEach((p,j)=>p.classList.toggle('active',i===j));}
 
-function saveKeys(){
-  localStorage.setItem(LS,JSON.stringify({mu:$('mipler-url').value,mt:$('meta-token').value,ck:$('claude-key').value,tt:$('tiktok-spend').value}));
-  setS('ok','Credenciales guardadas');
-}
-function loadKeys(){
-  const d=JSON.parse(localStorage.getItem(LS)||'{}');
-  if(d.mu)$('mipler-url').value=d.mu;
-  if(d.mt)$('meta-token').value=d.mt;
-  if(d.ck)$('claude-key').value=d.ck;
-  if(d.tt)$('tiktok-spend').value=d.tt;
-}
-function setDates(){
-  const t=new Date(),f=new Date(t.getFullYear(),t.getMonth(),1);
-  $('date-to').value=t.toISOString().slice(0,10);
-  $('date-from').value=f.toISOString().slice(0,10);
-}
+function saveKeys(){localStorage.setItem(LS,JSON.stringify({mu:$('mipler-url').value,mt:$('meta-token').value,ck:$('claude-key').value,tt:$('tiktok-spend').value}));setS('ok','Credenciales guardadas');}
+function loadKeys(){const d=JSON.parse(localStorage.getItem(LS)||'{}');if(d.mu)$('mipler-url').value=d.mu;if(d.mt)$('meta-token').value=d.mt;if(d.ck)$('claude-key').value=d.ck;if(d.tt)$('tiktok-spend').value=d.tt;}
+function setDates(){const t=new Date(),f=new Date(t.getFullYear(),t.getMonth(),1);$('date-to').value=t.toISOString().slice(0,10);$('date-from').value=f.toISOString().slice(0,10);}
 
-// ---- FILES ----
-function df(e,tipo){e.preventDefault();e.currentTarget.classList.remove('drag');hf(e.dataTransfer.files[0],tipo);}
+function df(e,t){e.preventDefault();e.currentTarget.classList.remove('drag');hf(e.dataTransfer.files[0],t);}
 function hf(file,tipo){
   if(!file)return;
   const r=new FileReader();
@@ -366,359 +258,214 @@ function hf(file,tipo){
     const wb=XLSX.read(e.target.result,{type:'binary'});
     const ws=wb.Sheets[wb.SheetNames[0]];
     const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
-    if(tipo==='ord'){dropiOrd=rows;showOk('ua-ord','ok-ord',file.name,rows.length,'ord');}
-    else{dropiProd=rows;showOk('ua-prod','ok-prod',file.name,rows.length,'prod');}
-    setS('ok',`${file.name} — ${rows.length} filas cargadas`);
+    if(tipo==='ord'){dOrd=rows;showOk('ua-ord','ok-ord',file.name,rows.length,'ord');}
+    else{dProd=rows;showOk('ua-prod','ok-prod',file.name,rows.length,'prod');}
+    setS('ok',`${file.name} — ${rows.length} filas`);
   };
   r.readAsBinaryString(file);
 }
-function showOk(a,o,n,c,t){
-  $(a).style.display='none';$(o).style.display='block';
-  $(o).innerHTML=`<div class="fok">✓ <strong>${n}</strong> — ${c} filas <button onclick="resetF('${t}')">×</button></div>`;
-}
-function resetF(t){
-  if(t==='ord'){dropiOrd=[];$('ua-ord').style.display='block';$('ok-ord').style.display='none';$('uf-ord').value='';}
-  else{dropiProd=[];$('ua-prod').style.display='block';$('ok-prod').style.display='none';$('uf-prod').value='';}
-}
+function showOk(a,o,n,c,t){$(a).style.display='none';$(o).style.display='block';$(o).innerHTML=`<div class="fok">✓ <strong>${n}</strong> — ${c} filas <button onclick="resetF('${t}')">×</button></div>`;}
+function resetF(t){if(t==='ord'){dOrd=[];$('ua-ord').style.display='block';$('ok-ord').style.display='none';$('uf-ord').value='';}else{dProd=[];$('ua-prod').style.display='block';$('ok-prod').style.display='none';$('uf-prod').value='';}}
 
-// ---- PRODUCTO FILTER ----
-function buildPF(ordenes){
-  const prods=new Set();
-  ordenes.forEach(o=>{if(o.productos&&o.productos!=='—')o.productos.split(',').forEach(p=>prods.add(p.trim()));});
-  if(prods.size===0){$('pf-wrap').style.display='none';return;}
-  $('pf-wrap').style.display='block';
-  const tags=['<div class="pf-tag all-tag active" data-prod="__all__" onclick="togglePF(this)">Todos</div>',
-    ...[...prods].sort().map(p=>`<div class="pf-tag" data-prod="${p}" onclick="togglePF(this)">${p}</div>`)];
-  $('pf-tags').innerHTML=tags.join('');
+function buildPF(ords){
+  const ps=new Set();
+  ords.forEach(o=>{if(o.productos&&o.productos!=='—')o.productos.split(',').forEach(p=>ps.add(p.trim()));});
+  if(ps.size===0){$('pfw').style.display='none';return;}
+  $('pfw').style.display='block';
+  $('pftags').innerHTML=['<div class="pftag all active" data-p="__all__" onclick="tPF(this)">Todos</div>',...[...ps].sort().map(p=>`<div class="pftag" data-p="${p}" onclick="tPF(this)">${p}</div>`)].join('');
 }
-function togglePF(el){
-  const prod=el.dataset.prod;
-  if(prod==='__all__'){
-    selectedProds.clear();
-    document.querySelectorAll('.pf-tag').forEach(t=>t.classList.remove('active'));
-    el.classList.add('active');
-  }else{
-    document.querySelector('.pf-tag[data-prod="__all__"]').classList.remove('active');
-    if(el.classList.contains('active')){el.classList.remove('active');selectedProds.delete(prod);}
-    else{el.classList.add('active');selectedProds.add(prod);}
-    if(selectedProds.size===0){document.querySelector('.pf-tag[data-prod="__all__"]').classList.add('active');}
-  }
-  recalcWithFilter();
+function tPF(el){
+  const p=el.dataset.p;
+  if(p==='__all__'){selProds.clear();document.querySelectorAll('.pftag').forEach(t=>t.classList.remove('active'));el.classList.add('active');}
+  else{document.querySelector('.pftag.all').classList.remove('active');if(el.classList.contains('active')){el.classList.remove('active');selProds.delete(p);}else{el.classList.add('active');selProds.add(p);}if(selProds.size===0)document.querySelector('.pftag.all').classList.add('active');}
+  recalc();
 }
-function clearPF(){
-  selectedProds.clear();
-  document.querySelectorAll('.pf-tag').forEach(t=>t.classList.remove('active'));
-  const allTag=document.querySelector('.pf-tag[data-prod="__all__"]');
-  if(allTag)allTag.classList.add('active');
-  recalcWithFilter();
-}
+function clearPF(){selProds.clear();document.querySelectorAll('.pftag').forEach(t=>t.classList.remove('active'));const a=document.querySelector('.pftag.all');if(a)a.classList.add('active');recalc();}
+function filtOrd(ords){if(selProds.size===0)return ords;return ords.filter(o=>o.productos&&o.productos!=='—'&&o.productos.split(',').some(p=>selProds.has(p.trim())));}
+function recalc(){const f=filtOrd(allOrds.filter(o=>!o.dup));const d=calcM(f);d.dups=allOrds.filter(o=>o.dup).length;renderLog(d);renderEst(d);renderProy(d);renderRes(d,gS,gM,gW);}
 
-function filterOrdenes(ordenes){
-  if(selectedProds.size===0)return ordenes;
-  return ordenes.filter(o=>{
-    if(!o.productos||o.productos==='—')return false;
-    return o.productos.split(',').some(p=>selectedProds.has(p.trim()));
-  });
-}
-
-function recalcWithFilter(){
-  const filt=filterOrdenes(allOrds.filter(o=>!o.duplicado));
-  const d=calcMetricas(filt);
-  renderDropiMetrics(d);
-  renderEstados(d);
-  renderProyeccion(d);
-  renderResumen(d,gS,gM,gW);
-}
-
-// ---- PROCESS DROPI ----
-function parseDropiFecha(f){
-  const s=String(f||'').slice(0,10);
-  const p=s.split('-');
-  if(p.length===3&&p[0].length===2)return`${p[2]}-${p[1]}-${p[0]}`;
-  return s;
-}
+function parseFecha(f){const s=String(f||'').slice(0,10);const p=s.split('-');if(p.length===3&&p[0].length===2)return`${p[2]}-${p[1]}-${p[0]}`;return s;}
 
 function procesarDropi(df,dt){
-  if(!dropiOrd.length)return null;
-
-  const prodById={};
-  dropiProd.forEach(r=>{
-    const id=String(r['ID']||'');
-    if(!prodById[id])prodById[id]=[];
-    prodById[id].push(r);
-  });
-
-  // Agrupar por ID, quedarse con el de mayor prioridad
-  const prio=est=>{
-    if(EST_ENT.includes(est))return 7;
-    if(EST_MOV.includes(est))return 6;
-    if(EST_DEV.includes(est))return 5;
-    if(EST_CAN.includes(est))return 4;
-    if(EST_PEND.includes(est))return 3;
-    return 1;
-  };
-
+  if(!dOrd.length)return null;
+  const pById={};
+  dProd.forEach(r=>{const id=String(r['ID']||'');if(!pById[id])pById[id]=[];pById[id].push(r);});
+  const prio=e=>{if(EST_ENT.includes(e))return 7;if(EST_MOV.includes(e))return 6;if(EST_DEV.includes(e))return 5;if(EST_CAN.includes(e))return 4;if(EST_PEND.includes(e))return 3;return 1;};
   const byId={};
-  dropiOrd.forEach(r=>{
-    const id=String(r['ID']||'');
-    const iso=parseDropiFecha(r['FECHA']);
+  dOrd.forEach(r=>{
+    const id=String(r['ID']||''),iso=parseFecha(r['FECHA']);
     if(df&&dt&&(iso<df||iso>dt))return;
-    const esDup=String(r['TAGS']||'').toLowerCase().includes('pedido duplicado');
-    if(!byId[id]||prio(String(r['ESTATUS']||'').toUpperCase())>prio(String(byId[id].ESTATUS||'').toUpperCase())){
-      byId[id]={...r,_dup:esDup,_iso:iso};
-    }
+    const dup=String(r['TAGS']||'').toLowerCase().includes('pedido duplicado');
+    const est=String(r['ESTATUS']||'').toUpperCase().trim();
+    if(!byId[id]||prio(est)>prio(String(byId[id].ESTATUS||'').toUpperCase())){byId[id]={...r,_dup:dup,_iso:iso};}
   });
-
   allOrds=Object.values(byId).map(r=>{
     const id=String(r['ID']||'');
-    const prods=prodById[id]||[];
-    const totalOrden=parseFloat(r['TOTAL DE LA ORDEN']||r['VALOR FACTURADO']||0);
-    const flete=parseFloat(r['PRECIO FLETE']||prods[0]?.['PRECIO FLETE']||0);
-    const costoProv=prods.reduce((s,p)=>s+parseFloat(p['PRECIO PROVEEDOR X CANTIDAD']||0),0)||parseFloat(r['VALOR DE COMPRA EN PRODUCTOS']||0);
-    const productos=prods.map(p=>p['PRODUCTO']||'').filter(Boolean).join(', ')||'—';
-    return{
-      id,estatus:String(r['ESTATUS']||'').toUpperCase().trim(),
-      cliente:r['NOMBRE CLIENTE']||'—',tel:String(r['TELÉFONO']||''),
-      ciudad:r['CIUDAD DESTINO']||'—',guia:r['NÚMERO GUIA']||'',
-      transp:r['TRANSPORTADORA']||'—',valor:totalOrden,flete,costoProv,productos,
-      ordenTienda:String(r['ID DE ORDEN DE TIENDA']||''),
-      numPedido:String(r['NUMERO DE PEDIDO DE TIENDA']||''),
-      tags:String(r['TAGS']||''),fecha:r['_iso']||'',duplicado:r['_dup']||false
-    };
+    const ps=pById[id]||[];
+    const val=parseFloat(r['TOTAL DE LA ORDEN']||r['VALOR FACTURADO']||0);
+    const fl=parseFloat(r['PRECIO FLETE']||ps[0]?.['PRECIO FLETE']||0);
+    const cp=ps.reduce((s,p)=>s+parseFloat(p['PRECIO PROVEEDOR X CANTIDAD']||0),0)||parseFloat(r['VALOR DE COMPRA EN PRODUCTOS']||0);
+    const prods=ps.map(p=>p['PRODUCTO']||'').filter(Boolean).join(', ')||'—';
+    // Pedido WA = sin ID DE ORDEN DE TIENDA
+    const idTienda=String(r['ID DE ORDEN DE TIENDA']||'').trim();
+    const esWA=!idTienda||idTienda===''||idTienda==='nan'||idTienda==='NaN';
+    return{id,estatus:String(r['ESTATUS']||'').toUpperCase().trim(),cliente:r['NOMBRE CLIENTE']||'—',tel:String(r['TELÉFONO']||''),ciudad:r['CIUDAD DESTINO']||'—',guia:r['NÚMERO GUIA']||'',transp:r['TRANSPORTADORA']||'—',valor:val,flete:fl,costoProv:cp,productos:prods,idTienda,esWA,fecha:r['_iso']||'',dup:r['_dup']||false};
   });
-
-  buildPF(allOrds.filter(o=>!o.duplicado));
-  const validas=allOrds.filter(o=>!o.duplicado);
-  const d=calcMetricas(validas);
-  d.duplicados=allOrds.filter(o=>o.duplicado).length;
-  d.allValidas=validas;
+  buildPF(allOrds.filter(o=>!o.dup));
+  const v=allOrds.filter(o=>!o.dup);
+  const d=calcM(v);d.dups=allOrds.filter(o=>o.dup).length;d.allV=v;
   return d;
 }
 
-function calcMetricas(validas){
-  const total=validas.length;
-  const entregados=validas.filter(o=>EST_ENT.includes(o.estatus)).length;
-  const devueltos=validas.filter(o=>EST_DEV.includes(o.estatus)).length;
-  const cancelados=validas.filter(o=>EST_CAN.includes(o.estatus)).length;
-  const pendientes=validas.filter(o=>EST_PEND.includes(o.estatus)).length;
-  const enMov=validas.filter(o=>EST_MOV.includes(o.estatus));
-  const numMov=enMov.length;
-  const despachados=entregados+devueltos+numMov;
-  const pctE=despachados>0?(entregados/despachados*100):0;
-  const pctD=despachados>0?(devueltos/despachados*100):0;
-  const pctC=total>0?(cancelados/total*100):0;
-  const tasaD=total>0?(despachados/total*100):0;
-  const estadoCount={};
-  validas.forEach(o=>{estadoCount[o.estatus]=(estadoCount[o.estatus]||0)+1;});
-  return{total,entregados,devueltos,cancelados,pendientes,numMov,despachados,
-    pctEntrega:pctE,pctDevolucion:pctD,pctCancelacion:pctC,tasaDespacho:tasaD,
-    enMov,validas,estadoCount,duplicados:0};
+function calcM(v){
+  const total=v.length;
+  const ent=v.filter(o=>EST_ENT.includes(o.estatus)).length;
+  const dev=v.filter(o=>EST_DEV.includes(o.estatus)).length;
+  const can=v.filter(o=>EST_CAN.includes(o.estatus)).length;
+  const pend=v.filter(o=>EST_PEND.includes(o.estatus)).length;
+  const mov=v.filter(o=>EST_MOV.includes(o.estatus));
+  const desp=ent+dev+mov.length;
+  const pE=desp>0?(ent/desp*100):0,pD=desp>0?(dev/desp*100):0,pC=total>0?(can/total*100):0,tD=total>0?(desp/total*100):0;
+  const ec={};v.forEach(o=>{ec[o.estatus]=(ec[o.estatus]||0)+1;});
+  return{total,ent,dev,can,pend,mov,numMov:mov.length,desp,pE,pD,pC,tD,ec,v,dups:0};
 }
 
-function renderDropiMetrics(d){
-  $('m-log').innerHTML=`
-    <div class="mc b"><div class="lbl">Total guías</div><div class="val">${d.total}</div></div>
-    <div class="mc g"><div class="lbl">Entregados</div><div class="val">${d.entregados}</div><div class="sub">${pct(d.pctEntrega)} s/desp.</div></div>
-    <div class="mc b"><div class="lbl">En movimiento</div><div class="val">${d.numMov}</div></div>
-    <div class="mc a"><div class="lbl">Pend. confirm.</div><div class="val">${d.pendientes}</div></div>
-    <div class="mc r"><div class="lbl">Devoluciones</div><div class="val">${d.devueltos}</div><div class="sub">${pct(d.pctDevolucion)} s/desp. — logística</div></div>
-    <div class="mc o"><div class="lbl">Cancelados</div><div class="val">${d.cancelados}</div><div class="sub">${pct(d.pctCancelacion)} del total — marketing</div></div>
-    <div class="mc"><div class="lbl">Despachados</div><div class="val">${d.despachados}</div><div class="sub">${pct(d.tasaDespacho)} tasa desp.</div></div>
-    ${d.duplicados>0?`<div class="mc p"><div class="lbl">Duplicados excl.</div><div class="val">${d.duplicados}</div></div>`:''}
-  `;
-
-  $('tb-log').innerHTML=d.validas.slice(0,100).map(o=>{
-    const[l,c]=PILL_MAP(o.estatus);
-    return`<tr><td style="font-family:'JetBrains Mono',monospace;font-size:11px">${o.id}</td><td>${o.cliente}</td><td style="color:var(--muted)">${o.ciudad}</td><td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)">${o.productos}</td><td style="font-family:'JetBrains Mono',monospace">${fmt(o.valor)}</td><td><span class="pill ${c}">${l}</span></td><td style="font-family:'JetBrains Mono',monospace;font-size:11px">${o.guia||'—'}</td><td style="color:var(--muted);font-size:11px">${o.transp}</td></tr>`;
-  }).join('')||'<tr><td colspan="8" class="empty">Sin órdenes</td></tr>';
-}
-
-function PILL_MAP(est){
-  const m={
-    'ENTREGADO':['Entregado','pg'],'CANCELADO':['Cancelado','pr'],'DEVOLUCION':['Devolución','pr'],
-    'RECHAZADO':['Rechazado','pr'],'PENDIENTE CONFIRMACION':['Pend. conf.','pa'],
-    'DESPACHADA':['Despachada','pb'],'EN REPARTO':['En reparto','pb'],
-    'EN BODEGA DESTINO':['Bodega destino','pb'],'EN BODEGA TRANSPORTADORA':['Bodega transp.','pb'],
-    'INTENTO DE ENTREGA':['Intento entrega','pb'],'NOVEDAD SOLUCIONADA':['Nov. solucionada','pb'],
-    'GUIA_GENERADA':['Guía generada','pp'],'EN PROCESAMIENTO':['En proceso','pp'],
-    'PREPARADO PARA TRANSPORTADORA':['Preparado','pp'],'RECLAME EN OFICINA':['Reclamo ofic.','po'],'NOVEDAD':['Novedad','pa']
-  };
+function PILL(est){
+  const m={'ENTREGADO':['Entregado','pg'],'CANCELADO':['Cancelado','pr'],'DEVOLUCION':['Devolución','pr'],'RECHAZADO':['Rechazado','pr'],'PENDIENTE CONFIRMACION':['Pend. conf.','pa'],'DESPACHADA':['Despachada','pb'],'EN REPARTO':['En reparto','pb'],'EN BODEGA DESTINO':['Bodega dest.','pb'],'EN BODEGA TRANSPORTADORA':['Bodega transp.','pb'],'INTENTO DE ENTREGA':['Intento ent.','pb'],'NOVEDAD SOLUCIONADA':['Nov. sol.','pb'],'GUIA_GENERADA':['Guía gen.','pp'],'EN PROCESAMIENTO':['En proceso','pp'],'PREPARADO PARA TRANSPORTADORA':['Preparado','pp'],'RECLAME EN OFICINA':['Reclamo','po'],'NOVEDAD':['Novedad','pa']};
   return m[est]||[est,'pgr'];
 }
 
-function renderEstados(d){
-  const sorted=Object.entries(d.estadoCount).sort((a,b)=>b[1]-a[1]);
-  $('est-list').innerHTML=sorted.map(([est,cnt])=>`
-    <div class="si">
-      <div class="si-name">${est}</div>
-      <div class="si-bar"><div class="si-fill" style="width:${(cnt/d.total*100).toFixed(1)}%;background:${COLORES_EST[est]||'#555'}"></div></div>
-      <div class="si-n">${cnt}</div>
-      <div class="si-p">${pct(cnt/d.total*100)}</div>
-    </div>`).join('');
+function renderLog(d){
+  $('m-log').innerHTML=`
+    <div class="mc b"><div class="lb">Total guías</div><div class="vl">${d.total}</div></div>
+    <div class="mc g"><div class="lb">Entregados</div><div class="vl">${d.ent}</div><div class="sb">${pct(d.pE)} s/desp.</div></div>
+    <div class="mc b"><div class="lb">En movimiento</div><div class="vl">${d.numMov}</div></div>
+    <div class="mc a"><div class="lb">Pend. confirm.</div><div class="vl">${d.pend}</div></div>
+    <div class="mc r"><div class="lb">Devoluciones</div><div class="vl">${d.dev}</div><div class="sb">${pct(d.pD)} s/desp. — logística</div></div>
+    <div class="mc o"><div class="lb">Cancelados</div><div class="vl">${d.can}</div><div class="sb">${pct(d.pC)} del total</div></div>
+    <div class="mc"><div class="lb">Despachados</div><div class="vl">${d.desp}</div><div class="sb">${pct(d.tD)} tasa desp.</div></div>
+    ${d.dups>0?`<div class="mc p"><div class="lb">Duplicados excl.</div><div class="vl">${d.dups}</div></div>`:''}
+  `;
+  $('tb-log').innerHTML=d.v.slice(0,100).map(o=>{const[l,c]=PILL(o.estatus);return`<tr><td style="font-family:'JetBrains Mono',monospace;font-size:11px">${o.id}</td><td>${o.cliente}</td><td style="font-family:'JetBrains Mono',monospace">${o.tel}</td><td style="color:var(--muted)">${o.ciudad}</td><td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)">${o.productos}</td><td style="font-family:'JetBrains Mono',monospace">${fmt(o.valor)}</td><td><span class="pill ${c}">${l}</span></td><td style="font-family:'JetBrains Mono',monospace;font-size:11px">${o.guia||'—'}</td></tr>`;}).join('')||'<tr><td colspan="8" class="empty">Sin órdenes</td></tr>';
+  gD=d;
+}
 
-  const movCount={};
-  d.enMov.forEach(o=>{movCount[o.estatus]=(movCount[o.estatus]||0)+1;});
-  $('mov-list').innerHTML=Object.entries(movCount).map(([est,cnt])=>`
-    <div class="si">
-      <div class="si-name">${est}</div>
-      <div class="si-bar"><div class="si-fill" style="width:${(cnt/d.numMov*100).toFixed(1)}%;background:${COLORES_EST[est]||'#3b82f6'}"></div></div>
-      <div class="si-n">${cnt}</div>
-      <div class="si-p">${pct(cnt/(d.numMov||1)*100)}</div>
-    </div>`).join('')||'<div class="empty">Sin pedidos en movimiento</div>';
-
-  $('sep-metricas').innerHTML=`
-    <div class="crow"><div class="cl">📦 Devolución (logística)</div><div class="cv" style="color:var(--red)">${d.devueltos} — ${pct(d.pctDevolucion)} sobre despachados</div></div>
-    <div class="crow"><div class="cl">❌ Cancelación (marketing)</div><div class="cv" style="color:var(--orange)">${d.cancelados} — ${pct(d.pctCancelacion)} del total</div></div>
-    <div class="crow"><div class="cl">✅ Tasa de entrega efectiva</div><div class="cv" style="color:var(--green)">${pct(d.pctEntrega)} sobre despachados</div></div>
-    <div class="crow"><div class="cl">🚚 Tasa de despacho</div><div class="cv">${pct(d.tasaDespacho)} del total</div></div>
-    <div class="crow"><div class="cl">🔄 En movimiento</div><div class="cv" style="color:var(--blue)">${d.numMov} — proyección: ${Math.round(d.numMov*0.85)} entregas est.</div></div>
+function renderEst(d){
+  const s=Object.entries(d.ec).sort((a,b)=>b[1]-a[1]);
+  $('est-list').innerHTML=s.map(([e,n])=>`<div class="si"><div class="sn">${e}</div><div class="sb2"><div class="sf" style="width:${(n/d.total*100).toFixed(1)}%;background:${CEST[e]||'#555'}"></div></div><div class="snn">${n}</div><div class="sp2">${pct(n/d.total*100)}</div></div>`).join('');
+  const mc={};d.mov.forEach(o=>{mc[o.estatus]=(mc[o.estatus]||0)+1;});
+  $('mov-list').innerHTML=Object.entries(mc).map(([e,n])=>`<div class="si"><div class="sn">${e}</div><div class="sb2"><div class="sf" style="width:${(n/(d.numMov||1)*100).toFixed(1)}%;background:${CEST[e]||'#3b82f6'}"></div></div><div class="snn">${n}</div><div class="sp2">${pct(n/(d.numMov||1)*100)}</div></div>`).join('')||'<div class="empty">Sin pedidos en movimiento</div>';
+  $('sep-met').innerHTML=`
+    <div class="cr"><div class="cl2">📦 Devolución — logística</div><div class="cv" style="color:var(--red)">${d.dev} · ${pct(d.pD)} s/despachados</div></div>
+    <div class="cr"><div class="cl2">❌ Cancelación</div><div class="cv" style="color:var(--orange)">${d.can} · ${pct(d.pC)} del total</div></div>
+    <div class="cr"><div class="cl2">✅ Tasa de entrega</div><div class="cv" style="color:var(--green)">${pct(d.pE)} sobre despachados</div></div>
+    <div class="cr"><div class="cl2">🚚 Tasa de despacho</div><div class="cv">${pct(d.tD)} del total</div></div>
+    <div class="cr"><div class="cl2">🔄 Entregas proyectadas</div><div class="cv" style="color:var(--blue)">${Math.round(d.numMov*0.85)} de ${d.numMov} en mov.</div></div>
   `;
 }
 
-function renderProyeccion(d){
-  const EF=0.85;
-  let bruto=0,neto=0;
-  d.enMov.forEach(o=>{bruto+=o.valor*EF;neto+=(o.valor-o.flete-o.costoProv)*EF;});
-
-  $('pbox').innerHTML=`
-    <div class="pbox-title">📈 Proyección — ${d.numMov} pedidos en movimiento × 85% efectividad</div>
-    <div class="pgrid">
-      <div class="pi"><div class="lbl">Guías en movimiento</div><div class="val">${d.numMov}</div></div>
-      <div class="pi"><div class="lbl">Entregas proyectadas</div><div class="val">${Math.round(d.numMov*EF)}</div></div>
-      <div class="pi"><div class="lbl">Ingreso bruto est.</div><div class="val" style="font-size:13px">${fmt(bruto)}</div></div>
-      <div class="pi"><div class="lbl">Ingreso neto est.</div><div class="val" style="font-size:13px">${fmt(neto)}</div></div>
-    </div>
-  `;
-
-  $('tb-proy').innerHTML=d.enMov.slice(0,60).map(o=>{
-    const n=(o.valor-o.flete-o.costoProv)*EF;
-    const[l,c]=PILL_MAP(o.estatus);
-    return`<tr><td style="font-family:'JetBrains Mono',monospace;font-size:11px">${o.id}</td><td>${o.cliente}</td><td style="color:var(--muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.productos}</td><td><span class="pill ${c}">${l}</span></td><td style="font-family:'JetBrains Mono',monospace">${fmt(o.valor)}</td><td style="color:var(--muted);font-family:'JetBrains Mono',monospace">${fmt(o.costoProv)}</td><td style="color:var(--muted);font-family:'JetBrains Mono',monospace">${fmt(o.flete)}</td><td style="color:var(--green);font-family:'JetBrains Mono',monospace">${fmt(n)}</td></tr>`;
-  }).join('')||'<tr><td colspan="8" class="empty">Sin pedidos en movimiento</td></tr>';
-
-  gP={bruto,neto,numMov:d.numMov};
-  return gP;
+function renderProy(d){
+  const EF=0.85;let br=0,ne=0;
+  d.mov.forEach(o=>{br+=o.valor*EF;ne+=(o.valor-o.flete-o.costoProv)*EF;});
+  $('pbox').innerHTML=`<div class="pt">📈 Proyección — ${d.numMov} pedidos en movimiento × 85%</div><div class="pg2"><div class="pi"><div class="lb">Guías en movimiento</div><div class="vl">${d.numMov}</div></div><div class="pi"><div class="lb">Entregas proyectadas</div><div class="vl">${Math.round(d.numMov*EF)}</div></div><div class="pi"><div class="lb">Ingreso bruto est.</div><div class="vl" style="font-size:13px">${fmt(br)}</div></div><div class="pi"><div class="lb">Ingreso neto est.</div><div class="vl" style="font-size:13px">${fmt(ne)}</div></div></div>`;
+  $('tb-proy').innerHTML=d.mov.slice(0,60).map(o=>{const n=(o.valor-o.flete-o.costoProv)*EF;const[l,c]=PILL(o.estatus);return`<tr><td style="font-family:'JetBrains Mono',monospace;font-size:11px">${o.id}</td><td>${o.cliente}</td><td style="color:var(--muted);max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.productos}</td><td><span class="pill ${c}">${l}</span></td><td style="font-family:'JetBrains Mono',monospace">${fmt(o.valor)}</td><td style="color:var(--muted);font-family:'JetBrains Mono',monospace">${fmt(o.costoProv)}</td><td style="color:var(--muted);font-family:'JetBrains Mono',monospace">${fmt(o.flete)}</td><td style="color:var(--green);font-family:'JetBrains Mono',monospace">${fmt(n)}</td></tr>`;}).join('')||'<tr><td colspan="8" class="empty">Sin pedidos en movimiento</td></tr>';
+  gP={br,ne,numMov:d.numMov};return gP;
 }
 
-function renderShopify(rows,dropiData){
+function renderShop(rows){
   const df=$('date-from').value,dt=$('date-to').value;
-  const filt=rows.filter(r=>{const f=(r['orders.processed_at']||'').slice(0,10);return(!df||f>=df)&&(!dt||f<=dt);});
-  const dropiNums=new Set();
-  if(dropiData)dropiData.allValidas.forEach(o=>{if(o.numPedido)dropiNums.add(o.numPedido.replace('#',''));});
-  const total=filt.length;
-  const pagados=filt.filter(r=>r['orders.financial_status']==='paid').length;
-  const pendientes=filt.filter(r=>r['orders.financial_status']==='pending').length;
-  const cancelados=filt.filter(r=>['voided','refunded'].includes(r['orders.financial_status'])).length;
-  const entregados=filt.filter(r=>r['orders.fulfillment_status']==='fulfilled').length;
-  const ingresos=filt.reduce((s,r)=>s+parseFloat(r['orders.total_net_sales']||0),0);
-  const pctC=total>0?(cancelados/total*100):0;
+  const f=rows.filter(r=>{const x=(r['orders.processed_at']||'').slice(0,10);return(!df||x>=df)&&(!dt||x<=dt);});
+  const tot=f.length,ing=f.reduce((s,r)=>s+parseFloat(r['orders.total_net_sales']||0),0);
   $('m-shop').innerHTML=`
-    <div class="mc b"><div class="lbl">Total pedidos</div><div class="val">${total}</div></div>
-    <div class="mc g"><div class="lbl">Pagados</div><div class="val">${pagados}</div></div>
-    <div class="mc a"><div class="lbl">Pendientes</div><div class="val">${pendientes}</div></div>
-    <div class="mc g"><div class="lbl">Entregados</div><div class="val">${entregados}</div></div>
-    <div class="mc o"><div class="lbl">Cancelados</div><div class="val">${cancelados}</div><div class="sub">${pct(pctC)} — marketing</div></div>
-    <div class="mc o"><div class="lbl">Ingresos netos</div><div class="val" style="font-size:13px">${fmt(ingresos)}</div></div>
+    <div class="mc b"><div class="lb">Total pedidos</div><div class="vl">${tot}</div></div>
+    <div class="mc g"><div class="lb">Pagados</div><div class="vl">${f.filter(r=>r['orders.financial_status']==='paid').length}</div></div>
+    <div class="mc a"><div class="lb">Pendientes</div><div class="vl">${f.filter(r=>r['orders.financial_status']==='pending').length}</div></div>
+    <div class="mc o"><div class="lb">Ingresos netos</div><div class="vl" style="font-size:13px">${fmt(ing)}</div></div>
   `;
   const sm={paid:['Pagado','pg'],pending:['Pendiente','pa'],refunded:['Devuelto','pr'],voided:['Cancelado','pr'],partially_refunded:['Dev. parcial','pa']};
-  const fm={fulfilled:['Entregado','pg'],partial:['Parcial','pa'],unfulfilled:['Sin despachar','pp'],null:['Sin despachar','pp']};
-  $('tb-shop').innerHTML=filt.slice(0,80).map(r=>{
-    const[sl,sc]=sm[r['orders.financial_status']]||[r['orders.financial_status'],'pgr'];
-    const[fl,fc]=fm[r['orders.fulfillment_status']||'null']||['—','pgr'];
-    const fecha=(r['orders.processed_at']||'').slice(0,10);
-    const cliente=r['customers.name']||'—';
-    const num=(r['orders.name']||'').replace('#','');
-    const enD=dropiNums.has(num);
-    return`<tr><td style="font-family:'JetBrains Mono',monospace;font-size:11px">${r['orders.name']||''}</td><td style="color:var(--muted);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cliente==='<nil>'?'—':cliente}</td><td style="font-family:'JetBrains Mono',monospace">${fmt(parseFloat(r['orders.total_net_sales']||0))}</td><td><span class="pill ${sc}">${sl}</span></td><td><span class="pill ${fc}">${fl}</span></td><td style="color:var(--muted)">${fecha}</td><td>${enD?'<span class="pill pg">✓ Sí</span>':'<span class="pill pgr">No</span>'}</td></tr>`;
-  }).join('')||'<tr><td colspan="7" class="empty">Sin pedidos</td></tr>';
-  gS={total,pagados,pendientes,cancelados,entregados,ingresos,pctCancel:pctC,dropiNums};
-  return gS;
+  $('tb-shop').innerHTML=f.slice(0,80).map(r=>{const[sl,sc]=sm[r['orders.financial_status']]||[r['orders.financial_status'],'pgr'];const fecha=(r['orders.processed_at']||'').slice(0,10);const cli=r['customers.name']||'—';return`<tr><td style="font-family:'JetBrains Mono',monospace;font-size:11px">${r['orders.name']||''}</td><td style="color:var(--muted);max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cli==='<nil>'?'—':cli}</td><td style="font-family:'JetBrains Mono',monospace">${fmt(parseFloat(r['orders.total_net_sales']||0))}</td><td><span class="pill ${sc}">${sl}</span></td><td style="color:var(--muted)">${fecha}</td></tr>`;}).join('')||'<tr><td colspan="5" class="empty">Sin pedidos</td></tr>';
+  gS={tot,ing};return gS;
 }
 
-function calcWP(dropiData,shopRows){
+function calcWP(dropiData){
   if(!dropiData)return null;
-  const shopNums=new Set(shopRows.map(r=>(r['orders.name']||'').replace('#','')));
-  const wp=dropiData.allValidas.filter(o=>{
-    const num=o.numPedido.replace('#','');
-    return num&&!shopNums.has(num)&&!EST_CAN.includes(o.estatus);
-  });
-  const totalD=dropiData.total,totalS=shopRows.length,totalWP=wp.length;
-  const pWP=(totalD+totalS)>0?(totalWP/(totalD+totalS)*100):0;
+  // WA = pedidos sin ID DE ORDEN DE TIENDA
+  const wp=dropiData.allV.filter(o=>o.esWA&&!EST_CAN.includes(o.estatus));
+  const tot=dropiData.total,totWP=wp.length;
+  const pWP=tot>0?(totWP/tot*100):0;
   $('m-wp').innerHTML=`
-    <div class="mc p"><div class="lbl">Pedidos WA/Org.</div><div class="val">${totalWP}</div></div>
-    <div class="mc"><div class="lbl">% del total</div><div class="val">${pct(pWP)}</div></div>
-    <div class="mc b"><div class="lbl">Total Shopify</div><div class="val">${totalS}</div></div>
-    <div class="mc o"><div class="lbl">Total Dropi</div><div class="val">${totalD}</div></div>
-    <div class="mc"><div class="lbl">Diferencia</div><div class="val">${Math.abs(totalD-totalS)}</div><div class="sub">${totalD>totalS?'más en Dropi':'más en Shopify'}</div></div>
+    <div class="mc p"><div class="lb">Pedidos WA/Org.</div><div class="vl">${totWP}</div></div>
+    <div class="mc"><div class="lb">% del total Dropi</div><div class="vl">${pct(pWP)}</div></div>
+    <div class="mc b"><div class="lb">Con ID Shopify</div><div class="vl">${dropiData.allV.filter(o=>!o.esWA).length}</div></div>
+    <div class="mc o"><div class="lb">Total Dropi</div><div class="vl">${tot}</div></div>
   `;
-  $('tb-wp').innerHTML=wp.slice(0,80).map(o=>`<tr><td style="font-family:'JetBrains Mono',monospace;font-size:11px">${o.id}</td><td>${o.cliente}</td><td style="font-family:'JetBrains Mono',monospace">${o.tel}</td><td style="color:var(--muted)">${o.ciudad}</td><td style="font-family:'JetBrains Mono',monospace">${fmt(o.valor)}</td><td><span class="pill po">WA/Orgánico</span></td><td style="color:var(--muted)">${o.fecha}</td></tr>`).join('')||'<tr><td colspan="7" class="empty">Sin pedidos orgánicos detectados</td></tr>';
-  gW={totalWP,pWP};return gW;
+  $('tb-wp').innerHTML=wp.slice(0,80).map(o=>{const[l,c]=PILL(o.estatus);return`<tr><td style="font-family:'JetBrains Mono',monospace;font-size:11px">${o.id}</td><td>${o.cliente}</td><td style="font-family:'JetBrains Mono',monospace">${o.tel}</td><td style="color:var(--muted)">${o.ciudad}</td><td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)">${o.productos}</td><td style="font-family:'JetBrains Mono',monospace">${fmt(o.valor)}</td><td><span class="pill ${c}">${l}</span></td></tr>`;}).join('')||'<tr><td colspan="7" class="empty">Sin pedidos de WhatsApp detectados</td></tr>';
+  gW={totWP,pWP};return gW;
 }
 
 async function fetchMeta(token,df,dt){
-  const r=await fetch('/.netlify/functions/meta',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token,dateFrom:df,dateTo:dt})});
-  const d=await r.json();if(d.error)throw new Error(d.error);return d;
+  // Consultar en lotes de 5 para evitar timeout
+  const r1=await fetch('/.netlify/functions/meta',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token,dateFrom:df,dateTo:dt})});
+  const d=await r1.json();if(d.error)throw new Error(d.error);return d;
 }
 
 function renderMeta(data,tt){
-  const camps=data.data||[];
-  const tG=camps.reduce((s,c)=>s+parseFloat(c.spend||0),0);
-  const tI=camps.reduce((s,c)=>s+parseInt(c.impressions||0),0);
-  const tC=camps.reduce((s,c)=>s+parseInt(c.clicks||0),0);
-  const ctr=tI>0?(tC/tI*100):0,cpc=tC>0?(tG/tC):0;
-  const tot=tG+(tt||0);
+  const cs=data.data||[];
+  const tG=cs.reduce((s,c)=>s+parseFloat(c.spend||0),0);
+  const tI=cs.reduce((s,c)=>s+parseInt(c.impressions||0),0);
+  const tC=cs.reduce((s,c)=>s+parseInt(c.clicks||0),0);
+  const ctr=tI>0?(tC/tI*100):0,cpc=tC>0?(tG/tC):0,tot=tG+(tt||0);
   $('m-meta').innerHTML=`
-    <div class="mc a"><div class="lbl">Gasto Meta</div><div class="val" style="font-size:13px">${fmt(tG)}</div></div>
-    ${tt>0?`<div class="mc"><div class="lbl">Gasto TikTok</div><div class="val" style="font-size:13px">${fmt(tt)}</div></div>`:''}
-    <div class="mc o"><div class="lbl">Total publicidad</div><div class="val" style="font-size:13px">${fmt(tot)}</div></div>
-    <div class="mc b"><div class="lbl">Impresiones</div><div class="val">${(tI/1000).toFixed(1)}K</div></div>
-    <div class="mc"><div class="lbl">Clics</div><div class="val">${mono(tC)}</div></div>
-    <div class="mc"><div class="lbl">CTR prom.</div><div class="val">${pct(ctr)}</div></div>
-    <div class="mc"><div class="lbl">CPC prom.</div><div class="val" style="font-size:13px">${fmt(cpc)}</div></div>
-    <div class="mc"><div class="lbl">Cuentas</div><div class="val">${(data.accounts||[]).length}</div></div>
+    <div class="mc a"><div class="lb">Gasto Meta</div><div class="vl" style="font-size:13px">${fmt(tG)}</div></div>
+    ${tt>0?`<div class="mc"><div class="lb">Gasto TikTok</div><div class="vl" style="font-size:13px">${fmt(tt)}</div></div>`:''}
+    <div class="mc o"><div class="lb">Total publicidad</div><div class="vl" style="font-size:13px">${fmt(tot)}</div></div>
+    <div class="mc b"><div class="lb">Impresiones</div><div class="vl">${(tI/1000).toFixed(1)}K</div></div>
+    <div class="mc"><div class="lb">Clics</div><div class="vl">${mono(tC)}</div></div>
+    <div class="mc"><div class="lb">CTR</div><div class="vl">${pct(ctr)}</div></div>
+    <div class="mc"><div class="lb">CPC</div><div class="vl" style="font-size:13px">${fmt(cpc)}</div></div>
+    <div class="mc"><div class="lb">Cuentas</div><div class="vl">${(data.accounts||[]).length}</div></div>
   `;
-  if(tt>0)$('meta-tt').innerHTML=`<div class="alert ai">Meta: ${fmt(tG)} + TikTok: ${fmt(tt)} = <strong>Total: ${fmt(tot)}</strong></div>`;
-  $('tb-meta').innerHTML=camps.map(c=>{const sp=parseFloat(c.spend||0),im=parseInt(c.impressions||0),cl=parseInt(c.clicks||0);return`<tr><td style="color:var(--muted);font-size:11px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.account_name||''}</td><td style="max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.campaign_name}</td><td style="font-family:'JetBrains Mono',monospace">${fmt(sp)}</td><td style="font-family:'JetBrains Mono',monospace">${mono(im)}</td><td style="font-family:'JetBrains Mono',monospace">${mono(cl)}</td><td>${pct(im>0?cl/im*100:0)}</td><td style="font-family:'JetBrains Mono',monospace">${fmt(cl>0?sp/cl:0)}</td></tr>`;}).join('')||'<tr><td colspan="7" class="empty">Sin campañas</td></tr>';
+  if(tt>0)$('meta-tt').innerHTML=`<div class="al ai">Meta: ${fmt(tG)} + TikTok: ${fmt(tt)} = <strong>Total: ${fmt(tot)}</strong></div>`;
+  $('tb-meta').innerHTML=cs.map(c=>{const sp=parseFloat(c.spend||0),im=parseInt(c.impressions||0),cl=parseInt(c.clicks||0);return`<tr><td style="color:var(--muted);font-size:11px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.account_name||''}</td><td style="max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.campaign_name}</td><td style="font-family:'JetBrains Mono',monospace">${fmt(sp)}</td><td style="font-family:'JetBrains Mono',monospace">${mono(im)}</td><td style="font-family:'JetBrains Mono',monospace">${mono(cl)}</td><td>${pct(im>0?cl/im*100:0)}</td><td style="font-family:'JetBrains Mono',monospace">${fmt(cl>0?sp/cl:0)}</td></tr>`;}).join('')||'<tr><td colspan="7" class="empty">Sin campañas en este período</td></tr>';
   gM={tG,tot,tt:tt||0,tI,tC,ctr,cpc};return gM;
 }
 
-function renderResumen(d,s,m,w){
-  const tot=m?.tot||0;
-  const totPeds=(s?.total||0)+(w?.totalWP||0);
-  const cpaS=tot>0&&s?.total>0?tot/s.total:0;
-  const cpaE=tot>0&&d?.entregados>0?tot/d.entregados:0;
-  const cpaG=tot>0&&d?.despachados>0?tot/d.despachados:0;
-  const cpaT=tot>0&&totPeds>0?tot/totPeds:0;
+function renderRes(d,s,m,w){
+  const tot=m?.tot||0,totP=(s?.tot||0)+(w?.totWP||0);
+  const cpaS=tot>0&&s?.tot>0?tot/s.tot:0;
+  const cpaE=tot>0&&d?.ent>0?tot/d.ent:0;
+  const cpaG=tot>0&&d?.desp>0?tot/d.desp:0;
+  const cpaT=tot>0&&totP>0?tot/totP:0;
   $('m-res').innerHTML=`
-    <div class="mc b"><div class="lbl">Pedidos Shopify</div><div class="val">${s?.total||0}</div></div>
-    <div class="mc p"><div class="lbl">Pedidos WA/Org.</div><div class="val">${w?.totalWP||0}</div></div>
-    <div class="mc g"><div class="lbl">Ingresos netos</div><div class="val" style="font-size:12px">${fmt(s?.ingresos||0)}</div></div>
-    <div class="mc o"><div class="lbl">Total publicidad</div><div class="val" style="font-size:12px">${fmt(tot)}</div></div>
-    <div class="mc"><div class="lbl">CPA/pedido total</div><div class="val" style="font-size:12px">${fmt(cpaT)}</div></div>
-    <div class="mc"><div class="lbl">CPA/guía desp.</div><div class="val" style="font-size:12px">${fmt(cpaG)}</div></div>
-    <div class="mc"><div class="lbl">CPA/entregado</div><div class="val" style="font-size:12px">${fmt(cpaE)}</div></div>
-    <div class="mc a"><div class="lbl">Ing. proyectado</div><div class="val" style="font-size:12px">${fmt(gP?.neto||0)}</div></div>
+    <div class="mc b"><div class="lb">Pedidos Shopify</div><div class="vl">${s?.tot||0}</div></div>
+    <div class="mc p"><div class="lb">Pedidos WA/Org.</div><div class="vl">${w?.totWP||0}</div></div>
+    <div class="mc g"><div class="lb">Ingresos netos</div><div class="vl" style="font-size:12px">${fmt(s?.ing||0)}</div></div>
+    <div class="mc o"><div class="lb">Total publicidad</div><div class="vl" style="font-size:12px">${fmt(tot)}</div></div>
+    <div class="mc"><div class="lb">CPA/pedido total</div><div class="vl" style="font-size:12px">${fmt(cpaT)}</div></div>
+    <div class="mc"><div class="lb">CPA/guía desp.</div><div class="vl" style="font-size:12px">${fmt(cpaG)}</div></div>
+    <div class="mc"><div class="lb">CPA/entregado</div><div class="vl" style="font-size:12px">${fmt(cpaE)}</div></div>
+    <div class="mc a"><div class="lb">Ing. proyectado</div><div class="vl" style="font-size:12px">${fmt(gP?.ne||0)}</div></div>
   `;
   $('res-log').innerHTML=`
-    <div class="crow"><div class="cl">Total guías Dropi</div><div class="cv">${d?.total||0}</div></div>
-    <div class="crow"><div class="cl">Entregados</div><div class="cv" style="color:var(--green)">${d?.entregados||0} — ${pct(d?.pctEntrega||0)} s/desp.</div></div>
-    <div class="crow"><div class="cl">En movimiento</div><div class="cv" style="color:var(--blue)">${d?.numMov||0}</div></div>
-    <div class="crow"><div class="cl">% Devolución (logística)</div><div class="cv" style="color:var(--red)">${pct(d?.pctDevolucion||0)} sobre despachados</div></div>
-    <div class="crow"><div class="cl">% Cancelación (marketing)</div><div class="cv" style="color:var(--orange)">${pct(s?.pctCancel||0)} de pedidos Shopify</div></div>
-    <div class="crow"><div class="cl">Tasa de despacho</div><div class="cv">${pct(d?.tasaDespacho||0)}</div></div>
-    <div class="crow"><div class="cl">Pedidos WA/orgánicos</div><div class="cv" style="color:var(--purple)">${w?.totalWP||0} (${pct(w?.pWP||0)})</div></div>
+    <div class="cr"><div class="cl2">Total guías Dropi</div><div class="cv">${d?.total||0}</div></div>
+    <div class="cr"><div class="cl2">Entregados</div><div class="cv" style="color:var(--green)">${d?.ent||0} · ${pct(d?.pE||0)} s/desp.</div></div>
+    <div class="cr"><div class="cl2">En movimiento</div><div class="cv" style="color:var(--blue)">${d?.numMov||0}</div></div>
+    <div class="cr"><div class="cl2">Devoluciones — logística</div><div class="cv" style="color:var(--red)">${pct(d?.pD||0)} s/despachados</div></div>
+    <div class="cr"><div class="cl2">Cancelados</div><div class="cv" style="color:var(--orange)">${pct(d?.pC||0)} del total</div></div>
+    <div class="cr"><div class="cl2">Tasa de despacho</div><div class="cv">${pct(d?.tD||0)}</div></div>
+    <div class="cr"><div class="cl2">Pedidos WA/orgánicos</div><div class="cv" style="color:var(--purple)">${w?.totWP||0} · ${pct(w?.pWP||0)} de Dropi</div></div>
   `;
   $('res-pub').innerHTML=`
-    <div class="crow"><div class="cl">Gasto Meta</div><div class="cv">${fmt(m?.tG||0)}</div></div>
-    <div class="crow"><div class="cl">Gasto TikTok</div><div class="cv">${fmt(m?.tt||0)}</div></div>
-    <div class="crow"><div class="cl">Total publicidad</div><div class="cv" style="color:var(--orange)">${fmt(tot)}</div></div>
-    <div class="crow"><div class="cl">CPA / pedido total</div><div class="cv">${fmt(cpaT)}</div></div>
-    <div class="crow"><div class="cl">CPA / guía despachada</div><div class="cv">${fmt(cpaG)}</div></div>
-    <div class="crow"><div class="cl">CPA / pedido entregado</div><div class="cv">${fmt(cpaE)}</div></div>
-    <div class="crow"><div class="cl">CTR promedio Meta</div><div class="cv">${pct(m?.ctr||0)}</div></div>
-    <div class="crow"><div class="cl">CPC promedio Meta</div><div class="cv">${fmt(m?.cpc||0)}</div></div>
+    <div class="cr"><div class="cl2">Gasto Meta</div><div class="cv">${fmt(m?.tG||0)}</div></div>
+    <div class="cr"><div class="cl2">Gasto TikTok</div><div class="cv">${fmt(m?.tt||0)}</div></div>
+    <div class="cr"><div class="cl2">Total publicidad</div><div class="cv" style="color:var(--orange)">${fmt(tot)}</div></div>
+    <div class="cr"><div class="cl2">CPA / pedido total</div><div class="cv">${fmt(cpaT)}</div></div>
+    <div class="cr"><div class="cl2">CPA / guía despachada</div><div class="cv">${fmt(cpaG)}</div></div>
+    <div class="cr"><div class="cl2">CPA / entregado</div><div class="cv">${fmt(cpaE)}</div></div>
+    <div class="cr"><div class="cl2">CTR Meta</div><div class="cv">${pct(m?.ctr||0)}</div></div>
+    <div class="cr"><div class="cl2">CPC Meta</div><div class="cv">${fmt(m?.cpc||0)}</div></div>
   `;
-  $('hbadge').textContent=`${d?.total||0} guías · ${pct(d?.pctEntrega||0)} entrega`;
+  $('hbadge').textContent=`${d?.total||0} guías · ${pct(d?.pE||0)} entrega`;
   $('hdate').textContent=`${$('date-from').value} → ${$('date-to').value}`;
 }
 
@@ -729,29 +476,28 @@ async function fetchMipler(url,df,dt){
 
 async function genIA(ck,d,s,m,w,p,df,dt){
   const el=$('ia-c');
-  if(!ck){el.innerHTML=`<div class="alert aw">Sin API Key de Claude no se genera el análisis narrativo. <a href="https://console.anthropic.com" target="_blank" style="color:inherit">Obtener →</a></div>`;return;}
+  if(!ck){el.innerHTML=`<div class="al aw">Sin API Key de Claude no se genera el análisis. <a href="https://console.anthropic.com" target="_blank" style="color:inherit">Obtener →</a></div>`;return;}
   el.innerHTML='<div class="iabox" style="color:var(--hint);font-style:italic">Analizando datos...</div>';
-  const tot=m?.tot||0;
-  const totP=(s?.total||0)+(w?.totalWP||0);
+  const tot=m?.tot||0,totP=(s?.tot||0)+(w?.totWP||0);
   const prompt=`Eres analista experto en e-commerce colombiano dropshipping contra entrega.
 Período: ${df} al ${dt}
 
-SHOPIFY — Pedidos: ${s?.total||0} | Pagados: ${s?.pagados||0} | Cancelados: ${s?.cancelados||0} (marketing ${pct(s?.pctCancel||0)}) | Ingresos: ${fmt(s?.ingresos||0)}
+SHOPIFY — Pedidos: ${s?.tot||0} | Ingresos: ${fmt(s?.ing||0)}
 
-DROPI — Total guías: ${d?.total||0} | Despachados: ${d?.despachados||0} | Entregados: ${d?.entregados||0} (${pct(d?.pctEntrega||0)} s/desp.) | En movimiento: ${d?.numMov||0} | Devoluciones: ${d?.devueltos||0} (${pct(d?.pctDevolucion||0)} s/desp. — logística) | Cancelados: ${d?.cancelados||0} | Pendientes: ${d?.pendientes||0} | Tasa despacho: ${pct(d?.tasaDespacho||0)} | Duplicados excl.: ${d?.duplicados||0}
+DROPI — Total guías: ${d?.total||0} | Despachados: ${d?.desp||0} | Entregados: ${d?.ent||0} (${pct(d?.pE||0)} s/desp.) | En movimiento: ${d?.numMov||0} | Devoluciones: ${d?.dev||0} (${pct(d?.pD||0)} s/desp. — LOGÍSTICA) | Cancelados: ${d?.can||0} (${pct(d?.pC||0)} del total) | Pendientes conf.: ${d?.pend||0} | Tasa despacho: ${pct(d?.tD||0)} | Duplicados excl.: ${d?.dups||0}
 
 META ADS — Meta: ${fmt(m?.tG||0)} | TikTok: ${fmt(m?.tt||0)} | Total pub.: ${fmt(tot)} | CTR: ${pct(m?.ctr||0)} | CPC: ${fmt(m?.cpc||0)}
 
-WHATSAPP/ORGÁNICO — ${w?.totalWP||0} pedidos (${pct(w?.pWP||0)} del total)
+WHATSAPP/ORGÁNICO — ${w?.totWP||0} pedidos (${pct(w?.pWP||0)} de Dropi)
 
-PROYECCIÓN — ${p?.numMov||0} en mov. | Ing. neto est.: ${fmt(p?.neto||0)} | Entregas est.: ${Math.round((p?.numMov||0)*0.85)}
+PROYECCIÓN — ${p?.numMov||0} en mov. | Ing. neto est.: ${fmt(p?.ne||0)} | Entregas est.: ${Math.round((p?.numMov||0)*0.85)}
 
-CPA/total: ${fmt(tot/Math.max(totP,1))} | CPA/guía: ${fmt(tot/Math.max(d?.despachados||1,1))} | CPA/entregado: ${fmt(tot/Math.max(d?.entregados||1,1))}
+CPA/total: ${fmt(tot/Math.max(totP,1))} | CPA/guía: ${fmt(tot/Math.max(d?.desp||1,1))} | CPA/entregado: ${fmt(tot/Math.max(d?.ent||1,1))}
 
 Redacta reporte ejecutivo:
 📊 RESUMEN EJECUTIVO
 ✅ PUNTOS POSITIVOS
-🚨 ALERTAS (logística vs marketing — separados)
+🚨 ALERTAS (logística vs cancelación — separados)
 🎯 3 ACCIONES CONCRETAS para mañana
 💬 CONCLUSIÓN en una frase`;
   try{
@@ -760,39 +506,36 @@ Redacta reporte ejecutivo:
     const txt=data.content[0].text;
     el.innerHTML=`<div class="iabox">${txt}</div>`;
     $('ia-ar').style.display='flex';window._rpt=txt;
-  }catch(e){el.innerHTML=`<div class="alert aw">Error Claude: ${e.message}</div>`;}
+  }catch(e){el.innerHTML=`<div class="al aw">Error Claude: ${e.message}</div>`;}
 }
 
 function expTxt(){if(!window._rpt)return;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([window._rpt],{type:'text/plain;charset=utf-8'}));a.download='reporte-'+$('date-to').value+'.txt';a.click();}
 function copIA(){if(!window._rpt)return;navigator.clipboard.writeText(window._rpt).then(()=>setS('ok','Copiado'));}
 
 async function fetchAll(){
-  const mu=$('mipler-url').value.trim();
-  const mt=$('meta-token').value.trim();
-  const ck=$('claude-key').value.trim();
-  const tt=parseFloat($('tiktok-spend').value||0);
-  const df=$('date-from').value,dt=$('date-to').value;
+  const mu=$('mipler-url').value.trim(),mt=$('meta-token').value.trim(),ck=$('claude-key').value.trim();
+  const tt=parseFloat($('tiktok-spend').value||0),df=$('date-from').value,dt=$('date-to').value;
   if(!df||!dt){setS('err','Selecciona el rango de fechas');return;}
   $('btn-run').disabled=true;$('spin').style.display='block';
   $('results').style.display='none';
   const errs=[];
 
   let dropiData=null;
-  if(dropiOrd.length){
+  if(dOrd.length){
     setS('loading','Procesando Dropi...');
     dropiData=procesarDropi(df,dt);
-    if(dropiData){renderDropiMetrics(dropiData);renderEstados(dropiData);renderProyeccion(dropiData);}
+    if(dropiData){renderLog(dropiData);renderEst(dropiData);renderProy(dropiData);}
   }else errs.push('Dropi: sube el archivo de órdenes');
 
   let shopRows=[],shopData=null;
   if(mu){
     setS('loading','Consultando Shopify...');
-    try{shopRows=await fetchMipler(mu,df,dt);shopData=renderShopify(shopRows,dropiData);}
+    try{shopRows=await fetchMipler(mu,df,dt);shopData=renderShop(shopRows);}
     catch(e){errs.push('Shopify: '+e.message);}
   }else errs.push('Mipler: ingresa la URL');
 
   let wpData=null;
-  if(dropiData&&shopRows.length){setS('loading','Detectando WA/orgánicos...');wpData=calcWP(dropiData,shopRows);}
+  if(dropiData){setS('loading','Detectando WA/orgánicos...');wpData=calcWP(dropiData);}
 
   let metaData={tG:0,tot:tt,tt,tI:0,tC:0,ctr:0,cpc:0};
   if(mt){
@@ -801,15 +544,13 @@ async function fetchAll(){
     catch(e){errs.push('Meta: '+e.message);}
   }else errs.push('Meta: ingresa el token');
 
-  renderResumen(dropiData,shopData,metaData,wpData);
-
+  renderRes(dropiData,shopData,metaData,wpData);
   setS('loading','Generando análisis IA...');
   await genIA(ck,dropiData,shopData,metaData,wpData,gP,df,dt);
 
   $('results').style.display='block';
   $('btn-run').disabled=false;$('spin').style.display='none';
   st(0);
-
   if(errs.length)setS('err','Parcial — '+errs[0]+(errs.length>1?` (+${errs.length-1} más)`:''));
   else setS('ok','✓ Reporte generado · '+new Date().toLocaleTimeString('es-CO'));
 }
