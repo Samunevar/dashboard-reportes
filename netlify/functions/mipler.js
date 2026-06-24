@@ -5,29 +5,18 @@ exports.handler = async (event) => {
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Content-Type': 'application/json'
   };
-
-  if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 200, headers, body: '' };
-  }
+  if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
 
   try {
     const { shareUrl, dateFrom, dateTo } = JSON.parse(event.body);
+    if (!shareUrl) return { statusCode: 400, headers, body: JSON.stringify({ error: 'Falta la URL de Mipler' }) };
 
-    if (!shareUrl) {
-      return { statusCode: 400, headers, body: JSON.stringify({ error: 'Falta la URL' }) };
-    }
-
-    const params = new URLSearchParams({
-      'filters[orders.processed_at][gte]': dateFrom + 'T00:00:00',
-      'filters[orders.processed_at][lte]': dateTo + 'T23:59:59',
-    });
-
-    const url = `${shareUrl}?${params}`;
-    const resp = await fetch(url);
-
+    // La URL de Mipler ya es pública — llamarla directamente sin filtros de fecha
+    // Los filtros de fecha se aplican en el cliente
+    const resp = await fetch(shareUrl);
     if (!resp.ok) {
       const text = await resp.text();
-      return { statusCode: resp.status, headers, body: JSON.stringify({ error: `Mipler error ${resp.status}: ${text}` }) };
+      return { statusCode: resp.status, headers, body: JSON.stringify({ error: `Mipler ${resp.status}: ${text.slice(0,200)}` }) };
     }
 
     const data = await resp.json();
