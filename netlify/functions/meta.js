@@ -11,36 +11,40 @@ exports.handler = async (event) => {
     const { token, dateFrom, dateTo } = JSON.parse(event.body);
     if (!token) return { statusCode: 400, headers, body: JSON.stringify({ error: 'Falta el token' }) };
 
-    // 1. Obtener cuentas
-    const accsResp = await fetch(`https://graph.facebook.com/v19.0/me/adaccounts?fields=id,name,account_status&limit=50&access_token=${token}`);
+    const timeRange = JSON.stringify({ since: dateFrom, until: dateTo });
+    const fields = 'campaign_name,spend,impressions,clicks,ctr,cpc';
+
+    // 1. Obtener todas las cuentas
+    const accsResp = await fetch(
+      `https://graph.facebook.com/v19.0/me/adaccounts?fields=id,name&limit=50&access_token=${token}`
+    );
     const accsData = await accsResp.json();
     if (accsData.error) throw new Error(accsData.error.message);
+    const accounts = accsData.data || [];
 
-    // Solo cuentas activas (status=1)
-    const accounts = (accsData.data || []).filter(a => a.account_status === 1 || a.account_status === undefined);
-    if (accounts.length === 0) throw new Error('No se encontraron cuentas publicitarias activas');
+    // 2. Consultar todas en paralelo con timeout individual de 8s
+    const fetchWithTimeout = (url, ms=8000) => {
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), ms);
+      return fetch(url, { signal: controller.signal })
+        .then(r => { clearTimeout(id); return r; })
+        .catch(() => null);
+    };
 
-    // 2. Consultar en lotes de 4 para evitar timeout
-    const fields = 'campaign_name,spend,impressions,clicks,ctr,cpc';
-    const timeRange = JSON.stringify({ since: dateFrom, until: dateTo });
-    const allCampaigns = [];
+    const results = await Promise.all(accounts.map(async (acc) => {
+      try {
+        const url = `https://graph.facebook.com/v19.0/${acc.id}/insights?fields=${fields}&time_range=${timeRange}&level=campaign&limit=100&access_token=${token}`;
+        const resp = await fetchWithTimeout(url);
+        if (!resp) return [];
+        const data = await resp.json();
+        if (data.error) return [];
+        return (data.data || [])
+          .filter(c => parseFloat(c.spend || 0) > 0)
+          .map(c => ({ ...c, account_name: acc.name }));
+      } catch { return []; }
+    }));
 
-    // Lotes de 4
-    for (let i = 0; i < accounts.length; i += 4) {
-      const batch = accounts.slice(i, i + 4);
-      const results = await Promise.all(batch.map(async (acc) => {
-        try {
-          const url = `https://graph.facebook.com/v19.0/${acc.id}/insights?fields=${fields}&time_range=${timeRange}&level=campaign&limit=50&access_token=${token}`;
-          const resp = await fetch(url);
-          const data = await resp.json();
-          if (data.error) return [];
-          return (data.data || [])
-            .filter(c => parseFloat(c.spend || 0) > 0)
-            .map(c => ({ ...c, account_name: acc.name }));
-        } catch { return []; }
-      }));
-      results.forEach(r => allCampaigns.push(...r));
-    }
+    const allCampaigns = results.flat();
 
     return {
       statusCode: 200, headers,
