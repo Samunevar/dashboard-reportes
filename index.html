@@ -450,7 +450,7 @@ async function fetchAll(){
   let s={total:0,pagados:0,pendientes:0,cancelados:0,entregados:0,ingresos:0,pctEntrega:0,pctCancel:0};
   let m={totalGasto:0,totalImpresiones:0,totalClics:0,ctrProm:0,cpcProm:0};
 
-  if(mk&&mr){
+  if(mk){
     setStatus('loading','Consultando Shopify via Mipler...');
     try{const rows=await fetchMipler(mk,df,dt);s=renderShopify(rows);}
     catch(e){errors.push('Shopify/Mipler: '+e.message);}
