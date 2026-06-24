@@ -438,7 +438,7 @@ function exportTxt(){if(!window._rpt)return;const a=document.createElement('a');
 function copiarReporte(){if(!window._rpt)return;navigator.clipboard.writeText(window._rpt).then(()=>setStatus('ok','Copiado'));}
 
 async function fetchAll(){
-  const mk=$('mipler-key').value.trim(),mr='';
+  const mk=$('mipler-key').value.trim(),mr='',mt=$('meta-token').value.trim(),ma='',ck=$('claude-key').value.trim(),df=$('date-from').value,dt=$('date-to').value;
   const mt=$('meta-token').value.trim(),ma=$('meta-adaccount').value.trim();
   const ck=$('claude-key').value.trim();
   const df=$('date-from').value,dt=$('date-to').value;
