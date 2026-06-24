@@ -299,27 +299,20 @@ function buildPF(ords){
 function tPF(el){
   const p=el.dataset.p;
   if(p==='__all__'){
-    // Limpiar todo y mostrar todos
     selProds.clear();
     document.querySelectorAll('.pftag').forEach(t=>t.classList.remove('active'));
     el.classList.add('active');
   } else {
-    // Comportamiento tabla dinámica: click en uno lo selecciona solo
-    // Si ya está activo ese y solo ese, lo deselecciona (vuelve a todos)
-    const yaActivo = el.classList.contains('active');
-    const soloEste = selProds.size===1 && selProds.has(p);
-    
-    if(yaActivo && soloEste){
-      // Deseleccionar — volver a todos
-      selProds.clear();
-      document.querySelectorAll('.pftag').forEach(t=>t.classList.remove('active'));
-      document.querySelector('.pftag.all').classList.add('active');
+    document.querySelector('.pftag.all').classList.remove('active');
+    if(el.classList.contains('active')){
+      el.classList.remove('active');
+      selProds.delete(p);
     } else {
-      // Seleccionar solo este (excluir todos los demás)
-      selProds.clear();
-      selProds.add(p);
-      document.querySelectorAll('.pftag').forEach(t=>t.classList.remove('active'));
       el.classList.add('active');
+      selProds.add(p);
+    }
+    if(selProds.size===0){
+      document.querySelector('.pftag.all').classList.add('active');
     }
   }
   recalc();
