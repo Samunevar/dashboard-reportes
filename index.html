@@ -123,7 +123,7 @@ Cambio 2: Busca: style="margin-top:6px">
         <input type="password" id="meta-token" placeholder="EAAxxxxxxxxxxxxx" autocomplete="off">
         <button class="toggle-vis" onclick="tv('meta-token')">Ver</button>
       </div>
-      <input type="text" id="meta-adaccount" placeholder="act_123456789" style="margin-top:6px">
+      <input type="text" id="meta-adaccount" placeholder="Se detectan automáticamente" readonly style="margin-top:6px;opacity:0.5" style="margin-top:6px">
     </div>
 
     <div class="field-group">
@@ -332,7 +332,7 @@ function renderShopify(rows){
 }
 
 async function fetchMeta(token,adAccount,df,dt){
-  const resp=await fetch('/.netlify/functions/meta',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token,adAccount,dateFrom:df,dateTo:dt})});
+  const resp=await fetch('/.netlify/functions/meta',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token,dateFrom:df,dateTo:dt})});
   const data=await resp.json();
   if(data.error)throw new Error(data.error);
   return data.data||[];
@@ -456,7 +456,7 @@ async function fetchAll(){
     catch(e){errors.push('Shopify/Mipler: '+e.message);}
   }else{errors.push('Mipler: ingresa la API Key y el ID del reporte');}
 
-  if(mt&&ma){
+  if(mt){
     setStatus('loading','Consultando Meta Ads...');
     try{const camps=await fetchMeta(mt,ma,df,dt);m=renderMeta(camps);}
     catch(e){errors.push('Meta: '+e.message);}
