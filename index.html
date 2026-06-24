@@ -180,7 +180,8 @@ tr:hover td{background:var(--bg3);}
     <div class="tab" onclick="st(4)">Meta Ads</div>
     <div class="tab" onclick="st(5)">WhatsApp</div>
     <div class="tab" onclick="st(6)">Proyección</div>
-    <div class="tab" onclick="st(7)">Reporte IA</div>
+    <div class="tab" onclick="st(7)" id="tab-sin-mov">Sin movimiento</div>
+    <div class="tab" onclick="st(8)">Reporte IA</div>
   </div>
 
   <div class="tp active" id="tp0">
@@ -219,6 +220,26 @@ tr:hover td{background:var(--bg3);}
   </div>
 
   <div class="tp" id="tp7">
+    <div class="card">
+      <div class="ct">Guías sin movimiento +48 horas hábiles</div>
+      <div class="mg" id="m-sinmov"></div>
+      <hr class="sdv">
+      <div class="al aw" style="margin-bottom:12px">Solo pedidos en movimiento con más de 48 horas hábiles colombianas sin actualización. Excluye sábados, domingos y festivos.</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <span class="sl" style="margin-bottom:0">Detalle de guías</span>
+        <button class="bp" style="font-size:12px;padding:7px 16px" onclick="copiarGuias()">📋 Copiar guías</button>
+      </div>
+      <div class="tw2">
+        <table>
+          <thead><tr><th>Nombre</th><th>Celular</th><th>Guía</th><th>Estado</th><th>Último mov.</th><th>Días háb.</th></tr></thead>
+          <tbody id="tb-sinmov"></tbody>
+        </table>
+      </div>
+      <div id="guias-copiadas" style="display:none;margin-top:10px" class="al ao">✓ Guías copiadas al portapapeles</div>
+    </div>
+  </div>
+
+  <div class="tp" id="tp8">
     <div class="card"><div class="ct">Análisis IA</div><div id="ia-c"><div class="empty">Presiona Generar reporte para el análisis</div></div><div class="ar" id="ia-ar" style="display:none"><button class="bs" onclick="expTxt()">Exportar .txt</button><button class="bs" onclick="copIA()">Copiar</button></div></div>
   </div>
 </div>
@@ -239,6 +260,7 @@ const EST_DEV=['DEVOLUCION','RECHAZADO'];
 const EST_CAN=['CANCELADO'];
 const EST_PEND=['PENDIENTE CONFIRMACION'];
 const EST_MOV=['DESPACHADA','EN REPARTO','EN BODEGA DESTINO','EN BODEGA TRANSPORTADORA','INTENTO DE ENTREGA','NOVEDAD SOLUCIONADA','GUIA_GENERADA','EN PROCESAMIENTO','PREPARADO PARA TRANSPORTADORA','RECLAME EN OFICINA','NOVEDAD'];
+const EST_SIN_MOV_48=['DESPACHADA','EN REPARTO','EN BODEGA DESTINO','EN BODEGA TRANSPORTADORA','INTENTO DE ENTREGA','NOVEDAD SOLUCIONADA','GUIA_GENERADA','EN PROCESAMIENTO','PREPARADO PARA TRANSPORTADORA','RECLAME EN OFICINA'];
 
 const CEST={'ENTREGADO':'#22c55e','CANCELADO':'#ef4444','PENDIENTE CONFIRMACION':'#f59e0b','DEVOLUCION':'#f87171','RECHAZADO':'#dc2626','NOVEDAD':'#a855f7','DESPACHADA':'#3b82f6','EN REPARTO':'#60a5fa','RECLAME EN OFICINA':'#c084fc','GUIA_GENERADA':'#818cf8','EN PROCESAMIENTO':'#6366f1','PREPARADO PARA TRANSPORTADORA':'#8b5cf6','EN BODEGA DESTINO':'#7c3aed','EN BODEGA TRANSPORTADORA':'#6d28d9','INTENTO DE ENTREGA':'#4f46e5','NOVEDAD SOLUCIONADA':'#22d3ee'};
 
@@ -276,8 +298,30 @@ function buildPF(ords){
 }
 function tPF(el){
   const p=el.dataset.p;
-  if(p==='__all__'){selProds.clear();document.querySelectorAll('.pftag').forEach(t=>t.classList.remove('active'));el.classList.add('active');}
-  else{document.querySelector('.pftag.all').classList.remove('active');if(el.classList.contains('active')){el.classList.remove('active');selProds.delete(p);}else{el.classList.add('active');selProds.add(p);}if(selProds.size===0)document.querySelector('.pftag.all').classList.add('active');}
+  if(p==='__all__'){
+    // Limpiar todo y mostrar todos
+    selProds.clear();
+    document.querySelectorAll('.pftag').forEach(t=>t.classList.remove('active'));
+    el.classList.add('active');
+  } else {
+    // Comportamiento tabla dinámica: click en uno lo selecciona solo
+    // Si ya está activo ese y solo ese, lo deselecciona (vuelve a todos)
+    const yaActivo = el.classList.contains('active');
+    const soloEste = selProds.size===1 && selProds.has(p);
+    
+    if(yaActivo && soloEste){
+      // Deseleccionar — volver a todos
+      selProds.clear();
+      document.querySelectorAll('.pftag').forEach(t=>t.classList.remove('active'));
+      document.querySelector('.pftag.all').classList.add('active');
+    } else {
+      // Seleccionar solo este (excluir todos los demás)
+      selProds.clear();
+      selProds.add(p);
+      document.querySelectorAll('.pftag').forEach(t=>t.classList.remove('active'));
+      el.classList.add('active');
+    }
+  }
   recalc();
 }
 function clearPF(){selProds.clear();document.querySelectorAll('.pftag').forEach(t=>t.classList.remove('active'));const a=document.querySelector('.pftag.all');if(a)a.classList.add('active');recalc();}
@@ -341,7 +385,7 @@ function renderLog(d){
     <div class="mc b"><div class="lb">Total guías</div><div class="vl">${d.total}</div></div>
     <div class="mc g"><div class="lb">Entregados</div><div class="vl">${d.ent}</div><div class="sb">${pct(d.pE)} s/desp.</div></div>
     <div class="mc b"><div class="lb">En movimiento</div><div class="vl">${d.numMov}</div></div>
-    <div class="mc g" style="border:1px solid rgba(34,197,94,0.25)"><div class="lb">Proyección entregas</div><div class="vl">${Math.round(d.numMov*0.85)}</div><div class="sb">${pct(d.total>0?Math.round(d.numMov*0.85)/d.total*100:0)} s/total · est. 85%</div></div>
+    <div class="mc g" style="border:1px solid rgba(34,197,94,0.25)"><div class="lb">Proyección entregas</div><div class="vl">${Math.round(d.numMov*0.85)}</div><div class="sb">de ${d.numMov} en movimiento</div></div>
     <div class="mc a"><div class="lb">Pend. confirm.</div><div class="vl">${d.pend}</div></div>
     <div class="mc r"><div class="lb">Devoluciones</div><div class="vl">${d.dev}</div><div class="sb">${pct(d.pD)} s/desp. — logística</div></div>
     <div class="mc o"><div class="lb">Cancelados</div><div class="vl">${d.can}</div><div class="sb">${pct(d.pC)} del total</div></div>
@@ -547,7 +591,114 @@ Redacta reporte ejecutivo:
   }catch(e){el.innerHTML=`<div class="al aw">Error Claude: ${e.message}</div>`;}
 }
 
-function expTxt(){if(!window._rpt)return;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([window._rpt],{type:'text/plain;charset=utf-8'}));a.download='reporte-'+$('date-to').value+'.txt';a.click();}
+// ---- DÍAS HÁBILES COLOMBIA ----
+const FESTIVOS_CO = new Set([
+  '2026-01-01','2026-01-12','2026-03-23','2026-04-02','2026-04-03',
+  '2026-05-01','2026-05-18','2026-06-08','2026-06-15','2026-06-29',
+  '2026-07-20','2026-08-07','2026-08-17','2026-10-12','2026-11-02',
+  '2026-11-16','2026-12-08','2026-12-25',
+  // 2025 por si hay fechas del año anterior
+  '2025-01-01','2025-01-06','2025-03-24','2025-04-17','2025-04-18',
+  '2025-05-01','2025-06-02','2025-06-23','2025-06-30','2025-07-20',
+  '2025-08-07','2025-08-18','2025-10-13','2025-11-03','2025-11-17',
+  '2025-12-08','2025-12-25'
+]);
+
+function diasHabiles(fechaStr){
+  try {
+    // Parsear dd-mm-yyyy o dd/mm/yyyy
+    const s = String(fechaStr||'').trim();
+    let d;
+    const p = s.includes('-') ? s.split('-') : s.split('/');
+    if(p[0].length===2) d = new Date(`${p[2]}-${p[1]}-${p[0]}`);
+    else d = new Date(s);
+    if(isNaN(d)) return -1;
+
+    const hoy = new Date();
+    hoy.setHours(0,0,0,0);
+    let habiles = 0;
+    let cur = new Date(d);
+    cur.setHours(0,0,0,0);
+
+    while(cur < hoy){
+      const dow = cur.getDay(); // 0=dom, 6=sab
+      const iso = cur.toISOString().slice(0,10);
+      if(dow !== 0 && dow !== 6 && !FESTIVOS_CO.has(iso)) habiles++;
+      cur.setDate(cur.getDate()+1);
+    }
+    return habiles;
+  } catch { return -1; }
+}
+
+let guiasSinMov = [];
+
+function calcSinMovimiento(dropiData){
+  if(!dropiData) return;
+
+  const sinMov = dropiData.allV.filter(o => {
+    if(!EST_MOV.includes(o.estatus)) return false;
+    // Buscar fecha último movimiento en el archivo original
+    return true; // se filtra abajo con la fecha
+  });
+
+  // Necesitamos la fecha de último movimiento — la guardamos en el objeto orden
+  // Buscamos en dOrd la columna FECHA DE ÚLTIMO MOVIMIENTO
+  const fechaByID = {};
+  const guiaByID = {};
+  dOrd.forEach(r => {
+    const id = String(r['ID']||'');
+    fechaByID[id] = r['FECHA DE ÚLTIMO MOVIMIENTO']||r['FECHA']||'';
+    guiaByID[id] = String(r['NÚMERO GUIA']||'');
+  });
+
+  const pendientes = dropiData.allV
+    .filter(o => EST_SIN_MOV_48.includes(o.estatus))
+    .map(o => {
+      const fech = fechaByID[o.id]||'';
+      const dh = diasHabiles(fech);
+      const guia = guiaByID[o.id]||o.guia||'';
+      return {...o, fechaUltMov: fech, diasHab: dh, guia};
+    })
+    .filter(o => o.diasHab >= 2)
+    .sort((a,b) => b.diasHab - a.diasHab);
+
+  guiasSinMov = pendientes;
+
+  $('m-sinmov').innerHTML=`
+    <div class="mc r"><div class="lb">Sin movimiento +48h</div><div class="vl">${pendientes.length}</div></div>
+    <div class="mc a"><div class="lb">De ${dropiData.numMov} en movimiento</div><div class="vl">${pct(dropiData.numMov>0?pendientes.length/dropiData.numMov*100:0)}</div></div>
+    <div class="mc"><div class="lb">Máx. días sin mov.</div><div class="vl">${pendientes.length>0?pendientes[0].diasHab:0}</div></div>
+  `;
+
+  $('tb-sinmov').innerHTML = pendientes.map(o => {
+    const[lbl,cls]=PILL(o.estatus);
+    const alerta = o.diasHab >= 5 ? 'style="color:var(--red)"' : o.diasHab >= 3 ? 'style="color:var(--amber)"' : '';
+    return`<tr>
+      <td>${o.cliente}</td>
+      <td style="font-family:'JetBrains Mono',monospace">${o.tel}</td>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:11px">${o.guia||'—'}</td>
+      <td><span class="pill ${cls}">${lbl}</span></td>
+      <td style="color:var(--muted)">${o.fechaUltMov}</td>
+      <td ${alerta} style="font-family:'JetBrains Mono',monospace;text-align:center"><strong>${o.diasHab}d</strong></td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="6" class="empty">Sin guías atrasadas — todo en orden ✓</td></tr>';
+
+  // Actualizar badge del tab
+  if(pendientes.length>0){
+    const tab=$('tab-sin-mov');
+    if(tab) tab.innerHTML=`Sin movimiento <span style="background:var(--red);color:#fff;font-size:9px;padding:1px 5px;border-radius:10px;margin-left:4px">${pendientes.length}</span>`;
+  }
+}
+
+function copiarGuias(){
+  if(!guiasSinMov.length) return;
+  const texto = guiasSinMov.map(o=>o.guia).filter(Boolean).join('\n');
+  navigator.clipboard.writeText(texto).then(()=>{
+    const el=$('guias-copiadas');
+    el.style.display='block';
+    setTimeout(()=>el.style.display='none', 3000);
+  });
+}if(!window._rpt)return;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([window._rpt],{type:'text/plain;charset=utf-8'}));a.download='reporte-'+$('date-to').value+'.txt';a.click();}
 function copIA(){if(!window._rpt)return;navigator.clipboard.writeText(window._rpt).then(()=>setS('ok','Copiado'));}
 
 async function fetchAll(){
@@ -574,6 +725,8 @@ async function fetchAll(){
 
   let wpData=null;
   if(dropiData){setS('loading','Detectando WA/orgánicos...');wpData=calcWP(dropiData);}
+
+  if(dropiData){setS('loading','Analizando guías sin movimiento...');calcSinMovimiento(dropiData);}
 
   let metaData={tG:0,tot:tt,tt,tI:0,tC:0,ctr:0,cpc:0};
   if(mt){
