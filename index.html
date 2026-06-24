@@ -452,7 +452,7 @@ async function fetchAll(){
 
   if(mk){
     setStatus('loading','Consultando Shopify via Mipler...');
-    try{const rows=await fetchMipler(mk,df,dt);s=renderShopify(rows);}
+    try{const rows=await fetchMipler(mk||$('mipler-key').value.trim(),df,dt);s=renderShopify(rows);}
     catch(e){errors.push('Shopify/Mipler: '+e.message);}
   }else{errors.push('Mipler: ingresa la API Key y el ID del reporte');}
 
