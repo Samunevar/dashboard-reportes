@@ -11,41 +11,27 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { token, dateFrom, dateTo } = JSON.parse(event.body);
-    if (!token) return { statusCode: 400, headers, body: JSON.stringify({ error: 'Falta el token' }) };
+    const { shareUrl, dateFrom, dateTo } = JSON.parse(event.body);
 
-    // 1. Obtener todas las cuentas publicitarias
-    const accountsUrl = `https://graph.facebook.com/v19.0/me/adaccounts?fields=id,name&limit=50&access_token=${token}`;
-    const accountsResp = await fetch(accountsUrl);
-    const accountsData = await accountsResp.json();
-    if (accountsData.error) throw new Error(accountsData.error.message);
+    if (!shareUrl) {
+      return { statusCode: 400, headers, body: JSON.stringify({ error: 'Falta la URL' }) };
+    }
 
-    const accounts = accountsData.data || [];
-    if (accounts.length === 0) throw new Error('No se encontraron cuentas publicitarias');
+    const params = new URLSearchParams({
+      'filters[orders.processed_at][gte]': dateFrom + 'T00:00:00',
+      'filters[orders.processed_at][lte]': dateTo + 'T23:59:59',
+    });
 
-    // 2. Consultar insights de todas las cuentas en paralelo
-    const fields = 'campaign_name,spend,impressions,clicks,ctr,cpc';
-    const timeRange = JSON.stringify({ since: dateFrom, until: dateTo });
+    const url = `${shareUrl}?${params}`;
+    const resp = await fetch(url);
 
-    const results = await Promise.all(accounts.map(async (account) => {
-      try {
-        const url = `https://graph.facebook.com/v19.0/${account.id}/insights?fields=${fields}&time_range=${timeRange}&level=campaign&limit=100&access_token=${token}`;
-        const resp = await fetch(url);
-        const data = await resp.json();
-        if (data.error) return [];
-        return (data.data || []).map(c => ({ ...c, account_name: account.name }));
-      } catch {
-        return [];
-      }
-    }));
+    if (!resp.ok) {
+      const text = await resp.text();
+      return { statusCode: resp.status, headers, body: JSON.stringify({ error: `Mipler error ${resp.status}: ${text}` }) };
+    }
 
-    const allCampaigns = results.flat();
-
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({ data: allCampaigns, accounts: accounts.map(a => ({ id: a.id, name: a.name })) })
-    };
+    const data = await resp.json();
+    return { statusCode: 200, headers, body: JSON.stringify(data) };
 
   } catch (e) {
     return { statusCode: 500, headers, body: JSON.stringify({ error: e.message }) };
