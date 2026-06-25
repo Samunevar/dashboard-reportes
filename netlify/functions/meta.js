@@ -12,7 +12,7 @@ exports.handler = async (event) => {
     if (!token) return { statusCode: 400, headers, body: JSON.stringify({ error: 'Falta el token' }) };
 
     const timeRange = JSON.stringify({ since: dateFrom, until: dateTo });
-    const fields = 'campaign_name,spend,impressions,clicks,ctr,cpc';
+    const fields = 'campaign_name,spend,impressions,clicks,ctr,cpc,actions';
 
     // 1. Obtener todas las cuentas
     const accsResp = await fetch(
