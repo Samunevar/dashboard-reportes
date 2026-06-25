@@ -222,7 +222,7 @@ tr:hover td{background:var(--bg3);}
 
   <!-- TAB 2: META -->
   <div class="tp" id="tp2">
-    <div class="card"><div class="ct">Meta Ads — todas las cuentas</div><div class="mg" id="m-meta"></div><hr class="sdv"><div id="meta-tt" style="margin-bottom:12px"></div><div class="tw2"><table><thead><tr><th>Cuenta</th><th>Campaña</th><th>Gasto</th><th>Clics</th><th>CTR</th><th>CPC</th><th>CPM</th></tr></thead><tbody id="tb-meta"></tbody></table></div></div>
+    <div class="card"><div class="ct">Meta Ads — todas las cuentas</div><div class="mg" id="m-meta"></div><hr class="sdv"><div id="meta-tt" style="margin-bottom:12px"></div><div class="tw2"><table><thead><tr><th>Cuenta</th><th>Campaña</th><th>Gasto</th><th>Clics</th><th>CTR</th><th>CPC</th><th>CPM</th><th>CPA</th></tr></thead><tbody id="tb-meta"></tbody></table></div></div>
   </div>
 
   <!-- TAB 3: WHATSAPP -->
@@ -634,7 +634,25 @@ function renderMeta(data,tt){
     <div class="mc"><div class="lb">Cuentas</div><div class="vl">${(data.accounts||[]).length}</div></div>
   `;
   if(tt>0)$('meta-tt').innerHTML=`<div class="al ai">Meta: ${fmt(tG)} + TikTok: ${fmt(tt)} = <strong>Total: ${fmt(tot)}</strong></div>`;
-  $('tb-meta').innerHTML=cs.map(c=>{const sp=parseFloat(c.spend||0),im=parseInt(c.impressions||0),cl=parseInt(c.clicks||0);const cpm=im>0?(sp/im*1000):0;return`<tr><td style="color:var(--muted);font-size:11px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.account_name||''}</td><td style="max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.campaign_name}</td><td style="font-family:'JetBrains Mono',monospace">${fmt(sp)}</td><td style="font-family:'JetBrains Mono',monospace">${mono(cl)}</td><td>${pct(im>0?cl/im*100:0)}</td><td style="font-family:'JetBrains Mono',monospace">${fmt(cl>0?sp/cl:0)}</td><td style="font-family:'JetBrains Mono',monospace">${fmt(cpm)}</td></tr>`;}).join('')||'<tr><td colspan="7" class="empty">Sin campañas en este período</td></tr>';
+  $('tb-meta').innerHTML=cs.map(c=>{
+    const sp=parseFloat(c.spend||0),im=parseInt(c.impressions||0),cl=parseInt(c.clicks||0);
+    const cpm=im>0?(sp/im*1000):0;
+    // CPA = gasto / conversiones (purchase, lead, o cualquier acción principal)
+    const acciones=c.actions||[];
+    const conv=acciones.find(a=>a.action_type==='purchase')||acciones.find(a=>a.action_type==='lead')||acciones.find(a=>a.action_type==='offsite_conversion.fb_pixel_purchase')||acciones[0];
+    const numConv=conv?parseFloat(conv.value||0):0;
+    const cpa=numConv>0?sp/numConv:0;
+    return`<tr>
+      <td style="color:var(--muted);font-size:11px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.account_name||''}</td>
+      <td style="max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.campaign_name}</td>
+      <td style="font-family:'JetBrains Mono',monospace">${fmt(sp)}</td>
+      <td style="font-family:'JetBrains Mono',monospace">${mono(cl)}</td>
+      <td>${pct(im>0?cl/im*100:0)}</td>
+      <td style="font-family:'JetBrains Mono',monospace">${fmt(cl>0?sp/cl:0)}</td>
+      <td style="font-family:'JetBrains Mono',monospace">${fmt(cpm)}</td>
+      <td style="font-family:'JetBrains Mono',monospace;color:${cpa>0?'var(--amber)':'var(--hint)'}">${cpa>0?fmt(cpa):'—'}</td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="8" class="empty">Sin campañas en este período</td></tr>';
   gM={tG,tot,tt:tt||0,tI,tC,ctr,cpc};return gM;
 }
 
