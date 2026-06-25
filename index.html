@@ -108,6 +108,9 @@ tr:hover td{background:var(--bg3);}
 .pftag.active{background:var(--od);border-color:var(--ob);color:var(--orange);font-weight:600;}
 .pftag.all{border-color:var(--border2);}
 .pftag.all.active{background:var(--bg2);border-color:var(--border2);color:var(--text);}
+/* ANIMACIÓN SCROLL */
+#logistica-section{opacity:0;transform:translateY(30px);transition:opacity .7s ease,transform .7s ease;}
+#logistica-section.visible{opacity:1;transform:translateY(0);}
 </style>
 </head>
 <body>
@@ -175,56 +178,70 @@ tr:hover td{background:var(--bg3);}
   <div class="tabs">
     <div class="tab active" onclick="st(0)">Resumen</div>
     <div class="tab" onclick="st(1)">Logística</div>
-    <div class="tab" onclick="st(2)">Por estado</div>
-    <div class="tab" onclick="st(3)">Shopify</div>
-    <div class="tab" onclick="st(4)">Meta Ads</div>
-    <div class="tab" onclick="st(5)">WhatsApp</div>
-    <div class="tab" onclick="st(6)">Proyección</div>
-    <div class="tab" onclick="st(7)" id="tab-sin-mov">Sin movimiento</div>
-    <div class="tab" onclick="st(8)">Reporte IA</div>
+    <div class="tab" onclick="st(2)">Meta Ads</div>
+    <div class="tab" onclick="st(3)">WhatsApp</div>
+    <div class="tab" onclick="st(4)">Proyección</div>
+    <div class="tab" onclick="st(5)" id="tab-sin-mov">Sin movimiento</div>
+    <div class="tab" onclick="st(6)">Reporte IA</div>
   </div>
 
+  <!-- TAB 0: RESUMEN -->
   <div class="tp active" id="tp0">
     <div class="card"><div class="ct">KPIs principales</div><div class="mg" id="m-res"></div><hr class="sdv"><div class="tw"><div><span class="sl">Logística (Dropi)</span><div id="res-log"></div></div><div><span class="sl">Publicidad</span><div id="res-pub"></div></div></div></div>
   </div>
 
+  <!-- TAB 1: LOGÍSTICA + TORTA -->
   <div class="tp" id="tp1">
-    <div class="card"><div class="ct">Logística Dropi</div><div class="mg" id="m-log"></div><hr class="sdv"><span class="sl">Detalle de órdenes</span><div class="tw2"><table><thead><tr><th>ID Dropi</th><th>Cliente</th><th>Teléfono</th><th>Ciudad</th><th>Producto</th><th>Valor</th><th>Estado</th><th>Guía</th></tr></thead><tbody id="tb-log"></tbody></table></div></div>
-  </div>
-
-  <div class="tp" id="tp2">
-    <div class="card"><div class="ct">Desglose por estado</div><div class="tw">
-      <div><span class="sl">Todos los estados</span><div class="slist" id="est-list"></div></div>
-      <div>
-        <span class="sl">Pedidos en movimiento</span><div class="slist" id="mov-list"></div>
-        <hr class="sdv">
-        <span class="sl">Métricas clave separadas</span><div id="sep-met"></div>
+    <div class="card" id="logistica-section">
+      <div class="ct">Logística</div>
+      <!-- KPIs animados -->
+      <div class="mg" id="m-log"></div>
+      <hr class="sdv">
+      <!-- Torta + estados lado a lado -->
+      <div class="tw">
+        <div>
+          <span class="sl">Distribución de pedidos</span>
+          <div style="position:relative;width:100%;max-width:300px;margin:0 auto">
+            <canvas id="torta-canvas" width="300" height="300"></canvas>
+            <div id="torta-legend" style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center"></div>
+          </div>
+        </div>
+        <div>
+          <span class="sl">Todos los estados</span>
+          <div class="slist" id="est-list"></div>
+          <hr class="sdv">
+          <span class="sl">Pedidos en movimiento</span>
+          <div class="slist" id="mov-list"></div>
+          <hr class="sdv">
+          <span class="sl">Métricas clave</span>
+          <div id="sep-met"></div>
+        </div>
       </div>
-    </div></div>
+    </div>
   </div>
 
-  <div class="tp" id="tp3">
-    <div class="card"><div class="ct">Pedidos Shopify</div><div class="mg" id="m-shop"></div><hr class="sdv"><div class="tw2"><table><thead><tr><th>Orden</th><th>Cliente</th><th>Total neto</th><th>Estado pago</th><th>Fecha</th></tr></thead><tbody id="tb-shop"></tbody></table></div></div>
-  </div>
-
-  <div class="tp" id="tp4">
+  <!-- TAB 2: META -->
+  <div class="tp" id="tp2">
     <div class="card"><div class="ct">Meta Ads — todas las cuentas</div><div class="mg" id="m-meta"></div><hr class="sdv"><div id="meta-tt" style="margin-bottom:12px"></div><div class="tw2"><table><thead><tr><th>Cuenta</th><th>Campaña</th><th>Gasto</th><th>Impresiones</th><th>Clics</th><th>CTR</th><th>CPC</th></tr></thead><tbody id="tb-meta"></tbody></table></div></div>
   </div>
 
-  <div class="tp" id="tp5">
+  <!-- TAB 3: WHATSAPP -->
+  <div class="tp" id="tp3">
     <div class="card"><div class="ct">Pedidos WhatsApp & Orgánicos</div><div class="mg" id="m-wp"></div><hr class="sdv"><div class="al ai" style="margin-bottom:12px">Pedidos en Dropi sin ID de orden de tienda — llegaron por WhatsApp u otro canal externo a Shopify</div><div class="tw2"><table><thead><tr><th>ID Dropi</th><th>Cliente</th><th>Teléfono</th><th>Ciudad</th><th>Producto</th><th>Valor</th><th>Estado</th></tr></thead><tbody id="tb-wp"></tbody></table></div></div>
   </div>
 
-  <div class="tp" id="tp6">
+  <!-- TAB 4: PROYECCIÓN -->
+  <div class="tp" id="tp4">
     <div class="card"><div class="ct">Proyección de ingresos</div><div class="pbox" id="pbox"></div><div class="al ai" style="margin-bottom:12px">Proyección = 85% × pedidos en movimiento. Ingreso neto = (Valor − Flete − Costo proveedor) × 0.85</div><div class="tw2"><table><thead><tr><th>ID</th><th>Cliente</th><th>Producto</th><th>Estado</th><th>Valor</th><th>Costo prov.</th><th>Flete</th><th>Ing. neto est.</th></tr></thead><tbody id="tb-proy"></tbody></table></div></div>
   </div>
 
-  <div class="tp" id="tp7">
+  <!-- TAB 5: SIN MOVIMIENTO -->
+  <div class="tp" id="tp5">
     <div class="card">
-      <div class="ct">Guías sin movimiento +48 horas hábiles</div>
+      <div class="ct">Pedidos sin movimiento +48 horas hábiles</div>
       <div class="mg" id="m-sinmov"></div>
       <hr class="sdv">
-      <div class="al aw" style="margin-bottom:12px">Solo pedidos en movimiento con más de 48 horas hábiles colombianas sin actualización. Excluye sábados, domingos y festivos.</div>
+      <div class="al aw" style="margin-bottom:12px">Pedidos en movimiento cuyo último registro tiene más de 48 horas hábiles colombianas contadas desde HOY. Excluye sábados, domingos y festivos. No incluye NOVEDAD ni RECLAME EN OFICINA.</div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
         <span class="sl" style="margin-bottom:0">Detalle de guías</span>
         <button class="bp" style="font-size:12px;padding:7px 16px" onclick="copiarGuias()">📋 Copiar guías</button>
@@ -239,7 +256,8 @@ tr:hover td{background:var(--bg3);}
     </div>
   </div>
 
-  <div class="tp" id="tp8">
+  <!-- TAB 6: IA -->
+  <div class="tp" id="tp6">
     <div class="card"><div class="ct">Análisis IA</div><div id="ia-c"><div class="empty">Presiona Generar reporte para el análisis</div></div><div class="ar" id="ia-ar" style="display:none"><button class="bs" onclick="expTxt()">Exportar .txt</button><button class="bs" onclick="copIA()">Copiar</button></div></div>
   </div>
 </div>
@@ -267,6 +285,69 @@ const CEST={'ENTREGADO':'#22c55e','CANCELADO':'#ef4444','PENDIENTE CONFIRMACION'
 function tv(id){const e=$(id);e.type=e.type==='password'?'text':'password';}
 function setS(s,m){$('sdot').className='dot '+(s||'');$('stxt').textContent=m;}
 function st(i){document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',i===j));document.querySelectorAll('.tp').forEach((p,j)=>p.classList.toggle('active',i===j));}
+
+// ---- TORTA 3D ----
+function dibujarTorta(datos){
+  const canvas=$('torta-canvas');if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  const cx=150,cy=130,rx=120,ry=50,depth=30;
+  ctx.clearRect(0,0,300,300);
+  const total=datos.reduce((s,d)=>s+d.v,0);if(!total)return;
+  let startAngle=-Math.PI/2;
+  const slices=datos.map(d=>{const sweep=d.v/total*Math.PI*2;const s={...d,start:startAngle,end:startAngle+sweep};startAngle+=sweep;return s;});
+  // Sombra lateral (3D)
+  slices.forEach(s=>{
+    const mid=(s.start+s.end)/2;
+    if(Math.sin(mid)>0){
+      ctx.beginPath();
+      ctx.moveTo(cx+Math.cos(s.start)*rx,cy+Math.sin(s.start)*ry);
+      ctx.arc(cx,cy,rx,s.start,s.end,false);
+      ctx.lineTo(cx+Math.cos(s.end)*rx,cy+Math.sin(s.end)*ry+depth);
+      ctx.arc(cx,cy+depth,rx,s.end,s.start,true);
+      ctx.closePath();
+      ctx.fillStyle=s.dark;ctx.fill();
+    }
+  });
+  // Cara superior
+  slices.forEach(s=>{
+    ctx.beginPath();
+    ctx.moveTo(cx,cy);
+    ctx.ellipse(cx,cy,rx,ry,0,s.start,s.end);
+    ctx.closePath();
+    ctx.fillStyle=s.color;ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,0.3)';ctx.lineWidth=1;ctx.stroke();
+  });
+  // Leyenda
+  const leg=$('torta-legend');if(leg){leg.innerHTML=datos.map(d=>`<div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)"><div style="width:10px;height:10px;border-radius:2px;background:${d.color};flex-shrink:0"></div>${d.label} <span style="color:var(--text);font-weight:600">${d.v} (${total>0?(d.v/total*100).toFixed(1):0}%)</span></div>`).join('');}
+}
+
+// ---- ANIMACIÓN SCROLL ----
+function animarKPIs(selector,valor,duracion=800){
+  const el=document.querySelector(selector);if(!el)return;
+  const inicio=0,fin=valor;let t0=null;
+  function step(ts){
+    if(!t0)t0=ts;
+    const prog=Math.min((ts-t0)/duracion,1);
+    const ease=1-Math.pow(1-prog,3);
+    el.textContent=Math.round(inicio+(fin-inicio)*ease).toLocaleString('es-CO');
+    if(prog<1)requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+const scrollObserver=new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.classList.add('visible');
+      scrollObserver.unobserve(e.target);
+    }
+  });
+},{threshold:0.15});
+
+function observarLogistica(){
+  const sec=$('logistica-section');
+  if(sec)scrollObserver.observe(sec);
+}
 
 function saveKeys(){localStorage.setItem(LS,JSON.stringify({mu:$('mipler-url').value,mt:$('meta-token').value,ck:$('claude-key').value,tt:$('tiktok-spend').value}));setS('ok','Credenciales guardadas');}
 function loadKeys(){const d=JSON.parse(localStorage.getItem(LS)||'{}');if(d.mu)$('mipler-url').value=d.mu;if(d.mt)$('meta-token').value=d.mt;if(d.ck)$('claude-key').value=d.ck;if(d.tt)$('tiktok-spend').value=d.tt;}
@@ -319,7 +400,7 @@ function tPF(el){
 }
 function clearPF(){selProds.clear();document.querySelectorAll('.pftag').forEach(t=>t.classList.remove('active'));const a=document.querySelector('.pftag.all');if(a)a.classList.add('active');recalc();}
 function filtOrd(ords){if(selProds.size===0)return ords;return ords.filter(o=>o.productos&&o.productos!=='—'&&o.productos.split(',').some(p=>selProds.has(p.trim())));}
-function recalc(){const f=filtOrd(allOrds.filter(o=>!o.dup));const d=calcM(f);d.dups=allOrds.filter(o=>o.dup).length;renderLog(d);renderEst(d);renderProy(d);renderRes(d,gS,gM,gW);}
+function recalc(){const f=filtOrd(allOrds.filter(o=>!o.dup));const d=calcM(f);d.dups=allOrds.filter(o=>o.dup).length;renderLog(d);renderProy(d);renderRes(d,gS,gM,gW);}
 
 function parseFecha(f){const s=String(f||'').slice(0,10);const p=s.split('-');if(p.length===3&&p[0].length===2)return`${p[2]}-${p[1]}-${p[0]}`;return s;}
 
@@ -375,23 +456,40 @@ function PILL(est){
 
 function renderLog(d){
   $('m-log').innerHTML=`
-    <div class="mc b"><div class="lb">Pedidos Dropi</div><div class="vl">${d.total}</div></div>
-    <div class="mc g"><div class="lb">Entregados</div><div class="vl">${d.ent}</div><div class="sb">${pct(d.pE)} s/desp.</div></div>
-    <div class="mc b"><div class="lb">En movimiento</div><div class="vl">${d.numMov}</div></div>
-    <div class="mc g" style="border:1px solid rgba(34,197,94,0.25)"><div class="lb">Proyección entregas</div><div class="vl">${Math.round(d.numMov*0.85)}</div><div class="sb">de ${d.numMov} en movimiento</div></div>
-    <div class="mc a"><div class="lb">Pend. confirm.</div><div class="vl">${d.pend}</div></div>
-    <div class="mc r"><div class="lb">Devoluciones</div><div class="vl">${d.dev}</div><div class="sb">${pct(d.pD)} s/desp. — logística</div></div>
-    <div class="mc o"><div class="lb">Cancelados</div><div class="vl">${d.can}</div><div class="sb">${pct(d.pC)} del total</div></div>
-    <div class="mc"><div class="lb">Despachados</div><div class="vl">${d.desp}</div><div class="sb">${pct(d.tD)} tasa desp.</div></div>
+    <div class="mc b"><div class="lb">Pedidos Dropi</div><div class="vl" id="kpi-total">${d.total}</div></div>
+    <div class="mc g"><div class="lb">Entregados</div><div class="vl" id="kpi-ent">${d.ent}</div><div class="sb">${pct(d.pE)} s/desp.</div></div>
+    <div class="mc b"><div class="lb">En movimiento</div><div class="vl" id="kpi-mov">${d.numMov}</div></div>
+    <div class="mc g" style="border:1px solid rgba(34,197,94,0.25)"><div class="lb">Proyección entregas</div><div class="vl" id="kpi-proy">${Math.round(d.numMov*0.85)}</div><div class="sb">de ${d.numMov} en mov.</div></div>
+    <div class="mc a"><div class="lb">Pend. confirm.</div><div class="vl" id="kpi-pend">${d.pend}</div></div>
+    <div class="mc r"><div class="lb">Devoluciones</div><div class="vl" id="kpi-dev">${d.dev}</div><div class="sb">${pct(d.pD)} s/desp. — logística</div></div>
+    <div class="mc o"><div class="lb">Cancelados</div><div class="vl" id="kpi-can">${d.can}</div><div class="sb">${pct(d.pC)} del total</div></div>
+    <div class="mc"><div class="lb">Despachados</div><div class="vl" id="kpi-desp">${d.desp}</div><div class="sb">${pct(d.tD)} tasa desp.</div></div>
     ${d.dups>0?`<div class="mc p"><div class="lb">Duplicados excl.</div><div class="vl">${d.dups}</div></div>`:''}
   `;
-  $('tb-log').innerHTML=d.v.slice(0,100).map(o=>{const[l,c]=PILL(o.estatus);return`<tr><td style="font-family:'JetBrains Mono',monospace;font-size:11px">${o.id}</td><td>${o.cliente}</td><td style="font-family:'JetBrains Mono',monospace">${o.tel}</td><td style="color:var(--muted)">${o.ciudad}</td><td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)">${o.productos}</td><td style="font-family:'JetBrains Mono',monospace">${fmt(o.valor)}</td><td><span class="pill ${c}">${l}</span></td><td style="font-family:'JetBrains Mono',monospace;font-size:11px">${o.guia||'—'}</td></tr>`;}).join('')||'<tr><td colspan="8" class="empty">Sin órdenes</td></tr>';
-  gD=d;
-}
-
-function renderEst(d){
-  const s=Object.entries(d.ec).sort((a,b)=>b[1]-a[1]);
-  $('est-list').innerHTML=s.map(([e,n])=>`<div class="si"><div class="sn">${e}</div><div class="sb2"><div class="sf" style="width:${(n/d.total*100).toFixed(1)}%;background:${CEST[e]||'#555'}"></div></div><div class="snn">${n}</div><div class="sp2">${pct(n/d.total*100)}</div></div>`).join('');
+  // Animar KPIs
+  setTimeout(()=>{
+    [['kpi-total',d.total],['kpi-ent',d.ent],['kpi-mov',d.numMov],
+     ['kpi-proy',Math.round(d.numMov*0.85)],['kpi-pend',d.pend],
+     ['kpi-dev',d.dev],['kpi-can',d.can],['kpi-desp',d.desp]
+    ].forEach(([id,val])=>{
+      const el=$(id);if(!el)return;
+      let t0=null,fin=val;
+      function step(ts){if(!t0)t0=ts;const prog=Math.min((ts-t0)/900,1);const ease=1-Math.pow(1-prog,3);el.textContent=Math.round(fin*ease).toLocaleString('es-CO');if(prog<1)requestAnimationFrame(step);}
+      requestAnimationFrame(step);
+    });
+  },100);
+  // Torta 3D
+  const datos=[
+    {label:'Entregados',v:d.ent,color:'#22c55e',dark:'#14532d'},
+    {label:'En movimiento',v:d.numMov,color:'#f59e0b',dark:'#78350f'},
+    {label:'Devoluciones',v:d.dev,color:'#ef4444',dark:'#7f1d1d'},
+    {label:'Cancelados',v:d.can,color:'#FF6B35',dark:'#7c2d12'},
+    {label:'Pend. conf.',v:d.pend,color:'#a855f7',dark:'#3b0764'},
+  ].filter(x=>x.v>0);
+  setTimeout(()=>dibujarTorta(datos),200);
+  // Estados
+  const sorted=Object.entries(d.ec).sort((a,b)=>b[1]-a[1]);
+  $('est-list').innerHTML=sorted.map(([e,n])=>`<div class="si"><div class="sn">${e}</div><div class="sb2"><div class="sf" style="width:${(n/d.total*100).toFixed(1)}%;background:${CEST[e]||'#555'}"></div></div><div class="snn">${n}</div><div class="sp2">${pct(n/d.total*100)}</div></div>`).join('');
   const mc={};d.mov.forEach(o=>{mc[o.estatus]=(mc[o.estatus]||0)+1;});
   $('mov-list').innerHTML=Object.entries(mc).map(([e,n])=>`<div class="si"><div class="sn">${e}</div><div class="sb2"><div class="sf" style="width:${(n/(d.numMov||1)*100).toFixed(1)}%;background:${CEST[e]||'#3b82f6'}"></div></div><div class="snn">${n}</div><div class="sp2">${pct(n/(d.numMov||1)*100)}</div></div>`).join('')||'<div class="empty">Sin pedidos en movimiento</div>';
   $('sep-met').innerHTML=`
@@ -401,7 +499,10 @@ function renderEst(d){
     <div class="cr"><div class="cl2">🚚 Tasa de despacho</div><div class="cv">${pct(d.tD)} del total</div></div>
     <div class="cr"><div class="cl2">🔄 Entregas proyectadas</div><div class="cv" style="color:var(--blue)">${Math.round(d.numMov*0.85)} de ${d.numMov} en mov.</div></div>
   `;
+  gD=d;
+  observarLogistica();
 }
+function renderEst(d){ /* fusionado en renderLog */ }
 
 function renderProy(d){
   const EF=0.85;
@@ -599,22 +700,25 @@ const FESTIVOS_CO = new Set([
 
 function diasHabiles(fechaStr){
   try {
-    // Parsear dd-mm-yyyy o dd/mm/yyyy
     const s = String(fechaStr||'').trim();
     let d;
     const p = s.includes('-') ? s.split('-') : s.split('/');
     if(p[0].length===2) d = new Date(`${p[2]}-${p[1]}-${p[0]}`);
     else d = new Date(s);
     if(isNaN(d)) return -1;
-
+    // Contar días hábiles COMPLETOS entre la fecha del movimiento y HOY
+    // Un día hábil es un día que ya terminó (no cuenta el día de hoy)
     const hoy = new Date();
     hoy.setHours(0,0,0,0);
+    // La fecha del movimiento — si fue hoy o después, 0 días
+    const fechaMov = new Date(d);
+    fechaMov.setHours(0,0,0,0);
+    if(fechaMov >= hoy) return 0;
     let habiles = 0;
-    let cur = new Date(d);
-    cur.setHours(0,0,0,0);
-
-    while(cur < hoy){
-      const dow = cur.getDay(); // 0=dom, 6=sab
+    let cur = new Date(fechaMov);
+    cur.setDate(cur.getDate()+1); // empezar el día SIGUIENTE al movimiento
+    while(cur < hoy){ // hasta HOY exclusive (no cuenta hoy)
+      const dow = cur.getDay();
       const iso = cur.toISOString().slice(0,10);
       if(dow !== 0 && dow !== 6 && !FESTIVOS_CO.has(iso)) habiles++;
       cur.setDate(cur.getDate()+1);
@@ -707,7 +811,7 @@ async function fetchAll(){
   if(dOrd.length){
     setS('loading','Procesando Dropi...');
     dropiData=procesarDropi(df,dt);
-    if(dropiData){renderLog(dropiData);renderEst(dropiData);renderProy(dropiData);}
+    if(dropiData){renderLog(dropiData);renderProy(dropiData);}
   }else errs.push('Dropi: sube el archivo de órdenes');
 
   let shopRows=[],shopData=null;
