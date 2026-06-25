@@ -202,7 +202,7 @@ tr:hover td{background:var(--bg3);}
         <div>
           <span class="sl">Distribución de pedidos</span>
           <div style="position:relative;width:100%;max-width:300px;margin:0 auto">
-            <canvas id="torta-canvas" width="300" height="300"></canvas>
+            <canvas id="torta-canvas" width="260" height="260" style="display:block;margin:0 auto"></canvas>
             <div id="torta-legend" style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center"></div>
           </div>
         </div>
@@ -222,7 +222,7 @@ tr:hover td{background:var(--bg3);}
 
   <!-- TAB 2: META -->
   <div class="tp" id="tp2">
-    <div class="card"><div class="ct">Meta Ads — todas las cuentas</div><div class="mg" id="m-meta"></div><hr class="sdv"><div id="meta-tt" style="margin-bottom:12px"></div><div class="tw2"><table><thead><tr><th>Cuenta</th><th>Campaña</th><th>Gasto</th><th>Impresiones</th><th>Clics</th><th>CTR</th><th>CPC</th></tr></thead><tbody id="tb-meta"></tbody></table></div></div>
+    <div class="card"><div class="ct">Meta Ads — todas las cuentas</div><div class="mg" id="m-meta"></div><hr class="sdv"><div id="meta-tt" style="margin-bottom:12px"></div><div class="tw2"><table><thead><tr><th>Cuenta</th><th>Campaña</th><th>Gasto</th><th>Clics</th><th>CTR</th><th>CPC</th><th>CPM</th></tr></thead><tbody id="tb-meta"></tbody></table></div></div>
   </div>
 
   <!-- TAB 3: WHATSAPP -->
@@ -286,39 +286,40 @@ function tv(id){const e=$(id);e.type=e.type==='password'?'text':'password';}
 function setS(s,m){$('sdot').className='dot '+(s||'');$('stxt').textContent=m;}
 function st(i){document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',i===j));document.querySelectorAll('.tp').forEach((p,j)=>p.classList.toggle('active',i===j));}
 
-// ---- TORTA 3D ----
+// ---- TORTA 2D ----
 function dibujarTorta(datos){
   const canvas=$('torta-canvas');if(!canvas)return;
   const ctx=canvas.getContext('2d');
-  const cx=150,cy=130,rx=120,ry=50,depth=30;
-  ctx.clearRect(0,0,300,300);
+  const cx=130,cy=130,r=110;
+  ctx.clearRect(0,0,260,260);
   const total=datos.reduce((s,d)=>s+d.v,0);if(!total)return;
-  let startAngle=-Math.PI/2;
-  const slices=datos.map(d=>{const sweep=d.v/total*Math.PI*2;const s={...d,start:startAngle,end:startAngle+sweep};startAngle+=sweep;return s;});
-  // Sombra lateral (3D)
-  slices.forEach(s=>{
-    const mid=(s.start+s.end)/2;
-    if(Math.sin(mid)>0){
-      ctx.beginPath();
-      ctx.moveTo(cx+Math.cos(s.start)*rx,cy+Math.sin(s.start)*ry);
-      ctx.arc(cx,cy,rx,s.start,s.end,false);
-      ctx.lineTo(cx+Math.cos(s.end)*rx,cy+Math.sin(s.end)*ry+depth);
-      ctx.arc(cx,cy+depth,rx,s.end,s.start,true);
-      ctx.closePath();
-      ctx.fillStyle=s.dark;ctx.fill();
-    }
-  });
-  // Cara superior
-  slices.forEach(s=>{
+  let ang=-Math.PI/2;
+  datos.forEach(d=>{
+    const sweep=d.v/total*Math.PI*2;
     ctx.beginPath();
     ctx.moveTo(cx,cy);
-    ctx.ellipse(cx,cy,rx,ry,0,s.start,s.end);
+    ctx.arc(cx,cy,r,ang,ang+sweep);
     ctx.closePath();
-    ctx.fillStyle=s.color;ctx.fill();
-    ctx.strokeStyle='rgba(0,0,0,0.3)';ctx.lineWidth=1;ctx.stroke();
+    ctx.fillStyle=d.color;
+    ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,0.25)';
+    ctx.lineWidth=1.5;
+    ctx.stroke();
+    // Etiqueta % si el slice es grande
+    if(d.v/total>0.05){
+      const mid=ang+sweep/2;
+      const lx=cx+Math.cos(mid)*r*0.65;
+      const ly=cy+Math.sin(mid)*r*0.65;
+      ctx.fillStyle='#fff';
+      ctx.font='bold 11px Inter,sans-serif';
+      ctx.textAlign='center';
+      ctx.textBaseline='middle';
+      ctx.fillText((d.v/total*100).toFixed(0)+'%',lx,ly);
+    }
+    ang+=sweep;
   });
-  // Leyenda
-  const leg=$('torta-legend');if(leg){leg.innerHTML=datos.map(d=>`<div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)"><div style="width:10px;height:10px;border-radius:2px;background:${d.color};flex-shrink:0"></div>${d.label} <span style="color:var(--text);font-weight:600">${d.v} (${total>0?(d.v/total*100).toFixed(1):0}%)</span></div>`).join('');}
+  const leg=$('torta-legend');
+  if(leg){leg.innerHTML=datos.map(d=>`<div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)"><div style="width:10px;height:10px;border-radius:2px;background:${d.color};flex-shrink:0"></div>${d.label} <span style="color:var(--text);font-weight:600">${d.v}</span></div>`).join('');}
 }
 
 // ---- ANIMACIÓN SCROLL ----
@@ -504,28 +505,60 @@ function renderLog(d){
 }
 function renderEst(d){ /* fusionado en renderLog */ }
 
+function calcEfectividad(d){
+  // Calcular días del rango seleccionado
+  const df=$('date-from').value,dt=$('date-to').value;
+  let diasRango=0;
+  if(df&&dt){
+    const d1=new Date(df),d2=new Date(dt);
+    diasRango=Math.round((d2-d1)/(1000*60*60*24));
+  }
+  // Si rango > 14 días: usar % real de entregados sobre despachados (datos reales)
+  // Si rango <= 14 días: 80% conservador
+  let EF,fuente;
+  if(diasRango>14&&d.desp>0){
+    EF=d.ent/d.desp; // tasa real
+    fuente=`${pct(EF*100)} real (${d.ent}/${d.desp} desp.)`;
+  }else{
+    EF=0.80;
+    fuente='80% conservador (<14 días)';
+  }
+  return{EF,fuente,diasRango};
+}
+
 function renderProy(d){
-  const EF=0.85;
+  const {EF,fuente}=calcEfectividad(d);
   let br=0,ne=0;
-  // Solo pedidos en movimiento — fórmula por fila: (TOTAL_ORDEN - PRECIO_FLETE - PRECIO_PROVEEDOR_X_CANTIDAD) × 0.85
   d.mov.forEach(o=>{
-    // val, flete y costoProv ya vienen correctamente sumados por orden en procesarDropi
     const netoOrden=o.valor-o.flete-o.costoProv;
     br+=o.valor*EF;
     ne+=netoOrden*EF;
   });
   const entProy=Math.round(d.numMov*EF);
+  const pctMovSobreTotal=d.total>0?(d.numMov/d.total*100):0;
   const pctProy=d.total>0?(entProy/d.total*100):0;
+  const pctEntActual=d.desp>0?(d.ent/d.desp*100):0;
+  const pctAdicional=d.total>0?(entProy/d.total*100):0;
+  const pctFinal=pctEntActual+pctAdicional;
 
   $('pbox').innerHTML=`
-    <div class="pt">📈 Proyección — ${d.numMov} pedidos en movimiento × 85% efectividad</div>
+    <div class="pt">📈 Proyección — ${d.numMov} pedidos en movimiento × ${pct(EF*100)} efectividad</div>
     <div class="pg2">
-      <div class="pi"><div class="lb">Guías en movimiento</div><div class="vl">${d.numMov}</div></div>
+      <div class="pi"><div class="lb">En movimiento</div><div class="vl">${d.numMov}</div></div>
       <div class="pi"><div class="lb">Entregas proyectadas</div><div class="vl">${entProy}</div></div>
-      <div class="pi"><div class="lb">% s/total guías</div><div class="vl">${pct(pctProy)}</div></div>
-      <div class="pi"><div class="lb">Ingreso neto est.</div><div class="vl" style="font-size:13px">${fmt(ne)}</div></div>
+      <div class="pi"><div class="lb">Ing. neto estimado</div><div class="vl" style="font-size:13px">${fmt(ne)}</div></div>
+      <div class="pi"><div class="lb">Efectividad usada</div><div class="vl" style="font-size:13px">${pct(EF*100)}</div></div>
     </div>
+    <div style="margin-top:12px;font-size:11px;color:rgba(255,107,53,0.7)">Fuente: ${fuente}</div>
   `;
+
+  // Card de proyección en logística (m-log) — actualizar el sub
+  const kpiProy=$('kpi-proy');
+  if(kpiProy){
+    kpiProy.textContent=entProy;
+    const sbEl=kpiProy.parentElement?.querySelector('.sb');
+    if(sbEl) sbEl.innerHTML=`de ${d.numMov} en mov.<br><span style="font-size:10px;color:var(--hint)">+${pct(pctAdicional)} mov. · ${pct(pctEntActual)} actual = <strong style="color:var(--green)">${pct(Math.min(pctFinal,100))} est.</strong></span>`;
+  }
 
   $('tb-proy').innerHTML=d.mov.slice(0,60).map(o=>{
     const netoOrden=o.valor-o.flete-o.costoProv;
@@ -543,7 +576,7 @@ function renderProy(d){
     </tr>`;
   }).join('')||'<tr><td colspan="8" class="empty">Sin pedidos en movimiento</td></tr>';
 
-  gP={br,ne,numMov:d.numMov,entProy,pctProy};
+  gP={br,ne,numMov:d.numMov,entProy,EF};
   return gP;
 }
 
@@ -601,7 +634,7 @@ function renderMeta(data,tt){
     <div class="mc"><div class="lb">Cuentas</div><div class="vl">${(data.accounts||[]).length}</div></div>
   `;
   if(tt>0)$('meta-tt').innerHTML=`<div class="al ai">Meta: ${fmt(tG)} + TikTok: ${fmt(tt)} = <strong>Total: ${fmt(tot)}</strong></div>`;
-  $('tb-meta').innerHTML=cs.map(c=>{const sp=parseFloat(c.spend||0),im=parseInt(c.impressions||0),cl=parseInt(c.clicks||0);return`<tr><td style="color:var(--muted);font-size:11px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.account_name||''}</td><td style="max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.campaign_name}</td><td style="font-family:'JetBrains Mono',monospace">${fmt(sp)}</td><td style="font-family:'JetBrains Mono',monospace">${mono(im)}</td><td style="font-family:'JetBrains Mono',monospace">${mono(cl)}</td><td>${pct(im>0?cl/im*100:0)}</td><td style="font-family:'JetBrains Mono',monospace">${fmt(cl>0?sp/cl:0)}</td></tr>`;}).join('')||'<tr><td colspan="7" class="empty">Sin campañas en este período</td></tr>';
+  $('tb-meta').innerHTML=cs.map(c=>{const sp=parseFloat(c.spend||0),im=parseInt(c.impressions||0),cl=parseInt(c.clicks||0);const cpm=im>0?(sp/im*1000):0;return`<tr><td style="color:var(--muted);font-size:11px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.account_name||''}</td><td style="max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.campaign_name}</td><td style="font-family:'JetBrains Mono',monospace">${fmt(sp)}</td><td style="font-family:'JetBrains Mono',monospace">${mono(cl)}</td><td>${pct(im>0?cl/im*100:0)}</td><td style="font-family:'JetBrains Mono',monospace">${fmt(cl>0?sp/cl:0)}</td><td style="font-family:'JetBrains Mono',monospace">${fmt(cpm)}</td></tr>`;}).join('')||'<tr><td colspan="7" class="empty">Sin campañas en este período</td></tr>';
   gM={tG,tot,tt:tt||0,tI,tC,ctr,cpc};return gM;
 }
 
@@ -612,10 +645,9 @@ function renderRes(d,s,m,w){
   const cpaG=tot>0&&d?.desp>0?tot/d.desp:0;
   const cpaT=tot>0&&totP>0?tot/totP:0;
   $('m-res').innerHTML=`
-    <div class="mc b"><div class="lb">Total guías Dropi</div><div class="vl">${d?.total||0}</div></div>
+    <div class="mc b"><div class="lb">Pedidos Dropi</div><div class="vl">${d?.total||0}</div></div>
     <div class="mc g"><div class="lb">Entregados</div><div class="vl">${d?.ent||0}</div><div class="sb">${pct(d?.pE||0)} s/desp.</div></div>
     <div class="mc p"><div class="lb">Pedidos WA/Org.</div><div class="vl">${w?.totWP||0}</div></div>
-    <div class="mc g"><div class="lb">Ingresos netos</div><div class="vl" style="font-size:12px">${fmt(s?.ing||0)}</div></div>
     <div class="mc o"><div class="lb">Total publicidad</div><div class="vl" style="font-size:12px">${fmt(tot)}</div></div>
     <div class="mc"><div class="lb">CPA/pedido generado</div><div class="vl" style="font-size:12px">${fmt(tot>0&&d?.total>0?tot/d.total:0)}</div></div>
     <div class="mc"><div class="lb">CPA/guía desp.</div><div class="vl" style="font-size:12px">${fmt(cpaG)}</div></div>
