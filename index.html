@@ -108,6 +108,63 @@ tr:hover td{background:var(--bg3);}
 .pftag.active{background:var(--od);border-color:var(--ob);color:var(--orange);font-weight:600;}
 .pftag.all{border-color:var(--border2);}
 .pftag.all.active{background:var(--bg2);border-color:var(--border2);color:var(--text);}
+/* PRODUCTOS Y TRANSPORTADORAS */
+.prod-card{background:var(--bg3);border-radius:var(--r);padding:12px 14px;margin-bottom:8px;border:1px solid var(--border);display:flex;align-items:center;gap:12px;}
+.prod-rank{font-size:18px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--hint);width:28px;flex-shrink:0;text-align:center;}
+.prod-rank.gold{color:#f59e0b;}.prod-rank.silver{color:#9ca3af;}.prod-rank.bronze{color:#cd7c32;}
+.prod-info{flex:1;min-width:0;}
+.prod-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.prod-bar-wrap{height:5px;background:var(--border);border-radius:3px;margin-top:6px;overflow:hidden;}
+.prod-bar-fill{height:100%;border-radius:3px;transition:width .5s ease;}
+.prod-stats{display:flex;gap:14px;flex-shrink:0;font-size:11px;text-align:right;}
+.prod-stat .lbl{color:var(--hint);font-size:9px;text-transform:uppercase;letter-spacing:.05em;}
+.prod-stat .val{font-family:'JetBrains Mono',monospace;font-weight:600;margin-top:1px;}
+.transp-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
+.transp-row:last-child{border-bottom:none;}
+.transp-name{font-size:13px;font-weight:500;width:160px;flex-shrink:0;}
+.transp-bar-wrap{flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden;}
+.transp-bar-fill{height:100%;border-radius:4px;transition:width .5s ease;}
+.transp-stats{display:flex;gap:10px;flex-shrink:0;font-size:12px;font-family:'JetBrains Mono',monospace;}
+.ciudad-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);}
+.ciudad-row:last-child{border-bottom:none;}
+.ciudad-name{font-size:12px;color:var(--muted);width:160px;flex-shrink:0;}
+.ciudad-bar-wrap{flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
+.ciudad-bar-fill{height:100%;border-radius:3px;}
+.ciudad-stats{font-size:11px;font-family:'JetBrains Mono',monospace;flex-shrink:0;display:flex;gap:8px;}
+/* PRODUCTOS / TRANSPORTADORAS / CIUDADES */
+.rank-item{padding:12px 0;border-bottom:1px solid var(--border);}
+.rank-item:last-child{border-bottom:none;}
+.rank-header{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.rank-pos{font-size:13px;font-weight:700;color:var(--hint);width:22px;flex-shrink:0;}
+.rank-pos.gold{color:#f59e0b;}.rank-pos.silver{color:#9ca3af;}.rank-pos.bronze{color:#b45309;}
+.rank-medal{font-size:16px;width:22px;flex-shrink:0;}
+.rank-name{font-size:13px;font-weight:600;color:var(--text);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.rank-stats{display:flex;gap:14px;font-size:11px;font-weight:600;flex-shrink:0;}
+.rank-stat{display:flex;flex-direction:column;align-items:flex-end;gap:1px;}
+.rank-stat .lbl{font-size:9px;color:var(--hint);letter-spacing:.05em;text-transform:uppercase;}
+.rank-bars{display:flex;flex-direction:column;gap:4px;}
+.rank-bar-row{display:flex;align-items:center;gap:8px;}
+.rank-bar-label{font-size:10px;color:var(--hint);width:95px;flex-shrink:0;}
+.rank-bar-track{flex:1;background:var(--bg3);border-radius:3px;height:6px;overflow:hidden;position:relative;}
+.rank-bar-fill{height:100%;border-radius:3px;transition:width .5s ease;}
+.rank-bar-val{font-size:11px;font-weight:700;width:40px;text-align:right;flex-shrink:0;}
+.transp-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
+.transp-item:last-child{border-bottom:none;}
+.transp-name{font-size:13px;font-weight:600;color:var(--text);width:140px;flex-shrink:0;}
+.transp-bar-track{flex:1;background:var(--bg3);border-radius:3px;height:8px;overflow:hidden;}
+.transp-bar-fill{height:100%;border-radius:3px;transition:width .5s ease;}
+.transp-val{font-size:12px;font-weight:700;width:45px;text-align:right;flex-shrink:0;}
+.transp-ped{font-size:11px;color:var(--muted);width:70px;text-align:right;flex-shrink:0;}
+.ciudad-item{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);}
+.ciudad-item:last-child{border-bottom:none;}
+.ciudad-name{font-size:12px;font-weight:500;color:var(--text);width:130px;flex-shrink:0;}
+.ciudad-bar-track{flex:1;background:var(--bg3);border-radius:3px;height:6px;overflow:hidden;}
+.ciudad-bar-fill{height:100%;border-radius:3px;transition:width .4s ease;}
+.ciudad-val{font-size:11px;font-weight:700;width:42px;text-align:right;flex-shrink:0;}
+.ciudad-ped{font-size:11px;color:var(--muted);width:55px;text-align:right;flex-shrink:0;}
+.filter-btn{background:var(--bg3);border:1px solid var(--border2);color:var(--muted);border-radius:var(--r);padding:5px 10px;font-size:11px;cursor:pointer;transition:all .12s;font-family:'Inter',sans-serif;}
+.filter-btn:hover{color:var(--text);border-color:var(--border2);}
+.filter-btn.active{background:var(--od);border-color:var(--ob);color:var(--orange);}
 /* ANIMACIÓN SCROLL */
 #logistica-section{opacity:0;transform:translateY(30px);transition:opacity .7s ease,transform .7s ease;}
 #logistica-section.visible{opacity:1;transform:translateY(0);}
@@ -131,6 +188,11 @@ tr:hover td{background:var(--bg3);}
     <div class="fl">
       <label><span class="tag tm">Meta Ads</span> Access Token</label>
       <div class="ir"><input type="password" id="meta-token" placeholder="EAAxxxxxxxxxxxxx" autocomplete="off"><button class="vb" onclick="tv('meta-token')">ver</button></div>
+    </div>
+    <div class="fl">
+      <label><span class="tag tm">Meta Ads</span> Gasto manual <span class="tag to">Opcional</span></label>
+      <input type="number" id="meta-spend" placeholder="0 COP — override manual" min="0" step="1000">
+      <div style="font-size:10px;color:var(--hint);margin-top:2px">Si lo llenas, reemplaza el gasto calculado por API</div>
     </div>
     <div class="fl">
       <label><span class="tag tt">TikTok</span> Gasto del período <span class="tag to">Opcional</span></label>
@@ -182,7 +244,9 @@ tr:hover td{background:var(--bg3);}
     <div class="tab" onclick="st(3)">WhatsApp</div>
     <div class="tab" onclick="st(4)">Proyección</div>
     <div class="tab" onclick="st(5)" id="tab-sin-mov">Sin movimiento</div>
-    <div class="tab" onclick="st(6)">Reporte IA</div>
+    <div class="tab" onclick="st(6)">Productos</div>
+    <div class="tab" onclick="st(7)">Transportadoras</div>
+    <div class="tab" onclick="st(8)">Reporte IA</div>
   </div>
 
   <!-- TAB 0: RESUMEN -->
@@ -256,8 +320,50 @@ tr:hover td{background:var(--bg3);}
     </div>
   </div>
 
-  <!-- TAB 6: IA -->
+  <!-- TAB 6: PRODUCTOS -->
   <div class="tp" id="tp6">
+    <div class="card">
+      <div class="ct">Rendimiento por producto</div>
+      <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+        <button class="filter-btn active" id="pf-ped" onclick="setProdSort('ped',this)">📦 Pedidos</button>
+        <button class="filter-btn" id="pf-ef" onclick="setProdSort('ef',this)">📊 Efectividad</button>
+        <button class="filter-btn active" id="pf-comb" onclick="toggleProdComb(this)" title="Combinar ambos filtros">🔗 Combinado</button>
+        <button class="filter-btn" id="pf-dir" onclick="toggleProdDir(this)">↓ Desc</button>
+      </div>
+      <div id="prod-ranking"></div>
+    </div>
+  </div>
+
+  <!-- MODAL PRODUCTO -->
+  <div id="prod-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;overflow-y:auto;padding:20px" onclick="if(event.target===this)cerrarModal()">
+    <div style="max-width:800px;margin:0 auto;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rl);padding:24px;position:relative">
+      <button onclick="cerrarModal()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer">✕</button>
+      <div id="modal-content"></div>
+    </div>
+  </div>
+
+  <!-- TAB 7: TRANSPORTADORAS + CIUDADES -->
+  <div class="tp" id="tp7">
+    <div class="card">
+      <div class="ct">Transportadoras</div>
+      <div id="transp-list"></div>
+      <hr class="sdv">
+      <div class="ct">Ciudades</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+        <input type="text" id="ciudad-search" placeholder="Buscar ciudad..." style="max-width:200px;padding:7px 11px" oninput="filtrarCiudades()">
+        <span id="ciudad-count" style="font-size:11px;color:var(--muted)"></span>
+        <div style="margin-left:auto;display:flex;gap:6px">
+          <button class="filter-btn active" id="cf-ped" onclick="setCiudadSort('ped',this)" title="Ordenar por pedidos">📦 Pedidos</button>
+          <button class="filter-btn" id="cf-ef" onclick="setCiudadSort('ef',this)" title="Ordenar por efectividad">📊 Efectividad</button>
+          <button class="filter-btn" id="cf-dir" onclick="toggleCiudadDir(this)" title="Ascendente/Descendente">↓ Desc</button>
+        </div>
+      </div>
+      <div id="ciudades-list"></div>
+    </div>
+  </div>
+
+  <!-- TAB 8: IA -->
+  <div class="tp" id="tp8">
     <div class="card"><div class="ct">Análisis IA</div><div id="ia-c"><div class="empty">Presiona Generar reporte para el análisis</div></div><div class="ar" id="ia-ar" style="display:none"><button class="bs" onclick="expTxt()">Exportar .txt</button><button class="bs" onclick="copIA()">Copiar</button></div></div>
   </div>
 </div>
@@ -350,8 +456,8 @@ function observarLogistica(){
   if(sec)scrollObserver.observe(sec);
 }
 
-function saveKeys(){localStorage.setItem(LS,JSON.stringify({mu:$('mipler-url').value,mt:$('meta-token').value,ck:$('claude-key').value,tt:$('tiktok-spend').value}));setS('ok','Credenciales guardadas');}
-function loadKeys(){const d=JSON.parse(localStorage.getItem(LS)||'{}');if(d.mu)$('mipler-url').value=d.mu;if(d.mt)$('meta-token').value=d.mt;if(d.ck)$('claude-key').value=d.ck;if(d.tt)$('tiktok-spend').value=d.tt;}
+function saveKeys(){localStorage.setItem(LS,JSON.stringify({mu:$('mipler-url').value,mt:$('meta-token').value,ck:$('claude-key').value,tt:$('tiktok-spend').value,ms:$('meta-spend').value}));setS('ok','Credenciales guardadas');}
+function loadKeys(){const d=JSON.parse(localStorage.getItem(LS)||'{}');if(d.mu)$('mipler-url').value=d.mu;if(d.mt)$('meta-token').value=d.mt;if(d.ck)$('claude-key').value=d.ck;if(d.tt)$('tiktok-spend').value=d.tt;if(d.ms)$('meta-spend').value=d.ms;}
 function setDates(){const t=new Date(),f=new Date(t.getFullYear(),t.getMonth(),1);$('date-to').value=t.toISOString().slice(0,10);$('date-from').value=f.toISOString().slice(0,10);}
 
 function df(e,t){e.preventDefault();e.currentTarget.classList.remove('drag');hf(e.dataTransfer.files[0],t);}
@@ -401,7 +507,7 @@ function tPF(el){
 }
 function clearPF(){selProds.clear();document.querySelectorAll('.pftag').forEach(t=>t.classList.remove('active'));const a=document.querySelector('.pftag.all');if(a)a.classList.add('active');recalc();}
 function filtOrd(ords){if(selProds.size===0)return ords;return ords.filter(o=>o.productos&&o.productos!=='—'&&o.productos.split(',').some(p=>selProds.has(p.trim())));}
-function recalc(){const f=filtOrd(allOrds.filter(o=>!o.dup));const d=calcM(f);d.dups=allOrds.filter(o=>o.dup).length;renderLog(d);renderProy(d);renderRes(d,gS,gM,gW);}
+function recalc(){const f=filtOrd(allOrds.filter(o=>!o.dup));const d=calcM(f);d.dups=allOrds.filter(o=>o.dup).length;d.allV=f;renderLog(d);renderProy(d);renderRes(d,gS,gM,gW);renderTodoAnalisis(d);}
 
 function parseFecha(f){const s=String(f||'').slice(0,10);const p=s.split('-');if(p.length===3&&p[0].length===2)return`${p[2]}-${p[1]}-${p[0]}`;return s;}
 
@@ -617,14 +723,15 @@ async function fetchMeta(token,df,dt){
   const d=await r1.json();if(d.error)throw new Error(d.error);return d;
 }
 
-function renderMeta(data,tt){
+function renderMeta(data,tt,ms){
   const cs=data.data||[];
-  const tG=cs.reduce((s,c)=>s+parseFloat(c.spend||0),0);
+  const tGapi=cs.reduce((s,c)=>s+parseFloat(c.spend||0),0);
+  const tG=ms>0?ms:tGapi; // override manual si existe
   const tI=cs.reduce((s,c)=>s+parseInt(c.impressions||0),0);
   const tC=cs.reduce((s,c)=>s+parseInt(c.clicks||0),0);
   const ctr=tI>0?(tC/tI*100):0,cpc=tC>0?(tG/tC):0,tot=tG+(tt||0);
   $('m-meta').innerHTML=`
-    <div class="mc a"><div class="lb">Gasto Meta</div><div class="vl" style="font-size:13px">${fmt(tG)}</div></div>
+    <div class="mc a"><div class="lb">Gasto Meta</div><div class="vl" style="font-size:13px">${fmt(tG)}</div>${ms>0?'<div class="sb" style="color:var(--orange)">manual</div>':''}</div>
     ${tt>0?`<div class="mc"><div class="lb">Gasto TikTok</div><div class="vl" style="font-size:13px">${fmt(tt)}</div></div>`:''}
     <div class="mc o"><div class="lb">Total publicidad</div><div class="vl" style="font-size:13px">${fmt(tot)}</div></div>
     <div class="mc b"><div class="lb">Impresiones</div><div class="vl">${(tI/1000).toFixed(1)}K</div></div>
@@ -633,11 +740,15 @@ function renderMeta(data,tt){
     <div class="mc"><div class="lb">CPC</div><div class="vl" style="font-size:13px">${fmt(cpc)}</div></div>
     <div class="mc"><div class="lb">Cuentas</div><div class="vl">${(data.accounts||[]).length}</div></div>
   `;
-  if(tt>0)$('meta-tt').innerHTML=`<div class="al ai">Meta: ${fmt(tG)} + TikTok: ${fmt(tt)} = <strong>Total: ${fmt(tot)}</strong></div>`;
+  const sumarios=[];
+  if(ms>0) sumarios.push(`Meta (manual): ${fmt(ms)}`);
+  else if(tGapi>0) sumarios.push(`Meta (API): ${fmt(tGapi)}`);
+  if(tt>0) sumarios.push(`TikTok: ${fmt(tt)}`);
+  if(sumarios.length>0) $('meta-tt').innerHTML=`<div class="al ai">${sumarios.join(' + ')} = <strong>Total: ${fmt(tot)}</strong></div>`;
+  else $('meta-tt').innerHTML='';
   $('tb-meta').innerHTML=cs.map(c=>{
     const sp=parseFloat(c.spend||0),im=parseInt(c.impressions||0),cl=parseInt(c.clicks||0);
     const cpm=im>0?(sp/im*1000):0;
-    // CPA = gasto / conversiones (purchase, lead, o cualquier acción principal)
     const acciones=c.actions||[];
     const conv=acciones.find(a=>a.action_type==='purchase')||acciones.find(a=>a.action_type==='lead')||acciones.find(a=>a.action_type==='offsite_conversion.fb_pixel_purchase')||acciones[0];
     const numConv=conv?parseFloat(conv.value||0):0;
@@ -653,7 +764,7 @@ function renderMeta(data,tt){
       <td style="font-family:'JetBrains Mono',monospace;color:${cpa>0?'var(--amber)':'var(--hint)'}">${cpa>0?fmt(cpa):'—'}</td>
     </tr>`;
   }).join('')||'<tr><td colspan="8" class="empty">Sin campañas en este período</td></tr>';
-  gM={tG,tot,tt:tt||0,tI,tC,ctr,cpc};return gM;
+  gM={tG,tot,tt:tt||0,ms:ms||0,tI,tC,ctr,cpc};return gM;
 }
 
 function renderRes(d,s,m,w){
@@ -846,12 +957,512 @@ function copiarGuias(){
     setTimeout(()=>el.style.display='none', 3000);
   });
 }
+// ---- PRODUCTOS ----
+let allCiudadesData=[];
+
+function renderProductos(dropiData){
+  if(!dropiData||!dropiData.allV){$('prod-ranking').innerHTML='<div class="empty">Sube el archivo de órdenes con productos para ver este análisis</div>';return;}
+
+  // Agrupar por producto desde dProd (órdenes+productos)
+  const prodMap={};
+  dropiData.allV.forEach(o=>{
+    // Buscar productos de esta orden en dProd
+    const prods=dProd.filter(p=>String(p['ID']||'')==String(o.id));
+    if(prods.length===0){
+      // Sin datos de producto — usar "Sin producto"
+      const key='Sin producto asignado';
+      if(!prodMap[key])prodMap[key]={nombre:key,ent:0,dev:0,can:0,pend:0,mov:0,desp:0,total:0};
+      const pm=prodMap[key];
+      pm.total++;
+      if(EST_ENT.includes(o.estatus)){pm.ent++;pm.desp++;}
+      else if(EST_DEV.includes(o.estatus)){pm.dev++;pm.desp++;}
+      else if(EST_CAN.includes(o.estatus)){pm.can++;}
+      else if(EST_PEND.includes(o.estatus)){pm.pend++;}
+      else if(EST_MOV.includes(o.estatus)){pm.mov++;pm.desp++;}
+    } else {
+      prods.forEach(p=>{
+        const key=String(p['PRODUCTO']||'Sin producto').trim();
+        if(!prodMap[key])prodMap[key]={nombre:key,ent:0,dev:0,can:0,pend:0,mov:0,desp:0,total:0};
+        const pm=prodMap[key];
+        pm.total++;
+        if(EST_ENT.includes(o.estatus)){pm.ent++;pm.desp++;}
+        else if(EST_DEV.includes(o.estatus)){pm.dev++;pm.desp++;}
+        else if(EST_CAN.includes(o.estatus)){pm.can++;}
+        else if(EST_PEND.includes(o.estatus)){pm.pend++;}
+        else if(EST_MOV.includes(o.estatus)){pm.mov++;pm.desp++;}
+      });
+    }
+  });
+
+  // Calcular score: % entrega sobre despachado - penalizar % devolución
+  const prods=Object.values(prodMap).filter(p=>p.desp>=3); // mínimo 3 despachados para ser relevante
+  prods.forEach(p=>{
+    p.pctEnt=p.desp>0?(p.ent/p.desp*100):0;
+    p.pctDev=p.desp>0?(p.dev/p.desp*100):0;
+    p.pctCan=p.total>0?(p.can/p.total*100):0;
+    p.score=p.pctEnt-(p.pctDev*0.5)-(p.pctCan*0.3);
+  });
+  prods.sort((a,b)=>b.score-a.score);
+
+  const maxEnt=Math.max(...prods.map(p=>p.pctEnt),1);
+  const rankSymbol=(i)=>i===0?'🥇':i===1?'🥈':i===2?'🥉':`${i+1}`;
+  const rankClass=(i)=>i===0?'gold':i===1?'silver':i===2?'bronze':'';
+  const entColor=(p)=>p.pctEnt>=70?'#22c55e':p.pctEnt>=50?'#f59e0b':'#ef4444';
+
+  $('prod-ranking').innerHTML=prods.map((p,i)=>`
+    <div class="prod-card">
+      <div class="prod-rank ${rankClass(i)}">${rankSymbol(i)}</div>
+      <div class="prod-info">
+        <div class="prod-name">${p.nombre}</div>
+        <div class="prod-bar-wrap">
+          <div class="prod-bar-fill" style="width:${(p.pctEnt/maxEnt*100).toFixed(1)}%;background:${entColor(p)}"></div>
+        </div>
+      </div>
+      <div class="prod-stats">
+        <div class="prod-stat">
+          <div class="lbl">Entrega</div>
+          <div class="val" style="color:${entColor(p)}">${pct(p.pctEnt)}</div>
+        </div>
+        <div class="prod-stat">
+          <div class="lbl">Devol.</div>
+          <div class="val" style="color:${p.pctDev>15?'var(--red)':'var(--muted)'}">${pct(p.pctDev)}</div>
+        </div>
+        <div class="prod-stat">
+          <div class="lbl">Cancel.</div>
+          <div class="val" style="color:${p.pctCan>20?'var(--orange)':'var(--muted)'}">${pct(p.pctCan)}</div>
+        </div>
+        <div class="prod-stat">
+          <div class="lbl">Desp.</div>
+          <div class="val">${p.desp}</div>
+        </div>
+      </div>
+    </div>
+  `).join('')||'<div class="empty">Sin datos de productos</div>';
+}
+
+// ---- TRANSPORTADORAS Y CIUDADES ----
+function renderTranspCiudades(dropiData){
+  if(!dropiData||!dropiData.allV){return;}
+  const v=dropiData.allV;
+
+  // Transportadoras
+  const tMap={};
+  v.forEach(o=>{
+    const t=o.transp||'Desconocida';
+    if(!tMap[t])tMap[t]={nombre:t,ent:0,dev:0,can:0,mov:0,desp:0,total:0};
+    const tm=tMap[t];
+    tm.total++;
+    if(EST_ENT.includes(o.estatus)){tm.ent++;tm.desp++;}
+    else if(EST_DEV.includes(o.estatus)){tm.dev++;tm.desp++;}
+    else if(EST_MOV.includes(o.estatus)){tm.mov++;tm.desp++;}
+    else if(EST_CAN.includes(o.estatus)){tm.can++;}
+  });
+
+  const transps=Object.values(tMap).filter(t=>t.desp>0).sort((a,b)=>b.desp-a.desp);
+  transps.forEach(t=>{t.pctEnt=t.desp>0?(t.ent/t.desp*100):0;t.pctDev=t.desp>0?(t.dev/t.desp*100):0;});
+  const maxDesp=Math.max(...transps.map(t=>t.desp),1);
+  const tColor=(p)=>p>=70?'#22c55e':p>=50?'#f59e0b':'#ef4444';
+
+  $('transp-list').innerHTML=transps.map(t=>`
+    <div class="transp-row">
+      <div class="transp-name">${t.nombre}</div>
+      <div class="transp-bar-wrap">
+        <div class="transp-bar-fill" style="width:${(t.desp/maxDesp*100).toFixed(1)}%;background:${tColor(t.pctEnt)}"></div>
+      </div>
+      <div class="transp-stats">
+        <span style="color:${tColor(t.pctEnt)};font-weight:600">${pct(t.pctEnt)}</span>
+        <span style="color:var(--red)">${pct(t.pctDev)} dev.</span>
+        <span style="color:var(--muted)">${t.desp} desp.</span>
+      </div>
+    </div>
+  `).join('')||'<div class="empty">Sin datos de transportadoras</div>';
+
+  // Ciudades
+  const cMap={};
+  v.forEach(o=>{
+    const c=o.ciudad||'Desconocida';
+    if(!cMap[c])cMap[c]={nombre:c,ent:0,dev:0,can:0,mov:0,desp:0,total:0};
+    const cm=cMap[c];
+    cm.total++;
+    if(EST_ENT.includes(o.estatus)){cm.ent++;cm.desp++;}
+    else if(EST_DEV.includes(o.estatus)){cm.dev++;cm.desp++;}
+    else if(EST_MOV.includes(o.estatus)){cm.mov++;cm.desp++;}
+    else if(EST_CAN.includes(o.estatus)){cm.can++;}
+  });
+
+  allCiudadesData=Object.values(cMap).filter(c=>c.desp>0).sort((a,b)=>b.desp-a.desp);
+  allCiudadesData.forEach(c=>{c.pctEnt=c.desp>0?(c.ent/c.desp*100):0;});
+  $('ciudad-count').textContent=`${allCiudadesData.length} ciudades`;
+  renderCiudades(allCiudadesData);
+}
+
+function renderCiudades(ciudades){
+  const maxD=Math.max(...ciudades.map(c=>c.desp),1);
+  const cColor=(p)=>p>=70?'#22c55e':p>=50?'#f59e0b':'#ef4444';
+  $('ciudades-list').innerHTML=ciudades.map(c=>`
+    <div class="ciudad-row">
+      <div class="ciudad-name">${c.nombre}</div>
+      <div class="ciudad-bar-wrap">
+        <div class="ciudad-bar-fill" style="width:${(c.desp/maxD*100).toFixed(1)}%;background:${cColor(c.pctEnt)}"></div>
+      </div>
+      <div class="ciudad-stats">
+        <span style="color:${cColor(c.pctEnt)};font-weight:600">${pct(c.pctEnt)}</span>
+        <span style="color:var(--muted)">${c.desp} desp.</span>
+      </div>
+    </div>
+  `).join('')||'<div class="empty">Sin datos de ciudades</div>';
+}
+
+function filtrarCiudades(){
+  const q=$('ciudad-search').value.toLowerCase().trim();
+  if(!q){renderCiudades(allCiudadesData);return;}
+  renderCiudades(allCiudadesData.filter(c=>c.nombre.toLowerCase().includes(q)));
+}
+
+// ---- PRODUCTOS ----
+let gProductos=[];
+
+function colorBar(ef){if(ef>=0.75)return'#22c55e';if(ef>=0.55)return'#f59e0b';return'#ef4444';}
+function colorVal(ef){if(ef>=0.75)return'var(--green)';if(ef>=0.55)return'var(--amber)';return'var(--red)';}
+
+function calcProductos(allValidas){
+  const byProd={};
+  const idToEstatus={};
+  allValidas.forEach(o=>idToEstatus[o.id]=o.estatus);
+  dProd.forEach(r=>{
+    const id=String(r['ID']||'');
+    const est=idToEstatus[id];
+    if(!est)return;
+    const prod=String(r['PRODUCTO']||'—').trim();
+    if(!prod||prod==='—')return;
+    if(!byProd[prod])byProd[prod]={total:new Set(),ent:new Set(),dev:new Set(),can:new Set(),pend:new Set(),mov:new Set(),desp:new Set()};
+    const p=byProd[prod];
+    p.total.add(id);
+    if(EST_ENT.includes(est))p.ent.add(id);
+    else if(EST_DEV.includes(est))p.dev.add(id);
+    else if(EST_CAN.includes(est))p.can.add(id);
+    else if(EST_PEND.includes(est))p.pend.add(id);
+    else if(EST_MOV.includes(est))p.mov.add(id);
+    if(EST_ENT.includes(est)||EST_DEV.includes(est)||EST_MOV.includes(est))p.desp.add(id);
+  });
+  return Object.entries(byProd).map(([nombre,p])=>{
+    const total=p.total.size,ent=p.ent.size,dev=p.dev.size,can=p.can.size,desp=p.desp.size;
+    return{nombre,total,ent,dev,can,desp,efDesp:desp>0?ent/desp:0,efTotal:total>0?ent/total:0,pctDev:desp>0?dev/desp:0,pctCan:total>0?can/total:0};
+  });
+}
+
+let prodSort='ped',prodDir='desc',prodComb=true;
+
+function setProdSort(tipo,el){
+  prodSort=tipo;
+  document.querySelectorAll('#pf-ped,#pf-ef').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderProductos(gProductos);
+}
+function toggleProdDir(el){
+  prodDir=prodDir==='desc'?'asc':'desc';
+  el.textContent=prodDir==='desc'?'↓ Desc':'↑ Asc';
+  renderProductos(gProductos);
+}
+function toggleProdComb(el){
+  prodComb=!prodComb;
+  el.classList.toggle('active',prodComb);
+  renderProductos(gProductos);
+}
+
+function sortProductos(lista){
+  return lista.slice().sort((a,b)=>{
+    let v;
+    if(prodComb){
+      // combinado: score = ef*100 + total/maxTotal*30
+      const maxT=Math.max(...lista.map(x=>x.total),1);
+      const sa=a.efDesp*100+(a.total/maxT*30);
+      const sb=b.efDesp*100+(b.total/maxT*30);
+      v=sa-sb;
+    } else if(prodSort==='ped'){
+      v=a.total-b.total;
+    } else {
+      v=a.efDesp-b.efDesp;
+    }
+    return prodDir==='desc'?-v:v;
+  });
+}
+
+function renderProductos(productos){
+  gProductos=productos;
+  if(!productos.length){$('prod-ranking').innerHTML='<div class="empty">Sube el archivo de órdenes con productos para ver este apartado</div>';return;}
+  const sorted=sortProductos(productos);
+  const medals=['🥇','🥈','🥉'];
+  $('prod-ranking').innerHTML=sorted.map((p,i)=>{
+    const efDespPct=(p.efDesp*100).toFixed(1);
+    const efTotalPct=(p.efTotal*100).toFixed(1);
+    const barDesp=Math.min(p.efDesp/0.85*100,100).toFixed(1);
+    const barTotal=Math.min(p.efTotal/0.85*100,100).toFixed(1);
+    const cD=colorBar(p.efDesp),cT=colorBar(p.efTotal);
+    const vD=colorVal(p.efDesp),vT=colorVal(p.efTotal);
+    const posHTML=i<3?`<span class="rank-medal">${medals[i]}</span>`:`<span class="rank-pos">${i+1}</span>`;
+    return`<div class="rank-item" style="cursor:pointer" onclick="abrirModal('${p.nombre.replace(/'/g,"\\'")}')">
+      <div class="rank-header">
+        ${posHTML}
+        <div class="rank-name">${p.nombre}</div>
+        <div class="rank-stats">
+          <div class="rank-stat"><span class="lbl">Entrega</span><span style="color:${vD}">${efDespPct}%</span></div>
+          <div class="rank-stat"><span class="lbl">Entrega general</span><span style="color:${vT}">${efTotalPct}%</span></div>
+          <div class="rank-stat"><span class="lbl">Devol.</span><span style="color:var(--red)">${(p.pctDev*100).toFixed(1)}%</span></div>
+          <div class="rank-stat"><span class="lbl">Cancel.</span><span style="color:var(--orange)">${(p.pctCan*100).toFixed(1)}%</span></div>
+          <div class="rank-stat"><span class="lbl">Total</span><span style="color:var(--blue)">${p.total}</span></div>
+          <div class="rank-stat"><span class="lbl">Desp.</span><span style="color:var(--muted)">${p.desp}</span></div>
+        </div>
+      </div>
+      <div class="rank-bars">
+        <div class="rank-bar-row">
+          <div class="rank-bar-label">Entrega s/despachado</div>
+          <div class="rank-bar-track"><div class="rank-bar-fill" style="width:${barDesp}%;background:${cD}"></div></div>
+          <div class="rank-bar-val" style="color:${vD}">${efDespPct}%</div>
+        </div>
+        <div class="rank-bar-row">
+          <div class="rank-bar-label">Efectividad general</div>
+          <div class="rank-bar-track"><div class="rank-bar-fill" style="width:${barTotal}%;background:${cT}"></div></div>
+          <div class="rank-bar-val" style="color:${vT}">${efTotalPct}%</div>
+        </div>
+      </div>
+      <div style="font-size:10px;color:var(--hint);margin-top:4px">Clic para ver desglose completo →</div>
+    </div>`;
+  }).join('');
+}
+
+// ---- MODAL DESGLOSE POR PRODUCTO ----
+function abrirModal(nombre){
+  const p=gProductos.find(x=>x.nombre===nombre);
+  if(!p)return;
+
+  // Datos de órdenes de ese producto
+  const ids=new Set();
+  dProd.forEach(r=>{if(String(r['PRODUCTO']||'').trim()===nombre)ids.add(String(r['ID']||''));});
+  const ords=allOrds.filter(o=>!o.dup&&ids.has(o.id));
+
+  // Calcular métricas
+  const ent=ords.filter(o=>EST_ENT.includes(o.estatus)).length;
+  const dev=ords.filter(o=>EST_DEV.includes(o.estatus)).length;
+  const can=ords.filter(o=>EST_CAN.includes(o.estatus)).length;
+  const pend=ords.filter(o=>EST_PEND.includes(o.estatus)).length;
+  const mov=ords.filter(o=>EST_MOV.includes(o.estatus)).length;
+  const total=ords.length;
+  const desp=ent+dev+mov;
+  const efDesp=desp>0?ent/desp:0;
+  const efTotal=total>0?ent/total:0;
+  const {EF}=calcEfectividad({desp,ent});
+  const proyEnt=Math.round(mov*EF);
+
+  // Por transportadora
+  const byT={};
+  ords.forEach(o=>{
+    const t=o.transp||'Sin info';
+    if(!byT[t])byT[t]={ent:0,desp:0};
+    if(EST_ENT.includes(o.estatus))byT[t].ent++;
+    if(EST_ENT.includes(o.estatus)||EST_DEV.includes(o.estatus)||EST_MOV.includes(o.estatus))byT[t].desp++;
+  });
+  const transpRows=Object.entries(byT).sort((a,b)=>b[1].desp-a[1].desp).map(([t,d])=>{
+    const ef=d.desp>0?d.ent/d.desp:0;
+    const bar=Math.min(ef*100,100).toFixed(1);
+    const c=colorBar(ef),v=colorVal(ef);
+    return`<div class="transp-item"><div class="transp-name">${t}</div><div class="transp-bar-track"><div class="transp-bar-fill" style="width:${bar}%;background:${c}"></div></div><div class="transp-val" style="color:${v}">${(ef*100).toFixed(1)}%</div><div class="transp-ped">${d.desp} desp.</div></div>`;
+  }).join('');
+
+  // Por ciudad (top 10)
+  const byC={};
+  ords.forEach(o=>{
+    const c=(o.ciudad||'Sin ciudad').toUpperCase();
+    if(!byC[c])byC[c]={ent:0,desp:0};
+    if(EST_ENT.includes(o.estatus))byC[c].ent++;
+    if(EST_ENT.includes(o.estatus)||EST_DEV.includes(o.estatus)||EST_MOV.includes(o.estatus))byC[c].desp++;
+  });
+  const ciudadRows=Object.entries(byC).sort((a,b)=>b[1].desp-a[1].desp).slice(0,15).map(([c,d])=>{
+    const ef=d.desp>0?d.ent/d.desp:0;
+    const bar=Math.min(ef*100,100).toFixed(1);
+    const col=colorBar(ef),v=colorVal(ef);
+    return`<div class="ciudad-item"><div class="ciudad-name">${c}</div><div class="ciudad-bar-track"><div class="ciudad-bar-fill" style="width:${bar}%;background:${col}"></div></div><div class="ciudad-val" style="color:${v}">${(ef*100).toFixed(1)}%</div><div class="ciudad-ped">${d.desp} desp.</div></div>`;
+  }).join('');
+
+  // Distribución estados para mini torta
+  const ec={};ords.forEach(o=>{ec[o.estatus]=(ec[o.estatus]||0)+1;});
+  const estadosRows=Object.entries(ec).sort((a,b)=>b[1]-a[1]).map(([e,n])=>`
+    <div class="si"><div class="sn">${e}</div><div class="sb2"><div class="sf" style="width:${(n/total*100).toFixed(1)}%;background:${CEST[e]||'#555'}"></div></div><div class="snn">${n}</div><div class="sp2">${pct(n/total*100)}</div></div>
+  `).join('');
+
+  $('modal-content').innerHTML=`
+    <div style="margin-bottom:16px">
+      <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px">${nombre}</div>
+      <div style="font-size:11px;color:var(--muted)">${total} pedidos totales · ${desp} despachados · ${mov} en movimiento</div>
+    </div>
+    <!-- KPIs -->
+    <div class="mg" style="margin-bottom:16px">
+      <div class="mc b"><div class="lb">Total</div><div class="vl">${total}</div></div>
+      <div class="mc g"><div class="lb">Entregados</div><div class="vl">${ent}</div><div class="sb">${(efDesp*100).toFixed(1)}% s/desp.</div></div>
+      <div class="mc"><div class="lb">En movimiento</div><div class="vl">${mov}</div></div>
+      <div class="mc g" style="border:1px solid rgba(34,197,94,0.2)"><div class="lb">Proyección</div><div class="vl">${proyEnt}</div><div class="sb">de ${mov} en mov.</div></div>
+      <div class="mc r"><div class="lb">Devoluciones</div><div class="vl">${dev}</div><div class="sb">${total>0?(dev/total*100).toFixed(1):0}% s/total</div></div>
+      <div class="mc o"><div class="lb">Cancelados</div><div class="vl">${can}</div><div class="sb">${total>0?(can/total*100).toFixed(1):0}% s/total</div></div>
+      <div class="mc a"><div class="lb">Pend. conf.</div><div class="vl">${pend}</div></div>
+      <div class="mc"><div class="lb">Entrega general</div><div class="vl">${(efTotal*100).toFixed(1)}%</div></div>
+    </div>
+    <hr class="sdv">
+    <!-- Mini torta + estados -->
+    <div class="tw" style="margin-bottom:16px">
+      <div>
+        <span class="sl">Distribución</span>
+        <canvas id="modal-torta" width="200" height="200" style="display:block;margin:0 auto"></canvas>
+        <div id="modal-torta-leg" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;justify-content:center"></div>
+      </div>
+      <div>
+        <span class="sl">Por estado</span>
+        <div class="slist">${estadosRows}</div>
+      </div>
+    </div>
+    <hr class="sdv">
+    <div class="tw">
+      <div>
+        <span class="sl">Por transportadora</span>
+        ${transpRows||'<div class="empty">Sin datos</div>'}
+      </div>
+      <div>
+        <span class="sl">Top ciudades</span>
+        ${ciudadRows||'<div class="empty">Sin datos</div>'}
+      </div>
+    </div>
+  `;
+  $('prod-modal').style.display='block';
+  // Dibujar mini torta
+  setTimeout(()=>{
+    const datos=[
+      {label:'Entregados',v:ent,color:'#22c55e'},{label:'En mov.',v:mov,color:'#f59e0b'},
+      {label:'Devoluciones',v:dev,color:'#ef4444'},{label:'Cancelados',v:can,color:'#FF6B35'},
+      {label:'Pend.',v:pend,color:'#a855f7'},
+    ].filter(x=>x.v>0);
+    const canvas=$('modal-torta');if(!canvas)return;
+    const ctx=canvas.getContext('2d');
+    const cx=100,cy=100,r=85;
+    ctx.clearRect(0,0,200,200);
+    const tot2=datos.reduce((s,d)=>s+d.v,0);
+    let ang=-Math.PI/2;
+    datos.forEach(d=>{
+      const sw=d.v/tot2*Math.PI*2;
+      ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,ang,ang+sw);ctx.closePath();
+      ctx.fillStyle=d.color;ctx.fill();ctx.strokeStyle='rgba(0,0,0,0.2)';ctx.lineWidth=1;ctx.stroke();
+      if(d.v/tot2>0.05){const mid=ang+sw/2;ctx.fillStyle='#fff';ctx.font='bold 10px Inter,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText((d.v/tot2*100).toFixed(0)+'%',cx+Math.cos(mid)*r*0.65,cy+Math.sin(mid)*r*0.65);}
+      ang+=sw;
+    });
+    $('modal-torta-leg').innerHTML=datos.map(d=>`<div style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)"><div style="width:8px;height:8px;border-radius:2px;background:${d.color}"></div>${d.label} <strong style="color:var(--text)">${d.v}</strong></div>`).join('');
+  },100);
+}
+
+function cerrarModal(){$('prod-modal').style.display='none';}
+
+// ---- TRANSPORTADORAS ----
+function calcTransportadoras(allValidas){
+  const byT={};
+  allValidas.forEach(o=>{
+    const t=o.transp||'Sin info';
+    if(!byT[t])byT[t]={ent:0,dev:0,mov:0,desp:0,total:0};
+    const b=byT[t];
+    b.total++;
+    if(EST_ENT.includes(o.estatus))b.ent++;
+    if(EST_DEV.includes(o.estatus))b.dev++;
+    if(EST_MOV.includes(o.estatus))b.mov++;
+    if(EST_ENT.includes(o.estatus)||EST_DEV.includes(o.estatus)||EST_MOV.includes(o.estatus)){b.desp++;}
+  });
+  return Object.entries(byT).map(([nombre,d])=>({
+    nombre,desp:d.desp,ent:d.ent,total:d.total,
+    ef:d.desp>0?d.ent/d.desp:0
+  })).sort((a,b)=>b.desp-a.desp);
+}
+
+function renderTransportadoras(ts){
+  if(!ts.length){$('transp-list').innerHTML='<div class="empty">Sin datos</div>';return;}
+  $('transp-list').innerHTML=ts.map(t=>{
+    const bar=Math.min(t.ef/1*100,100).toFixed(1); // barra sobre 100%
+    const c=colorBar(t.ef),v=colorVal(t.ef);
+    return`<div class="transp-item">
+      <div class="transp-name">${t.nombre}</div>
+      <div class="transp-bar-track"><div class="transp-bar-fill" style="width:${bar}%;background:${c}"></div></div>
+      <div class="transp-val" style="color:${v}">${(t.ef*100).toFixed(1)}%</div>
+      <div class="transp-ped">${t.desp} desp.</div>
+    </div>`;
+  }).join('');
+}
+
+// ---- CIUDADES ----
+let gCiudades=[],ciudadSort='ped',ciudadDir='desc';
+
+function calcCiudades(allValidas){
+  const byC={};
+  allValidas.forEach(o=>{
+    const c=(o.ciudad||'Sin ciudad').toUpperCase().trim();
+    if(!byC[c])byC[c]={ent:0,desp:0,total:0};
+    const b=byC[c];
+    b.total++;
+    if(EST_ENT.includes(o.estatus))b.ent++;
+    if(EST_ENT.includes(o.estatus)||EST_DEV.includes(o.estatus)||EST_MOV.includes(o.estatus))b.desp++;
+  });
+  return Object.entries(byC).map(([nombre,d])=>({
+    nombre,desp:d.desp,ent:d.ent,total:d.total,
+    ef:d.desp>0?d.ent/d.desp:0
+  }));
+}
+
+function setCiudadSort(tipo,el){
+  ciudadSort=tipo;
+  document.querySelectorAll('#cf-ped,#cf-ef').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderCiudadesFiltradas();
+}
+function toggleCiudadDir(el){
+  ciudadDir=ciudadDir==='desc'?'asc':'desc';
+  el.textContent=ciudadDir==='desc'?'↓ Desc':'↑ Asc';
+  renderCiudadesFiltradas();
+}
+
+function renderCiudadesFiltradas(){
+  const q=($('ciudad-search')?.value||'').toLowerCase();
+  let lista=gCiudades.filter(c=>c.nombre.toLowerCase().includes(q));
+  lista.sort((a,b)=>{
+    const v=ciudadSort==='ped'?a.desp-b.desp:a.ef-b.ef;
+    return ciudadDir==='desc'?-v:v;
+  });
+  $('ciudad-count').textContent=`${lista.length} ciudades`;
+  $('ciudades-list').innerHTML=lista.map(c=>{
+    const bar=Math.min(c.ef/1*100,100).toFixed(1);
+    const col=colorBar(c.ef),v=colorVal(c.ef);
+    return`<div class="ciudad-item">
+      <div class="ciudad-name">${c.nombre}</div>
+      <div class="ciudad-bar-track"><div class="ciudad-bar-fill" style="width:${bar}%;background:${col}"></div></div>
+      <div class="ciudad-val" style="color:${v}">${(c.ef*100).toFixed(1)}%</div>
+      <div class="ciudad-ped">${c.desp} desp.</div>
+    </div>`;
+  }).join('')||'<div class="empty">Sin ciudades</div>';
+}
+
+function filtrarCiudades(){renderCiudadesFiltradas();}
+
+function renderTodoAnalisis(dropiData){
+  if(!dropiData)return;
+  // Productos
+  const prods=calcProductos(dropiData.allV);
+  renderProductos(prods);
+  // Transportadoras
+  const ts=calcTransportadoras(dropiData.allV);
+  renderTransportadoras(ts);
+  // Ciudades
+  gCiudades=calcCiudades(dropiData.allV);
+  renderCiudadesFiltradas();
+}
+
 function expTxt(){if(!window._rpt)return;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([window._rpt],{type:'text/plain;charset=utf-8'}));a.download='reporte-'+$('date-to').value+'.txt';a.click();}
 function copIA(){if(!window._rpt)return;navigator.clipboard.writeText(window._rpt).then(()=>setS('ok','Copiado'));}
 
 async function fetchAll(){
   const mu=$('mipler-url').value.trim(),mt=$('meta-token').value.trim(),ck=$('claude-key').value.trim();
-  const tt=parseFloat($('tiktok-spend').value||0),df=$('date-from').value,dt=$('date-to').value;
+  const tt=parseFloat($('tiktok-spend').value||0),ms=parseFloat($('meta-spend').value||0),df=$('date-from').value,dt=$('date-to').value;
   if(!df||!dt){setS('err','Selecciona el rango de fechas');return;}
   $('btn-run').disabled=true;$('spin').style.display='block';
   $('results').style.display='none';
@@ -874,12 +1485,16 @@ async function fetchAll(){
   let wpData=null;
   if(dropiData){setS('loading','Detectando WA/orgánicos...');wpData=calcWP(dropiData);}
 
-  if(dropiData){setS('loading','Analizando guías sin movimiento...');calcSinMovimiento(dropiData);}
+  if(dropiData){
+    setS('loading','Analizando guías sin movimiento...');
+    calcSinMovimiento(dropiData);
+    renderTodoAnalisis(dropiData);
+  }
 
-  let metaData={tG:0,tot:tt,tt,tI:0,tC:0,ctr:0,cpc:0};
+  let metaData={tG:ms||0,tot:(ms||0)+tt,tt,tI:0,tC:0,ctr:0,cpc:0};
   if(mt){
     setS('loading','Consultando Meta Ads...');
-    try{const raw=await fetchMeta(mt,df,dt);metaData=renderMeta(raw,tt);}
+    try{const raw=await fetchMeta(mt,df,dt);metaData=renderMeta(raw,tt,ms);}
     catch(e){errs.push('Meta: '+e.message);}
   }else errs.push('Meta: ingresa el token');
 
