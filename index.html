@@ -304,7 +304,7 @@ tr:hover td{background:var(--bg3);}
 
   <!-- TAB 4: PROYECCIÓN -->
   <div class="tp" id="tp4">
-    <div class="card"><div class="ct">Proyección de ingresos</div><div class="pbox" id="pbox"></div><div class="al ai" style="margin-bottom:12px">Proyección = 85% × pedidos en movimiento. Ingreso neto = (Valor − Flete − Costo proveedor) × 0.85</div><div class="tw2"><table><thead><tr><th>ID</th><th>Cliente</th><th>Producto</th><th>Estado</th><th>Valor</th><th>Costo prov.</th><th>Flete</th><th>Ing. neto est.</th></tr></thead><tbody id="tb-proy"></tbody></table></div></div>
+    <div class="card"><div class="ct">Proyección de ingresos</div><div class="pbox" id="pbox"></div><div class="al ai" style="margin-bottom:12px">Proyección = 85% × pedidos en movimiento. Ingreso neto = (Valor − Flete − Costo proveedor) × 0.85</div><div class="tw2"><table><thead><tr><th>ID</th><th>Cliente</th><th>Producto</th><th>Estado</th><th>Valor</th><th>Costo prov.</th><th>Flete</th><th>Ingreso neto estimado</th></tr></thead><tbody id="tb-proy"></tbody></table></div></div>
   </div>
 
   <!-- TAB 5: SIN MOVIMIENTO -->
@@ -526,26 +526,30 @@ function calcM(v){
 }
 
 function PILL(est){
-  const m={'ENTREGADO':['Entregado','pg'],'CANCELADO':['Cancelado','pr'],'DEVOLUCION':['Devolución','pr'],'RECHAZADO':['Rechazado','pr'],'PENDIENTE CONFIRMACION':['Pend. conf.','pa'],'DESPACHADA':['Despachada','pb'],'EN REPARTO':['En reparto','pb'],'EN BODEGA DESTINO':['Bodega dest.','pb'],'EN BODEGA TRANSPORTADORA':['Bodega transp.','pb'],'INTENTO DE ENTREGA':['Intento ent.','pb'],'NOVEDAD SOLUCIONADA':['Nov. sol.','pb'],'GUIA_GENERADA':['Guía gen.','pp'],'EN PROCESAMIENTO':['En proceso','pp'],'PREPARADO PARA TRANSPORTADORA':['Preparado','pp'],'RECLAME EN OFICINA':['Reclamo','po'],'NOVEDAD':['Novedad','pa']};
+  const m={'ENTREGADO':['Entregado','pg'],'CANCELADO':['Cancelado','pr'],'DEVOLUCION':['Devolución','pr'],'RECHAZADO':['Rechazado','pr'],'PENDIENTE CONFIRMACION':['Pend. confirmación','pa'],'DESPACHADA':['Despachada','pb'],'EN REPARTO':['En reparto','pb'],'EN BODEGA DESTINO':['Bodega destino','pb'],'EN BODEGA TRANSPORTADORA':['Bodega transportadora','pb'],'INTENTO DE ENTREGA':['Intento de entrega','pb'],'NOVEDAD SOLUCIONADA':['Nov. solucionada','pb'],'GUIA_GENERADA':['Guía generada','pp'],'EN PROCESAMIENTO':['En proceso','pp'],'PREPARADO PARA TRANSPORTADORA':['Preparado','pp'],'RECLAME EN OFICINA':['Reclamo','po'],'NOVEDAD':['Novedad','pa']};
   return m[est]||[est,'pgr'];
 }
 
 function renderLog(d){
   $('m-log').innerHTML=`
     <div class="mc b"><div class="lb">Pedidos Dropi</div><div class="vl" id="kpi-total">${d.total}</div></div>
-    <div class="mc g"><div class="lb">Entregados</div><div class="vl" id="kpi-ent">${d.ent}</div><div class="sb">${pct(d.pE)} s/desp.</div></div>
+    <div class="mc g"><div class="lb">Entregados</div><div class="vl" id="kpi-ent">${d.ent}</div><div class="sb">${pct(d.pE)} sobre despachados</div></div>
     <div class="mc b"><div class="lb">En movimiento</div><div class="vl" id="kpi-mov">${d.numMov}</div></div>
-    <div class="mc g" style="border:1px solid rgba(34,197,94,0.25)"><div class="lb">Proyección entregas</div><div class="vl" id="kpi-proy">${Math.round(d.numMov*0.85)}</div><div class="sb">de ${d.numMov} en mov.</div></div>
-    <div class="mc a"><div class="lb">Pend. confirm.</div><div class="vl" id="kpi-pend">${d.pend}</div></div>
-    <div class="mc r"><div class="lb">Devoluciones</div><div class="vl" id="kpi-dev">${d.dev}</div><div class="sb">${pct(d.pD)} s/desp. — logística</div></div>
+    <div class="mc g" style="border:1px solid rgba(34,197,94,0.25)"><div class="lb">Proyección entregas</div><div class="vl" id="kpi-proy">${Math.round(d.numMov*0.85)}</div><div class="sb">de ${d.numMov} en movimiento · ${(0.85*100).toFixed(0)}% efectividad</div></div>
+    <div class="mc g" style="border:1px solid rgba(34,197,94,0.15)"><div class="lb">Efectividad proyectada</div><div class="vl" id="kpi-efproy">${d.total>0?((d.ent+Math.round(d.numMov*0.85))/d.total*100).toFixed(1):0}%</div><div class="sb">(${d.ent}+${Math.round(d.numMov*0.85)}) / ${d.total} pedidos</div></div>
+    <div class="mc a"><div class="lb">Pendiente confirmación</div><div class="vl" id="kpi-pend">${d.pend}</div></div>
+    <div class="mc r"><div class="lb">Devoluciones reales</div><div class="vl" id="kpi-dev">${d.dev}</div><div class="sb">${d.total>0?(d.dev/d.total*100).toFixed(1):0}% del total</div></div>
+    <div class="mc r" style="border:1px solid rgba(239,68,68,0.2);opacity:0.8"><div class="lb">Devoluciones adicionales proyectadas</div><div class="vl" id="kpi-devproy">${Math.round(d.numMov*0.15)}</div><div class="sb">de ${d.numMov} en movimiento · 85% efectividad</div></div>
+    <div class="mc r" style="border:1px solid rgba(239,68,68,0.35)"><div class="lb">Devolución total proyectada</div><div class="vl" id="kpi-devtotal">${d.total>0?((d.dev+Math.round(d.numMov*0.15))/d.total*100).toFixed(1):0}%</div><div class="sb">${d.dev+Math.round(d.numMov*0.15)} pedidos del total estimado</div></div>
     <div class="mc o"><div class="lb">Cancelados</div><div class="vl" id="kpi-can">${d.can}</div><div class="sb">${pct(d.pC)} del total</div></div>
-    <div class="mc"><div class="lb">Despachados</div><div class="vl" id="kpi-desp">${d.desp}</div><div class="sb">${pct(d.tD)} tasa desp.</div></div>
-    ${d.dups>0?`<div class="mc p"><div class="lb">Duplicados excl.</div><div class="vl">${d.dups}</div></div>`:''}
+    <div class="mc"><div class="lb">Despachados</div><div class="vl" id="kpi-desp">${d.desp}</div><div class="sb">${pct(d.tD)} tasa de despacho</div></div>
+    ${d.dups>0?`<div class="mc p"><div class="lb">Duplicados excluidos</div><div class="vl">${d.dups}</div></div>`:''}
   `;
   setTimeout(()=>{
     [['kpi-total',d.total],['kpi-ent',d.ent],['kpi-mov',d.numMov],
      ['kpi-proy',Math.round(d.numMov*0.85)],['kpi-pend',d.pend],
-     ['kpi-dev',d.dev],['kpi-can',d.can],['kpi-desp',d.desp]
+     ['kpi-dev',d.dev],['kpi-devproy',Math.round(d.numMov*0.15)],
+     ['kpi-can',d.can],['kpi-desp',d.desp]
     ].forEach(([id,val])=>{
       const el=$(id);if(!el)return;
       let t0=null,fin=val;
@@ -556,7 +560,7 @@ function renderLog(d){
   const datos=[
     {label:'Entregados',v:d.ent,color:'#22c55e'},{label:'En movimiento',v:d.numMov,color:'#f59e0b'},
     {label:'Devoluciones',v:d.dev,color:'#ef4444'},{label:'Cancelados',v:d.can,color:'#FF6B35'},
-    {label:'Pend. conf.',v:d.pend,color:'#a855f7'},
+    {label:'Pend. confirmación',v:d.pend,color:'#a855f7'},
   ].filter(x=>x.v>0);
   setTimeout(()=>dibujarTorta(datos),200);
   const sorted=Object.entries(d.ec).sort((a,b)=>b[1]-a[1]);
@@ -564,11 +568,13 @@ function renderLog(d){
   const mc={};d.mov.forEach(o=>{mc[o.estatus]=(mc[o.estatus]||0)+1;});
   $('mov-list').innerHTML=Object.entries(mc).map(([e,n])=>`<div class="si"><div class="sn">${e}</div><div class="sb2"><div class="sf" style="width:${(n/(d.numMov||1)*100).toFixed(1)}%;background:${CEST[e]||'#3b82f6'}"></div></div><div class="snn">${n}</div><div class="sp2">${pct(n/(d.numMov||1)*100)}</div></div>`).join('')||'<div class="empty">Sin pedidos en movimiento</div>';
   $('sep-met').innerHTML=`
-    <div class="cr"><div class="cl2">📦 Devolución — logística</div><div class="cv" style="color:var(--red)">${d.dev} · ${pct(d.pD)} s/despachados</div></div>
-    <div class="cr"><div class="cl2">❌ Cancelación</div><div class="cv" style="color:var(--orange)">${d.can} · ${pct(d.pC)} del total</div></div>
-    <div class="cr"><div class="cl2">✅ Tasa de entrega</div><div class="cv" style="color:var(--green)">${pct(d.pE)} sobre despachados</div></div>
+    <div class="cr"><div class="cl2">✅ Tasa de entrega real</div><div class="cv" style="color:var(--green)">${pct(d.pE)} sobre despachados</div></div>
+    <div class="cr"><div class="cl2">📈 Efectividad proyectada final</div><div class="cv" style="color:var(--green)">${d.total>0?((d.ent+Math.round(d.numMov*0.85))/d.total*100).toFixed(1):0}% del total (${d.ent}+${Math.round(d.numMov*0.85)} entregas)</div></div>
+    <div class="cr"><div class="cl2">🔄 Entregas proyectadas adicionales</div><div class="cv" style="color:var(--blue)">${Math.round(d.numMov*0.85)} de ${d.numMov} en movimiento</div></div>
+    <div class="cr"><div class="cl2">📦 Devoluciones reales</div><div class="cv" style="color:var(--red)">${d.dev} · ${d.total>0?(d.dev/d.total*100).toFixed(1):0}% del total</div></div>
+    <div class="cr"><div class="cl2">📦 Devolución total proyectada</div><div class="cv" style="color:var(--red)">${d.dev+Math.round(d.numMov*0.15)} pedidos · ${d.total>0?((d.dev+Math.round(d.numMov*0.15))/d.total*100).toFixed(1):0}% del total estimado</div></div>
+    <div class="cr"><div class="cl2">❌ Cancelados</div><div class="cv" style="color:var(--orange)">${d.can} · ${pct(d.pC)} del total</div></div>
     <div class="cr"><div class="cl2">🚚 Tasa de despacho</div><div class="cv">${pct(d.tD)}</div></div>
-    <div class="cr"><div class="cl2">🔄 Entregas proyectadas</div><div class="cv" style="color:var(--blue)">${Math.round(d.numMov*0.85)} de ${d.numMov} en mov.</div></div>
   `;
   gD=d;
   observarLogistica();
@@ -598,7 +604,7 @@ function renderProy(d){
     <div class="pg2">
       <div class="pi"><div class="lb">En movimiento</div><div class="vl">${d.numMov}</div></div>
       <div class="pi"><div class="lb">Entregas proyectadas</div><div class="vl">${entProy}</div></div>
-      <div class="pi"><div class="lb">Ing. neto estimado</div><div class="vl" style="font-size:13px">${fmt(ne)}</div></div>
+      <div class="pi"><div class="lb">Ingreso neto estimado</div><div class="vl" style="font-size:13px">${fmt(ne)}</div></div>
       <div class="pi"><div class="lb">Efectividad usada</div><div class="vl" style="font-size:13px">${pct(EF*100)}</div></div>
     </div>
     <div style="margin-top:12px;font-size:11px;color:rgba(255,107,53,0.7)">Fuente: ${fuente}</div>
@@ -608,7 +614,7 @@ function renderProy(d){
   if(kpiProy){
     kpiProy.textContent=entProy;
     const sbEl=kpiProy.parentElement?.querySelector('.sb');
-    if(sbEl) sbEl.innerHTML=`de ${d.numMov} en mov.<br><span style="font-size:10px;color:var(--hint)">+${pct(pctAdicional)} mov. · ${pct(pctEntActual)} actual = <strong style="color:var(--green)">${pct(Math.min(pctFinal,100))} est.</strong></span>`;
+    if(sbEl) sbEl.innerHTML=`de ${d.numMov} en movimiento<br><span style="font-size:10px;color:var(--hint)">+${pct(pctAdicional)} mov. · ${pct(pctEntActual)} actual = <strong style="color:var(--green)">${pct(Math.min(pctFinal,100))} est.</strong></span>`;
   }
 
   $('tb-proy').innerHTML=d.mov.slice(0,60).map(o=>{
@@ -652,8 +658,8 @@ function calcWP(dropiData){
   const tot=dropiData.total,totWP=wp.length;
   const pWP=tot>0?(totWP/tot*100):0;
   $('m-wp').innerHTML=`
-    <div class="mc p"><div class="lb">Pedidos WA/Org.</div><div class="vl">${totWP}</div></div>
-    <div class="mc"><div class="lb">% del total Dropi</div><div class="vl">${pct(pWP)}</div></div>
+    <div class="mc p"><div class="lb">Pedidos WhatsApp / Orgánicos</div><div class="vl">${totWP}</div></div>
+    <div class="mc"><div class="lb">% del total en Dropi</div><div class="vl">${pct(pWP)}</div></div>
     <div class="mc b"><div class="lb">Con ID Shopify</div><div class="vl">${dropiData.allV.filter(o=>!o.esWA).length}</div></div>
     <div class="mc o"><div class="lb">Total Dropi</div><div class="vl">${tot}</div></div>
   `;
@@ -771,23 +777,25 @@ function renderRes(d,s,m,w){
 
   $('m-res').innerHTML=`
     <div class="mc b"><div class="lb">Pedidos Dropi</div><div class="vl">${_total}</div></div>
-    <div class="mc g"><div class="lb">Entregados</div><div class="vl">${_ent}</div><div class="sb">${pct(d?.pE||0)} s/desp.</div></div>
+    <div class="mc g"><div class="lb">Entregados</div><div class="vl">${_ent}</div><div class="sb">${pct(d?.pE||0)} sobre despachados</div></div>
     <div class="mc b"><div class="lb">En movimiento</div><div class="vl">${_numMov}</div></div>
-    <div class="mc g" style="border:1px solid rgba(34,197,94,0.25)"><div class="lb">Proyección entregas</div><div class="vl">${_proyEnt}</div><div class="sb">de ${_numMov} en mov. · ${(_EF*100).toFixed(0)}% ef.</div></div>
+    <div class="mc g" style="border:1px solid rgba(34,197,94,0.25)"><div class="lb">Proyección entregas</div><div class="vl">${_proyEnt}</div><div class="sb">de ${_numMov} en movimiento · ${(_EF*100).toFixed(0)}% efectividad</div></div>
     <div class="mc g" style="border:1px solid rgba(34,197,94,0.15)"><div class="lb">Efectividad proyectada</div><div class="vl">${_efProyPct.toFixed(1)}%</div><div class="sb">(${_ent}+${_proyEnt}) / ${_total}</div></div>
-    <div class="mc r" style="border:1px solid rgba(239,68,68,0.2)"><div class="lb">Dev. proyectada total</div><div class="vl">${_devTotal}</div><div class="sb">${_dev}+${_devProy} · ${_devTotalPct.toFixed(1)}% s/total</div></div>
-    <div class="mc p"><div class="lb">Pedidos WA/Org.</div><div class="vl">${w?.totWP||0}</div></div>
+    <div class="mc r"><div class="lb">Devoluciones reales</div><div class="vl">${_dev}</div><div class="sb">${_devActualPct.toFixed(1)}% del total</div></div>
+    <div class="mc r" style="border:1px solid rgba(239,68,68,0.2);opacity:0.8"><div class="lb">Devoluciones adicionales proyectadas</div><div class="vl">${_devProy}</div><div class="sb">de ${_numMov} en movimiento · ${(_EF*100).toFixed(0)}% efectividad</div></div>
+    <div class="mc r" style="border:1px solid rgba(239,68,68,0.35)"><div class="lb">Devolución total proyectada</div><div class="vl">${_devTotalPct.toFixed(1)}%</div><div class="sb">${_devTotal} pedidos del total estimado</div></div>
+    <div class="mc p"><div class="lb">Pedidos WhatsApp / Orgánicos</div><div class="vl">${w?.totWP||0}</div></div>
     <div class="mc o"><div class="lb">Total publicidad</div><div class="vl" style="font-size:12px">${fmt(tot)}</div></div>
-    <div class="mc"><div class="lb">CPA/pedido generado</div><div class="vl" style="font-size:12px">${fmt(tot>0&&_total>0?tot/_total:0)}</div></div>
-    <div class="mc"><div class="lb">CPA/guía desp.</div><div class="vl" style="font-size:12px">${fmt(cpaG)}</div></div>
-    <div class="mc"><div class="lb">CPA/entregado</div><div class="vl" style="font-size:12px">${fmt(cpaE)}</div></div>
-    <div class="mc a"><div class="lb">Ing. proyectado</div><div class="vl" style="font-size:12px">${fmt(gP?.ne||0)}</div><div class="sb">${_proyEnt} entregas est.</div></div>
+    <div class="mc"><div class="lb">CPA por pedido generado</div><div class="vl" style="font-size:12px">${fmt(tot>0&&_total>0?tot/_total:0)}</div></div>
+    <div class="mc"><div class="lb">CPA por guía despachada</div><div class="vl" style="font-size:12px">${fmt(cpaG)}</div></div>
+    <div class="mc"><div class="lb">CPA por pedido entregado</div><div class="vl" style="font-size:12px">${fmt(cpaE)}</div></div>
+    <div class="mc a"><div class="lb">Ingreso proyectado</div><div class="vl" style="font-size:12px">${fmt(gP?.ne||0)}</div><div class="sb">${_proyEnt} entregas estimadas</div></div>
   `;
   $('res-log').innerHTML=`
     <div class="cr"><div class="cl2">Pedidos Dropi</div><div class="cv">${d?.total||0}</div></div>
-    <div class="cr"><div class="cl2">Entregados</div><div class="cv" style="color:var(--green)">${d?.ent||0} · ${pct(d?.pE||0)} s/desp.</div></div>
+    <div class="cr"><div class="cl2">Entregados</div><div class="cv" style="color:var(--green)">${d?.ent||0} · ${pct(d?.pE||0)} sobre despachados</div></div>
     <div class="cr"><div class="cl2">En movimiento</div><div class="cv" style="color:var(--blue)">${d?.numMov||0}</div></div>
-    <div class="cr"><div class="cl2">Devoluciones — logística</div><div class="cv" style="color:var(--red)">${pct(d?.pD||0)} s/despachados</div></div>
+    <div class="cr"><div class="cl2">Devoluciones — métrica logística</div><div class="cv" style="color:var(--red)">${pct(d?.pD||0)} sobre despachados</div></div>
     <div class="cr"><div class="cl2">Cancelados</div><div class="cv" style="color:var(--orange)">${pct(d?.pC||0)} del total</div></div>
     <div class="cr"><div class="cl2">Tasa de despacho</div><div class="cv">${pct(d?.tD||0)}</div></div>
     <div class="cr"><div class="cl2">Pedidos WA/orgánicos</div><div class="cv" style="color:var(--purple)">${w?.totWP||0} · ${pct(w?.pWP||0)} de Dropi</div></div>
@@ -804,7 +812,7 @@ function renderRes(d,s,m,w){
   `;
   $('m-fin').innerHTML=`
     <div class="mc g"><div class="lb">Utilidad bruta</div><div class="vl" style="font-size:12px">${fmt(fin.utilBruta)}</div><div class="sb">lo que entra a la wallet</div></div>
-    <div class="mc" style="border:1px solid rgba(34,197,94,0.3)"><div class="lb">Utilidad neta</div><div class="vl" style="font-size:12px;color:${utilNeta>0?'var(--green)':'var(--red)'}">${fmt(utilNeta)}</div><div class="sb">tras pauta · ${pct(margenNeto)} margen</div></div>
+    <div class="mc" style="border:1px solid rgba(34,197,94,0.3)"><div class="lb">Utilidad neta</div><div class="vl" style="font-size:12px;color:${utilNeta>0?'var(--green)':'var(--red)'}">${fmt(utilNeta)}</div><div class="sb">después de pauta · ${pct(margenNeto)} margen</div></div>
     <div class="mc o"><div class="lb">Total publicidad</div><div class="vl" style="font-size:12px">${fmt(tot)}</div><div class="sb">${fin.utilBruta>0?pct(tot/fin.utilBruta*100):0} de la utilidad</div></div>
   `;
   $('res-fin').innerHTML=`
@@ -836,13 +844,13 @@ Período: ${df} al ${dt}
 
 SHOPIFY — Pedidos: ${s?.tot||0} | Ingresos: ${fmt(s?.ing||0)}
 
-DROPI — Total guías: ${d?.total||0} | Despachados: ${d?.desp||0} | Entregados: ${d?.ent||0} (${pct(d?.pE||0)} s/desp.) | En movimiento: ${d?.numMov||0} | Devoluciones: ${d?.dev||0} (${pct(d?.pD||0)} s/desp. — LOGÍSTICA) | Cancelados: ${d?.can||0} (${pct(d?.pC||0)} del total) | Pendientes conf.: ${d?.pend||0} | Tasa despacho: ${pct(d?.tD||0)} | Duplicados excl.: ${d?.dups||0}
+DROPI — Total guías: ${d?.total||0} | Despachados: ${d?.desp||0} | Entregados: ${d?.ent||0} (${pct(d?.pE||0)} sobre despachados) | En movimiento: ${d?.numMov||0} | Devoluciones: ${d?.dev||0} (${pct(d?.pD||0)} sobre despachados — LOGÍSTICA) | Cancelados: ${d?.can||0} (${pct(d?.pC||0)} del total) | Pendientes conf.: ${d?.pend||0} | Tasa despacho: ${pct(d?.tD||0)} | Duplicados excluidos: ${d?.dups||0}
 
 META ADS — Meta: ${fmt(m?.tG||0)} | TikTok: ${fmt(m?.tt||0)} | Total pub.: ${fmt(tot)} | CTR: ${pct(m?.ctr||0)} | CPC: ${fmt(m?.cpc||0)}
 
 WHATSAPP/ORGÁNICO — ${w?.totWP||0} pedidos (${pct(w?.pWP||0)} de Dropi)
 
-PROYECCIÓN — ${p?.numMov||0} en mov. | Ing. neto est.: ${fmt(p?.ne||0)} | Entregas est.: ${Math.round((p?.numMov||0)*0.85)}
+PROYECCIÓN — ${p?.numMov||0} en movimiento | Ingreso neto est.: ${fmt(p?.ne||0)} | Entregas est.: ${Math.round((p?.numMov||0)*0.85)}
 
 CPA/total: ${fmt(tot/Math.max(totP,1))} | CPA/guía: ${fmt(tot/Math.max(d?.desp||1,1))} | CPA/entregado: ${fmt(tot/Math.max(d?.ent||1,1))}
 
@@ -909,7 +917,7 @@ function calcSinMovimiento(dropiData){
   $('m-sinmov').innerHTML=`
     <div class="mc r"><div class="lb">Sin movimiento +48h</div><div class="vl">${pendientes.length}</div></div>
     <div class="mc a"><div class="lb">De ${dropiData.numMov} en movimiento</div><div class="vl">${pct(dropiData.numMov>0?pendientes.length/dropiData.numMov*100:0)}</div></div>
-    <div class="mc"><div class="lb">Máx. días sin mov.</div><div class="vl">${pendientes.length>0?pendientes[0].diasHab:0}</div></div>
+    <div class="mc"><div class="lb">Máx. días sin movimiento</div><div class="vl">${pendientes.length>0?pendientes[0].diasHab:0}</div></div>
   `;
   $('tb-sinmov').innerHTML=pendientes.map(o=>{
     const[lbl,cls]=PILL(o.estatus);
@@ -990,15 +998,15 @@ function renderProductos(productos){
         <div class="rank-name">${p.nombre}</div>
         <div class="rank-stats">
           <div class="rank-stat"><span class="lbl">Entrega</span><span style="color:${vD}">${efDespPct}%</span></div>
-          <div class="rank-stat"><span class="lbl">Entrega general</span><span style="color:${vT}">${efTotalPct}%</span></div>
-          <div class="rank-stat"><span class="lbl">Devol.</span><span style="color:var(--red)">${(p.pctDev*100).toFixed(1)}%</span></div>
-          <div class="rank-stat"><span class="lbl">Cancel.</span><span style="color:var(--orange)">${(p.pctCan*100).toFixed(1)}%</span></div>
+          <div class="rank-stat"><span class="lbl">Tasa de entrega general</span><span style="color:${vT}">${efTotalPct}%</span></div>
+          <div class="rank-stat"><span class="lbl">Devoluciones</span><span style="color:var(--red)">${(p.pctDev*100).toFixed(1)}%</span></div>
+          <div class="rank-stat"><span class="lbl">Cancelados</span><span style="color:var(--orange)">${(p.pctCan*100).toFixed(1)}%</span></div>
           <div class="rank-stat"><span class="lbl">Total</span><span style="color:var(--blue)">${p.total}</span></div>
-          <div class="rank-stat"><span class="lbl">Desp.</span><span style="color:var(--muted)">${p.desp}</span></div>
+          <div class="rank-stat"><span class="lbl">Despachados</span><span style="color:var(--muted)">${p.desp}</span></div>
         </div>
       </div>
       <div class="rank-bars">
-        <div class="rank-bar-row"><div class="rank-bar-label">Entrega s/despachado</div><div class="rank-bar-track"><div class="rank-bar-fill" style="width:${barDesp}%;background:${cD}"></div></div><div class="rank-bar-val" style="color:${vD}">${efDespPct}%</div></div>
+        <div class="rank-bar-row"><div class="rank-bar-label">Entrega sobre despachadosachado</div><div class="rank-bar-track"><div class="rank-bar-fill" style="width:${barDesp}%;background:${cD}"></div></div><div class="rank-bar-val" style="color:${vD}">${efDespPct}%</div></div>
         <div class="rank-bar-row"><div class="rank-bar-label">Efectividad general</div><div class="rank-bar-track"><div class="rank-bar-fill" style="width:${barTotal}%;background:${cT}"></div></div><div class="rank-bar-val" style="color:${vT}">${efTotalPct}%</div></div>
       </div>
       <div style="font-size:10px;color:var(--hint);margin-top:4px">Clic para ver desglose completo →</div>
@@ -1076,15 +1084,16 @@ function abrirModal(nombre){
     <!-- KPIs -->
     <div class="mg" style="margin-bottom:16px">
       <div class="mc b"><div class="lb">Total</div><div class="vl">${total}</div></div>
-      <div class="mc g"><div class="lb">Entregados</div><div class="vl">${ent}</div><div class="sb">${(efDesp*100).toFixed(1)}% s/desp.</div></div>
+      <div class="mc g"><div class="lb">Entregados</div><div class="vl">${ent}</div><div class="sb">${(efDesp*100).toFixed(1)}% sobre despachados</div></div>
       <div class="mc"><div class="lb">En movimiento</div><div class="vl">${mov}</div></div>
-      <div class="mc g" style="border:1px solid rgba(34,197,94,0.2)"><div class="lb">Proyección entregas</div><div class="vl">${proyEnt}</div><div class="sb">de ${mov} en mov. · ${(EF*100).toFixed(0)}% ef.</div></div>
+      <div class="mc g" style="border:1px solid rgba(34,197,94,0.2)"><div class="lb">Proyección entregas</div><div class="vl">${proyEnt}</div><div class="sb">de ${mov} en movimiento · ${(EF*100).toFixed(0)}% efectividad</div></div>
       <div class="mc g" style="border:1px solid rgba(34,197,94,0.15)"><div class="lb">Efectividad proyectada</div><div class="vl">${efProyPct.toFixed(1)}%</div><div class="sb">(${ent}+${proyEnt}) / ${total} total</div></div>
-      <div class="mc r"><div class="lb">Dev. proyectada total</div><div class="vl">${devTotal}</div><div class="sb">${dev}+${devProy} · ${devTotalPct.toFixed(1)}% s/total</div></div>
-      <div class="mc r"><div class="lb">Devoluciones reales</div><div class="vl">${dev}</div><div class="sb">${total>0?(dev/total*100).toFixed(1):0}% s/total</div></div>
-      <div class="mc o"><div class="lb">Cancelados</div><div class="vl">${can}</div><div class="sb">${total>0?(can/total*100).toFixed(1):0}% s/total</div></div>
-      <div class="mc a"><div class="lb">Pend. conf.</div><div class="vl">${pend}</div></div>
-      <div class="mc"><div class="lb">Entrega general</div><div class="vl">${(efTotal*100).toFixed(1)}%</div></div>
+      <div class="mc r"><div class="lb">Devoluciones reales</div><div class="vl">${dev}</div><div class="sb">${total>0?(dev/total*100).toFixed(1):0}% del total</div></div>
+      <div class="mc r" style="border:1px solid rgba(239,68,68,0.2);opacity:0.8"><div class="lb">Devoluciones adicionales proyectadas</div><div class="vl">${devProy}</div><div class="sb">de ${mov} en movimiento · ${(EF*100).toFixed(0)}% efectividad</div></div>
+      <div class="mc r" style="border:1px solid rgba(239,68,68,0.35)"><div class="lb">Devolución total proyectada</div><div class="vl">${devTotalPct.toFixed(1)}%</div><div class="sb">${devTotal} pedidos del total estimado</div></div>
+      <div class="mc o"><div class="lb">Cancelados</div><div class="vl">${can}</div><div class="sb">${total>0?(can/total*100).toFixed(1):0}% del total</div></div>
+      <div class="mc a"><div class="lb">Pendiente confirmación</div><div class="vl">${pend}</div></div>
+      <div class="mc"><div class="lb">Tasa de entrega general</div><div class="vl">${(efTotal*100).toFixed(1)}%</div></div>
     </div>
     <hr class="sdv">
     <!-- Mini torta + estados -->
