@@ -721,25 +721,31 @@ function calcFinanciero(allValidas){
   return{totalOrdenEnt,fleteEnt,costoProvEnt,fletesDev,utilBruta};
 }
 
-function dibujarTortaFin(utilBruta,pauta){
+function dibujarTortaFin(utilBruta,gastMeta,gastTiktok){
   const canvas=$('torta-fin');if(!canvas)return;
   const ctx=canvas.getContext('2d');
   const cx=110,cy=110,r=95;
   ctx.clearRect(0,0,220,220);
-  const utilNeta=Math.max(utilBruta-pauta,0);
-  const datos=[{label:'Utilidad neta',v:utilNeta,color:'#22c55e'},{label:'Pauta',v:pauta,color:'#3b82f6'}].filter(x=>x.v>0);
+  const totalPauta=gastMeta+gastTiktok;
+  const utilNeta=Math.max(utilBruta-totalPauta,0);
+  const datos=[
+    {label:'Utilidad neta',v:utilNeta,color:'#22c55e'},
+    {label:'Meta Ads',v:gastMeta,color:'#3b82f6'},
+    {label:'TikTok Ads',v:gastTiktok,color:'#1a1a1a'},
+  ].filter(x=>x.v>0);
   if(!datos.length)return;
   const total=datos.reduce((s,d)=>s+d.v,0);
   let ang=-Math.PI/2;
   datos.forEach(d=>{
     const sw=d.v/total*Math.PI*2;
     ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,ang,ang+sw);ctx.closePath();
-    ctx.fillStyle=d.color;ctx.fill();ctx.strokeStyle='rgba(0,0,0,0.2)';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle=d.color;ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,0.08)';ctx.lineWidth=2;ctx.stroke();
     if(d.v/total>0.05){const mid=ang+sw/2;ctx.fillStyle='#fff';ctx.font='bold 11px Inter,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText((d.v/total*100).toFixed(0)+'%',cx+Math.cos(mid)*r*0.65,cy+Math.sin(mid)*r*0.65);}
     ang+=sw;
   });
   const leg=$('torta-fin-leg');
-  if(leg)leg.innerHTML=datos.map(d=>`<div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)"><div style="width:10px;height:10px;border-radius:2px;background:${d.color}"></div>${d.label} <strong style="color:var(--text)">${fmt(d.v)}</strong></div>`).join('');
+  if(leg)leg.innerHTML=datos.map(d=>`<div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)"><div style="width:10px;height:10px;border-radius:2px;background:${d.color};${d.color==='#1a1a1a'?'border:1px solid #555':''}"></div>${d.label} <strong style="color:var(--text)">${fmt(d.v)}</strong></div>`).join('');
 }
 
 function renderRes(d,s,m,w){
@@ -750,15 +756,29 @@ function renderRes(d,s,m,w){
   const utilNeta=Math.max(fin.utilBruta-tot,0);
   const margenNeto=fin.utilBruta>0?(utilNeta/fin.utilBruta*100):0;
 
+  // Métricas de proyección general
+  const _EF=gP?.EF||0.80;
+  const _numMov=d?.numMov||0;
+  const _ent=d?.ent||0;
+  const _total=d?.total||0;
+  const _proyEnt=gP?.entProy||0;
+  const _devProy=Math.round(_numMov*(1-_EF));
+  const _efProyPct=_total>0?((_ent+_proyEnt)/_total*100):0;
+  const _devProyPct=_total>0?(_devProy/_total*100):0;
+
   $('m-res').innerHTML=`
-    <div class="mc b"><div class="lb">Pedidos Dropi</div><div class="vl">${d?.total||0}</div></div>
-    <div class="mc g"><div class="lb">Entregados</div><div class="vl">${d?.ent||0}</div><div class="sb">${pct(d?.pE||0)} s/desp.</div></div>
+    <div class="mc b"><div class="lb">Pedidos Dropi</div><div class="vl">${_total}</div></div>
+    <div class="mc g"><div class="lb">Entregados</div><div class="vl">${_ent}</div><div class="sb">${pct(d?.pE||0)} s/desp.</div></div>
+    <div class="mc b"><div class="lb">En movimiento</div><div class="vl">${_numMov}</div></div>
+    <div class="mc g" style="border:1px solid rgba(34,197,94,0.25)"><div class="lb">Proyección entregas</div><div class="vl">${_proyEnt}</div><div class="sb">de ${_numMov} en mov. · ${(_EF*100).toFixed(0)}% ef.</div></div>
+    <div class="mc g" style="border:1px solid rgba(34,197,94,0.15)"><div class="lb">Efectividad proyectada</div><div class="vl">${_efProyPct.toFixed(1)}%</div><div class="sb">(${_ent}+${_proyEnt}) / ${_total}</div></div>
+    <div class="mc r" style="border:1px solid rgba(239,68,68,0.2)"><div class="lb">Dev. proyectada</div><div class="vl">${_devProy}</div><div class="sb">${_devProyPct.toFixed(1)}% s/total · de ${_numMov} mov.</div></div>
     <div class="mc p"><div class="lb">Pedidos WA/Org.</div><div class="vl">${w?.totWP||0}</div></div>
     <div class="mc o"><div class="lb">Total publicidad</div><div class="vl" style="font-size:12px">${fmt(tot)}</div></div>
-    <div class="mc"><div class="lb">CPA/pedido generado</div><div class="vl" style="font-size:12px">${fmt(tot>0&&d?.total>0?tot/d.total:0)}</div></div>
+    <div class="mc"><div class="lb">CPA/pedido generado</div><div class="vl" style="font-size:12px">${fmt(tot>0&&_total>0?tot/_total:0)}</div></div>
     <div class="mc"><div class="lb">CPA/guía desp.</div><div class="vl" style="font-size:12px">${fmt(cpaG)}</div></div>
     <div class="mc"><div class="lb">CPA/entregado</div><div class="vl" style="font-size:12px">${fmt(cpaE)}</div></div>
-    <div class="mc a"><div class="lb">Ing. proyectado</div><div class="vl" style="font-size:12px">${fmt(gP?.ne||0)}</div><div class="sb">${gP?.entProy||0} entregas est.</div></div>
+    <div class="mc a"><div class="lb">Ing. proyectado</div><div class="vl" style="font-size:12px">${fmt(gP?.ne||0)}</div><div class="sb">${_proyEnt} entregas est.</div></div>
   `;
   $('res-log').innerHTML=`
     <div class="cr"><div class="cl2">Pedidos Dropi</div><div class="cv">${d?.total||0}</div></div>
@@ -793,7 +813,7 @@ function renderRes(d,s,m,w){
     <div class="cr"><div class="cl2">Gasto publicidad</div><div class="cv" style="color:var(--red)">−${fmt(tot)}</div></div>
     <div class="cr"><div class="cl2" style="font-weight:600;color:var(--text)">Utilidad neta</div><div class="cv" style="color:${utilNeta>0?'var(--green)':'var(--red)'};font-weight:700">${fmt(utilNeta)}</div></div>
   `;
-  setTimeout(()=>dibujarTortaFin(fin.utilBruta,tot),200);
+  setTimeout(()=>dibujarTortaFin(fin.utilBruta,m?.tG||0,m?.tt||0),200);
   $('hbadge').textContent=`${d?.total||0} guías · ${pct(d?.pE||0)} entrega`;
   $('hdate').textContent=`${$('date-from').value} → ${$('date-to').value}`;
 }
