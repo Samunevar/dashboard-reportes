@@ -760,11 +760,14 @@ function renderRes(d,s,m,w){
   const _EF=gP?.EF||0.80;
   const _numMov=d?.numMov||0;
   const _ent=d?.ent||0;
+  const _dev=d?.dev||0;
   const _total=d?.total||0;
   const _proyEnt=gP?.entProy||0;
   const _devProy=Math.round(_numMov*(1-_EF));
+  const _devTotal=_dev+_devProy;
   const _efProyPct=_total>0?((_ent+_proyEnt)/_total*100):0;
-  const _devProyPct=_total>0?(_devProy/_total*100):0;
+  const _devTotalPct=_total>0?(_devTotal/_total*100):0;
+  const _devActualPct=_total>0?(_dev/_total*100):0;
 
   $('m-res').innerHTML=`
     <div class="mc b"><div class="lb">Pedidos Dropi</div><div class="vl">${_total}</div></div>
@@ -772,7 +775,7 @@ function renderRes(d,s,m,w){
     <div class="mc b"><div class="lb">En movimiento</div><div class="vl">${_numMov}</div></div>
     <div class="mc g" style="border:1px solid rgba(34,197,94,0.25)"><div class="lb">Proyección entregas</div><div class="vl">${_proyEnt}</div><div class="sb">de ${_numMov} en mov. · ${(_EF*100).toFixed(0)}% ef.</div></div>
     <div class="mc g" style="border:1px solid rgba(34,197,94,0.15)"><div class="lb">Efectividad proyectada</div><div class="vl">${_efProyPct.toFixed(1)}%</div><div class="sb">(${_ent}+${_proyEnt}) / ${_total}</div></div>
-    <div class="mc r" style="border:1px solid rgba(239,68,68,0.2)"><div class="lb">Dev. proyectada</div><div class="vl">${_devProy}</div><div class="sb">${_devProyPct.toFixed(1)}% s/total · de ${_numMov} mov.</div></div>
+    <div class="mc r" style="border:1px solid rgba(239,68,68,0.2)"><div class="lb">Dev. proyectada total</div><div class="vl">${_devTotal}</div><div class="sb">${_dev}+${_devProy} · ${_devTotalPct.toFixed(1)}% s/total</div></div>
     <div class="mc p"><div class="lb">Pedidos WA/Org.</div><div class="vl">${w?.totWP||0}</div></div>
     <div class="mc o"><div class="lb">Total publicidad</div><div class="vl" style="font-size:12px">${fmt(tot)}</div></div>
     <div class="mc"><div class="lb">CPA/pedido generado</div><div class="vl" style="font-size:12px">${fmt(tot>0&&_total>0?tot/_total:0)}</div></div>
@@ -1026,8 +1029,9 @@ function abrirModal(nombre){
 
   // Nuevas métricas de proyección
   const devProy=Math.round(mov*(1-EF));
+  const devTotal=dev+devProy;
   const efProyPct=total>0?((ent+proyEnt)/total*100):0;
-  const devProyPct=total>0?(devProy/total*100):0;
+  const devTotalPct=total>0?(devTotal/total*100):0;
 
   // Por transportadora
   const byT={};
@@ -1076,7 +1080,7 @@ function abrirModal(nombre){
       <div class="mc"><div class="lb">En movimiento</div><div class="vl">${mov}</div></div>
       <div class="mc g" style="border:1px solid rgba(34,197,94,0.2)"><div class="lb">Proyección entregas</div><div class="vl">${proyEnt}</div><div class="sb">de ${mov} en mov. · ${(EF*100).toFixed(0)}% ef.</div></div>
       <div class="mc g" style="border:1px solid rgba(34,197,94,0.15)"><div class="lb">Efectividad proyectada</div><div class="vl">${efProyPct.toFixed(1)}%</div><div class="sb">(${ent}+${proyEnt}) / ${total} total</div></div>
-      <div class="mc r"><div class="lb">Dev. proyectada</div><div class="vl">${devProy}</div><div class="sb">${devProyPct.toFixed(1)}% s/total · de ${mov} en mov.</div></div>
+      <div class="mc r"><div class="lb">Dev. proyectada total</div><div class="vl">${devTotal}</div><div class="sb">${dev}+${devProy} · ${devTotalPct.toFixed(1)}% s/total</div></div>
       <div class="mc r"><div class="lb">Devoluciones reales</div><div class="vl">${dev}</div><div class="sb">${total>0?(dev/total*100).toFixed(1):0}% s/total</div></div>
       <div class="mc o"><div class="lb">Cancelados</div><div class="vl">${can}</div><div class="sb">${total>0?(can/total*100).toFixed(1):0}% s/total</div></div>
       <div class="mc a"><div class="lb">Pend. conf.</div><div class="vl">${pend}</div></div>
