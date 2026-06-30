@@ -170,7 +170,7 @@ tr:hover td{background:var(--bg3);}
 <div class="shell">
 
 <div class="hdr">
-  <div><h1>Dashboard de reportes</h1><p id="hdate">Shopify · Meta Ads · Dropi · Colombia</p></div>
+  <div><h1>Dashboard de reportes</h1><p id="hdate">Dropi · Shopify · Colombia</p></div>
   <div class="hbadge" id="hbadge">Sin datos</div>
 </div>
 
@@ -608,15 +608,53 @@ function procesarDropi(df,dt){
     const val=ps.length>0?ps.reduce((s,p)=>s+parseFloat(p['TOTAL DE LA ORDEN']||0),0):parseFloat(r['VALOR FACTURADO']||0);
     const fl=ps.length>0?ps.reduce((s,p)=>s+parseFloat(p['PRECIO FLETE']||0),0):parseFloat(r['PRECIO FLETE']||0);
     const cp=ps.reduce((s,p)=>s+parseFloat(p['PRECIO PROVEEDOR X CANTIDAD']||0),0)||parseFloat(r['VALOR DE COMPRA EN PRODUCTOS']||0);
+    const cdf=parseFloat(r['COSTO DEVOLUCION FLETE']||0); // costo real de flete cuando es devolucion, si el reporte lo trae
     const prods=ps.map(p=>p['PRODUCTO']||'').filter(Boolean).join(', ')||'—';
     const idTienda=String(r['ID DE ORDEN DE TIENDA']||'').trim();
     const esWA=!idTienda||idTienda===''||idTienda==='nan'||idTienda==='NaN';
-    return{id,estatus:String(r['ESTATUS']||'').toUpperCase().trim(),cliente:r['NOMBRE CLIENTE']||'—',tel:String(r['TELÉFONO']||''),ciudad:r['CIUDAD DESTINO']||'—',guia:r['NÚMERO GUIA']||'',transp:r['TRANSPORTADORA']||'—',valor:val,flete:fl,costoProv:cp,productos:prods,idTienda,esWA,fecha:r['_iso']||'',dup:r['_dup']||false};
+    const estatus=String(r['ESTATUS']||'').toUpperCase().trim();
+    return{id,estatus,cliente:r['NOMBRE CLIENTE']||'—',tel:String(r['TELÉFONO']||''),ciudad:r['CIUDAD DESTINO']||'—',guia:r['NÚMERO GUIA']||'',transp:r['TRANSPORTADORA']||'—',valor:val,flete:fl,costoDevFlete:cdf,costoProv:cp,productos:prods,idTienda,esWA,fecha:r['_iso']||'',dup:r['_dup']||false};
   });
   buildPF(allOrds.filter(o=>!o.dup));
   const v=allOrds.filter(o=>!o.dup);
+  // Calcular tabla de ajuste de flete de devolucion por transportadora usando datos reales
+  calcularAjusteFleteDevolucion(v);
   const d=calcM(v);d.dups=allOrds.filter(o=>o.dup).length;d.allV=v;
   return d;
+}
+
+// ---- MOTOR DE FLETE DE DEVOLUCION POR TRANSPORTADORA ----
+// Para pedidos devueltos: se cobra UN SOLO flete (no se suman flete normal + flete devolucion).
+// Si el reporte trae COSTO DEVOLUCION FLETE > 0, ese es el flete real cobrado.
+// Si no lo trae, se estima restando la diferencia promedio observada en esa transportadora
+// (PRECIO FLETE - COSTO DEVOLUCION FLETE) de los pedidos que SI tienen el dato.
+// Para ENVIA sin dato, se suma $2000 de margen conservador a la diferencia estimada.
+let ajusteFleteDevTransp={};
+
+function calcularAjusteFleteDevolucion(ords){
+  const porTransp={};
+  ords.filter(o=>o.estatus==='DEVOLUCION'&&o.costoDevFlete>0).forEach(o=>{
+    const t=o.transp||'Sin info';
+    if(!porTransp[t])porTransp[t]=[];
+    porTransp[t].push(o.flete-o.costoDevFlete);
+  });
+  ajusteFleteDevTransp={};
+  Object.entries(porTransp).forEach(([t,diffs])=>{
+    const prom=diffs.reduce((s,x)=>s+x,0)/diffs.length;
+    ajusteFleteDevTransp[t]=Math.max(prom,0);
+  });
+}
+
+// Devuelve el flete EFECTIVO que se cobra por un pedido — usar SIEMPRE esta funcion
+// en vez de o.flete directamente, para que devoluciones no dupliquen el cobro.
+function fleteEfectivo(o){
+  if(o.estatus!=='DEVOLUCION')return o.flete; // entregados y demas pagan el flete normal completo
+  if(o.costoDevFlete>0)return o.costoDevFlete; // dato real del reporte
+  // Estimar con la diferencia promedio de la transportadora
+  const t=o.transp||'Sin info';
+  let diff=ajusteFleteDevTransp[t]!==undefined?ajusteFleteDevTransp[t]:(o.flete*0.15); // fallback 15% si no hay ninguna referencia
+  if(t.toUpperCase().includes('ENVIA'))diff+=2000; // margen conservador para Envia sin dato
+  return Math.max(o.flete-diff,0);
 }
 
 function calcM(v){
@@ -770,37 +808,14 @@ function renderProy(d){
   return gP;
 }
 
-function renderShop(rows){
-  const df=$('date-from').value,dt=$('date-to').value;
-  const f=rows.filter(r=>{const x=(r['orders.processed_at']||'').slice(0,10);return(!df||x>=df)&&(!dt||x<=dt);});
-  const tot=f.length,ing=f.reduce((s,r)=>s+parseFloat(r['orders.total_net_sales']||0),0);
-  $('m-shop').innerHTML=`
-    <div class="mc b"><div class="lb">Total pedidos</div><div class="vl">${tot}</div></div>
-    <div class="mc g"><div class="lb">Pagados</div><div class="vl">${f.filter(r=>r['orders.financial_status']==='paid').length}</div></div>
-    <div class="mc a"><div class="lb">Pendientes</div><div class="vl">${f.filter(r=>r['orders.financial_status']==='pending').length}</div></div>
-    <div class="mc o"><div class="lb">Ingresos netos</div><div class="vl" style="font-size:13px">${fmt(ing)}</div></div>
-  `;
-  const sm={paid:['Pagado','pg'],pending:['Pendiente','pa'],refunded:['Devuelto','pr'],voided:['Cancelado','pr'],partially_refunded:['Dev. parcial','pa']};
-  $('tb-shop').innerHTML=f.slice(0,80).map(r=>{const[sl,sc]=sm[r['orders.financial_status']]||[r['orders.financial_status'],'pgr'];const fecha=(r['orders.processed_at']||'').slice(0,10);const cli=r['customers.name']||'—';return`<tr><td style="font-family:'JetBrains Mono',monospace;font-size:11px">${r['orders.name']||''}</td><td style="color:var(--muted);max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cli==='<nil>'?'—':cli}</td><td style="font-family:'JetBrains Mono',monospace">${fmt(parseFloat(r['orders.total_net_sales']||0))}</td><td><span class="pill ${sc}">${sl}</span></td><td style="color:var(--muted)">${fecha}</td></tr>`;}).join('')||'<tr><td colspan="5" class="empty">Sin pedidos</td></tr>';
-  gS={tot,ing};return gS;
-}
-
 function calcWP(dropiData){
   if(!dropiData)return null;
   const wp=dropiData.allV.filter(o=>o.esWA&&!EST_CAN.includes(o.estatus));
   const tot=dropiData.total,totWP=wp.length;
   const pWP=tot>0?(totWP/tot*100):0;
-  $('m-wp').innerHTML=`
-    <div class="mc p"><div class="lb">Pedidos WhatsApp / Orgánicos</div><div class="vl">${totWP}</div></div>
-    <div class="mc"><div class="lb">% del total en Dropi</div><div class="vl">${pct(pWP)}</div></div>
-    <div class="mc b"><div class="lb">Con ID Shopify</div><div class="vl">${dropiData.allV.filter(o=>!o.esWA).length}</div></div>
-    <div class="mc o"><div class="lb">Total Dropi</div><div class="vl">${tot}</div></div>
-  `;
-  $('tb-wp').innerHTML=wp.slice(0,80).map(o=>{const[l,c]=PILL(o.estatus);return`<tr><td style="font-family:'JetBrains Mono',monospace;font-size:11px">${o.id}</td><td>${o.cliente}</td><td style="font-family:'JetBrains Mono',monospace">${o.tel}</td><td style="color:var(--muted)">${o.ciudad}</td><td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)">${o.productos}</td><td style="font-family:'JetBrains Mono',monospace">${fmt(o.valor)}</td><td><span class="pill ${c}">${l}</span></td></tr>`;}).join('')||'<tr><td colspan="7" class="empty">Sin pedidos de WhatsApp detectados</td></tr>';
-  gW={totWP,pWP};return gW;
+  return{totWP,pWP};
 }
 
-// fetchMeta eliminado — usar gasto manual
 
 function renderMeta(data,tt,ms){
   const cs=data.data||[];
@@ -848,13 +863,13 @@ function renderMeta(data,tt,ms){
 
 function calcFinanciero(allValidas){
   const entregados=allValidas.filter(o=>EST_ENT.includes(o.estatus));
-  const devueltos=allValidas.filter(o=>o.estatus==='DEVOLUCION');
   const totalOrdenEnt=entregados.reduce((s,o)=>s+o.valor,0);
-  const fleteEnt=entregados.reduce((s,o)=>s+o.flete,0);
+  const fleteEnt=entregados.reduce((s,o)=>s+fleteEfectivo(o),0);
   const costoProvEnt=entregados.reduce((s,o)=>s+o.costoProv,0);
-  const fletesDev=devueltos.reduce((s,o)=>s+o.flete,0);
-  const utilBruta=totalOrdenEnt-fleteEnt-costoProvEnt-fletesDev;
-  return{totalOrdenEnt,fleteEnt,costoProvEnt,fletesDev,utilBruta};
+  // Wallet = total orden - flete - proveedor. Las devoluciones NO generan ingreso
+  // por lo que no entran a totalOrdenEnt, y su flete (ya descontado via fleteEfectivo) no se resta aqui
+  const utilBruta=totalOrdenEnt-fleteEnt-costoProvEnt;
+  return{totalOrdenEnt,fleteEnt,costoProvEnt,fletesDev:0,utilBruta};
 }
 
 function dibujarTortaFin(utilBruta,gastMeta,gastTiktok){
@@ -1133,12 +1148,17 @@ let gProductos=[];
 
 function renderProductos(productos){
   gProductos=productos;
-  // Filtrar productos con menos de 30 pedidos para el ranking
   const minPedidos=30;
   const productosFiltrados=productos.filter(p=>p.total>=minPedidos);
-  const productosPocos=productos.filter(p=>p.total<minPedidos);
-  if(!productosFiltrados.length&&!productos.length){$('prod-ranking').innerHTML='<div class="empty">Sube el archivo de órdenes con productos para ver este apartado</div>';return;}
-  const sorted=sortProductos(productosFiltrados.length?productosFiltrados:productos);
+  const productosPocos=productos.filter(p=>p.total<minPedidos).sort((a,b)=>b.total-a.total);
+  if(!productos.length){$('prod-ranking').innerHTML='<div class="empty">Sube el archivo de órdenes con productos para ver este apartado</div>';return;}
+  // Top 3: solo productos con 30+ pedidos ordenados por el criterio activo
+  // Del 4 en adelante: los demás de mayor a menor pedidos
+  const top3=sortProductos(productosFiltrados).slice(0,3);
+  const resto=prodSort==='best'
+    ? [...sortProductos(productosFiltrados).slice(3),...productosPocos]
+    : [...sortProductos(productosFiltrados).slice(3),...productosPocos];
+  const sorted=[...top3,...resto];
   const mostrandoFiltrados=productosFiltrados.length>0;
   const medals=['🥇','🥈','🥉'];
   const notaPocos=mostrandoFiltrados&&productosPocos.length>0?`<div class="al ai" style="margin-top:12px;font-size:11px">📊 ${productosPocos.length} producto${productosPocos.length>1?'s':''} con menos de ${minPedidos} pedidos no aparece${productosPocos.length>1?'n':''} en el ranking (datos insuficientes para comparar): ${productosPocos.map(p=>p.nombre).join(', ')}</div>`:'';
@@ -1171,6 +1191,59 @@ function renderProductos(productos){
 }
 
 // ---- MODAL PRODUCTO (CON PROYECCIÓN MEJORADA + SIMULADOR) ----
+// ---- RECLASIFICACION CONSERVADORA PARA SIMULACION ----
+// Pedidos en movimiento +10 dias sin cerrar -> tratar como devolucion (90% prob real)
+// Novedad sin solucionar +5 dias -> tratar como devolucion
+// Pendiente confirmacion +5 dias habiles -> tratar como cancelacion
+function reclasificarParaSimulacion(ords){
+  const fechaByID={},novByID={};
+  dOrd.forEach(r=>{
+    const id=String(r['ID']||'');
+    fechaByID[id]=r['FECHA DE ÚLTIMO MOVIMIENTO']||r['FECHA']||'';
+    novByID[id]=String(r['FUE SOLUCIONADA LA NOVEDAD']||'').toUpperCase();
+  });
+  let ent=0,dev=0,can=0,movSano=0,pendSano=0;
+  ords.forEach(o=>{
+    if(EST_ENT.includes(o.estatus)){ent++;return;}
+    if(o.estatus==='DEVOLUCION'||o.estatus==='RECHAZADO'){dev++;return;}
+    if(EST_CAN.includes(o.estatus)){can++;return;}
+    const fech=fechaByID[o.id]||'';
+    const dh=diasHabiles(fech);
+    if(EST_MOV.includes(o.estatus)){
+      if(dh>=10){dev++;}
+      else if(o.estatus==='NOVEDAD'&&dh>=5&&novByID[o.id]!=='SI'&&novByID[o.id]!=='SÍ'){dev++;}
+      else{movSano++;} // sigue en movimiento dentro de tiempo normal
+      return;
+    }
+    if(EST_PEND.includes(o.estatus)){
+      if(dh>=4){can++;}
+      else{pendSano++;} // pendiente aun joven, no forzado a cancelacion
+      return;
+    }
+  });
+  // movSano: ya esta despachado y en camino -> aplica la tasa de entrega SOBRE DESPACHADOS (EF madura)
+  if(movSano>0){
+    let efRef=0.75;
+    try{const r=calcEfectividad({desp:ent+dev,ent});efRef=r.EF;}catch(e){}
+    ent+=movSano*efRef;
+    dev+=movSano*(1-efRef);
+  }
+  // pendSano: aun no se ha confirmado/despachado -> usar la tasa de confirmacion observada del producto
+  // (cuantos de los ya resueltos terminaron despachando vs cancelandose), mas conservador
+  if(pendSano>0){
+    const totalResuelto=ent+dev+can;
+    const tasaConfirma=totalResuelto>0?(ent+dev)/totalResuelto:0.65;
+    let efRef=0.75;
+    try{const r=calcEfectividad({desp:ent+dev,ent});efRef=r.EF;}catch(e){}
+    const pendQueDespacha=pendSano*tasaConfirma;
+    const pendQueCancela=pendSano*(1-tasaConfirma);
+    can+=pendQueCancela;
+    ent+=pendQueDespacha*efRef;
+    dev+=pendQueDespacha*(1-efRef);
+  }
+  return{ent:Math.round(ent),dev:Math.round(dev),can:Math.round(can),total:ords.length};
+}
+
 function abrirModal(nombre){
   const p=gProductos.find(x=>x.nombre===nombre);
   if(!p)return;
@@ -1191,26 +1264,34 @@ function abrirModal(nombre){
   const {EF,fuente}=calcEfectividad({desp,ent});
   const proyEnt=Math.round(mov*EF);
 
-  // Métricas financieras reales
+  // Financiero real — flete efectivo (sin doble cobro en devoluciones)
   const ordsEnt=ords.filter(o=>EST_ENT.includes(o.estatus));
   const ordsDev=ords.filter(o=>o.estatus==='DEVOLUCION');
   const ingresosBrutos=ordsEnt.reduce((s,o)=>s+o.valor,0);
-  const fletesEnt=ordsEnt.reduce((s,o)=>s+o.flete,0);
+  const fletesEnt=ordsEnt.reduce((s,o)=>s+fleteEfectivo(o),0);
   const costoProvEnt=ordsEnt.reduce((s,o)=>s+o.costoProv,0);
-  const fletesDev=ordsDev.reduce((s,o)=>s+o.flete,0);
-  const walletBruta=ingresosBrutos-fletesEnt-costoProvEnt-fletesDev;
+  const walletBruta=ingresosBrutos-fletesEnt-costoProvEnt;
   const ticketPromedio=ent>0?ingresosBrutos/ent:0;
   const walletPorEntrega=ent>0?walletBruta/ent:0;
   const fleteProm=ent>0?fletesEnt/ent:0;
   const costoProm=ent>0?costoProvEnt/ent:0;
+  // Relacion flete/ticket para escalar el flete cuando el ticket cambie (simulacion)
+  const ratioFleteTicket=ticketPromedio>0?fleteProm/ticketPromedio:0;
 
-  // Proyección de devoluciones
+  // Distribucion real por transportadora para ESTE producto (despachados)
+  const ordsDesp=ords.filter(o=>EST_ENT.includes(o.estatus)||EST_DEV.includes(o.estatus)||EST_MOV.includes(o.estatus));
+  const byTranspCount={};
+  ordsDesp.forEach(o=>{const t=o.transp||'Sin info';byTranspCount[t]=(byTranspCount[t]||0)+1;});
+  const totalDesp=ordsDesp.length||1;
+  const transpDist=Object.entries(byTranspCount).map(([t,n])=>({transp:t,pct:n/totalDesp}));
+
+  // Proyeccion de devoluciones (logica de mov en movimiento, igual que antes)
   const devProy=Math.round(mov*(1-EF));
   const devTotal=dev+devProy;
   const efProyPct=total>0?((ent+proyEnt)/total*100):0;
   const devTotalPct=total>0?(devTotal/total*100):0;
 
-  // Por transportadora
+  // Por transportadora (tabla visual)
   const byT={};
   ords.forEach(o=>{
     const t=o.transp||'Sin info';
@@ -1225,7 +1306,6 @@ function abrirModal(nombre){
     return`<div class="transp-item"><div class="transp-name">${t}</div><div class="transp-bar-track"><div class="transp-bar-fill" style="width:${bar}%;background:${c}"></div></div><div class="transp-val" style="color:${v}">${(ef*100).toFixed(1)}%</div><div class="transp-ped">${d.desp} desp.</div></div>`;
   }).join('');
 
-  // Por ciudad top 15
   const byC={};
   ords.forEach(o=>{
     const c=(o.ciudad||'Sin ciudad').toUpperCase();
@@ -1251,7 +1331,6 @@ function abrirModal(nombre){
       <div style="font-size:11px;color:var(--muted)">${total} pedidos totales · ${desp} despachados · ${mov} en movimiento</div>
     </div>
 
-    <!-- KPIs principales -->
     <div class="mg" style="margin-bottom:16px">
       <div class="mc b"><div class="lb">Total pedidos</div><div class="vl">${total}</div></div>
       <div class="mc g"><div class="lb">Entregados</div><div class="vl">${ent}</div><div class="sb">${(efDesp*100).toFixed(1)}% sobre despachados</div></div>
@@ -1268,23 +1347,23 @@ function abrirModal(nombre){
 
     <hr class="sdv">
 
-    <!-- Financiero real -->
     <div class="ct">Financiero real</div>
     <div class="tw" style="margin-bottom:16px">
       <div>
         <div class="mg">
-          <div class="mc g"><div class="lb">Dinero en wallet</div><div class="vl" style="font-size:13px">${fmt(walletBruta)}</div><div class="sb">ingresos − fletes − proveedor − dev.</div></div>
+          <div class="mc g"><div class="lb">Wallet bruta</div><div class="vl" style="font-size:13px">${fmt(walletBruta)}</div><div class="sb">ingresos − flete − proveedor</div></div>
           <div class="mc"><div class="lb">Ticket promedio</div><div class="vl" style="font-size:13px">${fmt(ticketPromedio)}</div><div class="sb">por pedido entregado</div></div>
-          <div class="mc g" style="border:1px solid rgba(34,197,94,0.2)"><div class="lb">Wallet por entrega</div><div class="vl" style="font-size:13px">${fmt(walletPorEntrega)}</div><div class="sb">ganancia neta por entregado</div></div>
-          <div class="mc"><div class="lb">Flete promedio</div><div class="vl" style="font-size:13px">${fmt(fleteProm)}</div></div>
-          <div class="mc"><div class="lb">Costo proveedor prom.</div><div class="vl" style="font-size:13px">${fmt(costoProm)}</div></div>
+          <div class="mc g" style="border:1px solid rgba(34,197,94,0.2)"><div class="lb">Wallet por entrega</div><div class="vl" style="font-size:13px">${fmt(walletPorEntrega)}</div><div class="sb">ganancia bruta por entregado</div></div>
+          <div class="mc"><div class="lb">Flete promedio</div><div class="vl" style="font-size:13px">${fmt(fleteProm)}</div><div class="sb">${(ratioFleteTicket*100).toFixed(1)}% del ticket</div></div>
+        </div>
+        <div style="margin-top:10px;margin-bottom:10px">
+          <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">CPA Promedio Meta Ads real (por pedido generado)</label>
+          <input type="number" id="cpa-real" value="0" min="0" step="1000" oninput="actualizarFinReal('${nombre.replace(/'/g,"\\'")}',${walletBruta},${total},${desp},${ent})" style="width:100%;max-width:220px">
         </div>
         <div id="fin-real-detalle" style="margin-top:8px">
-          <div class="cr"><div class="cl2">Ingresos brutos entregados</div><div class="cv">${fmt(ingresosBrutos)}</div></div>
-          <div class="cr"><div class="cl2">Fletes de entrega</div><div class="cv" style="color:var(--red)">−${fmt(fletesEnt)}</div></div>
-          <div class="cr"><div class="cl2">Costo proveedor</div><div class="cv" style="color:var(--red)">−${fmt(costoProvEnt)}</div></div>
-          <div class="cr"><div class="cl2">Fletes de devolución</div><div class="cv" style="color:var(--red)">−${fmt(fletesDev)}</div></div>
-          <div class="cr" style="border-top:1px solid var(--border2);margin-top:4px;padding-top:8px"><div class="cl2" style="font-weight:600;color:var(--text)">Dinero en wallet</div><div class="cv" style="color:var(--green);font-weight:700">${fmt(walletBruta)}</div></div>
+          <div class="cr"><div class="cl2" style="font-weight:600;color:var(--text)">Utilidad bruta</div><div class="cv" style="color:var(--green);font-weight:700">${fmt(walletBruta)}</div></div>
+          <div id="fin-real-cpas"></div>
+          <div id="fin-real-neta"></div>
         </div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:center">
@@ -1296,21 +1375,20 @@ function abrirModal(nombre){
 
     <hr class="sdv">
 
-    <!-- Simulador -->
     <div class="ct">Simulador de ventas</div>
     <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:16px;margin-bottom:16px">
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px">
         <div>
           <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Pedidos a simular</label>
-          <input type="number" id="sim-pedidos" value="100" min="1" step="10" oninput="actualizarSim('${nombre.replace(/'/g,"\\'")}',${ticketPromedio},${fleteProm},${costoProm},${walletPorEntrega},${EF})" style="width:100%">
+          <input type="number" id="sim-pedidos" value="100" min="1" step="10" oninput="actualizarSim('${nombre.replace(/'/g,"\\'")}')" style="width:100%">
         </div>
         <div>
           <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">CPA Promedio Meta Ads (por pedido generado)</label>
-          <input type="number" id="sim-cpa" value="0" min="0" step="1000" oninput="actualizarSim('${nombre.replace(/'/g,"\\'")}',${ticketPromedio},${fleteProm},${costoProm},${walletPorEntrega},${EF})" style="width:100%">
+          <input type="number" id="sim-cpa" value="0" min="0" step="1000" oninput="actualizarSim('${nombre.replace(/'/g,"\\'")}')" style="width:100%">
         </div>
         <div>
-          <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Efectividad usada</label>
-          <div style="padding:8px 11px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);font-size:12px;color:var(--green)">${(EF*100).toFixed(1)}% · ${fuente.split('·')[0].trim()}</div>
+          <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Efectividad usada (conservadora)</label>
+          <div style="padding:8px 11px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);font-size:12px;color:var(--amber)">reclasificada · −2% saturación</div>
         </div>
       </div>
       <div id="sim-resultado"></div>
@@ -1318,7 +1396,6 @@ function abrirModal(nombre){
 
     <hr class="sdv">
 
-    <!-- Distribución + estados -->
     <div class="tw" style="margin-bottom:16px">
       <div>
         <span class="sl">Distribución</span>
@@ -1345,7 +1422,21 @@ function abrirModal(nombre){
 
   $('prod-modal').style.display='block';
 
-  // Torta distribución logística
+  // Guardar contexto del producto activo para el simulador
+  const reclasif=reclasificarParaSimulacion(ords);
+  // Proyeccion del producto: entregados reales + proyeccion de los en movimiento (con EF madura de -10d)
+  // Esta es la base que se usa para la simulacion, NO el % crudo actual (que esta sub-reportado
+  // porque la operacion del rango aun no ha cerrado del todo).
+  const entProy_=ent+proyEnt;
+  const devProy_=dev+devProy;
+  const canProy_=can; // cancelacion no necesita proyectarse, ya es un estado final rapido
+  window._modalCtx={
+    nombre,total,desp,ent,dev,can,mov,
+    ticketPromedio,fleteProm,costoProm,ratioFleteTicket,
+    walletBruta,efTotal,efDesp,transpDist,EF,reclasif,
+    entProy:entProy_,devProy:devProy_,canProy:canProy_
+  };
+
   setTimeout(()=>{
     const datos=[
       {label:'Entregados',v:ent,color:'#22c55e'},{label:'En mov.',v:mov,color:'#f59e0b'},
@@ -1367,25 +1458,43 @@ function abrirModal(nombre){
     });
     $('modal-torta-leg').innerHTML=datos.map(d=>`<div style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)"><div style="width:8px;height:8px;border-radius:2px;background:${d.color}"></div>${d.label} <strong style="color:var(--text)">${d.v}</strong></div>`).join('');
 
-    // Torta financiera real
-    dibujarTortaModalFin(walletBruta,fletesEnt,costoProvEnt,fletesDev);
-
-    // Inicializar simulador
-    actualizarSim(nombre,ticketPromedio,fleteProm,costoProm,walletPorEntrega,EF);
+    actualizarFinReal(nombre,walletBruta,total,desp,ent);
+    actualizarSim(nombre);
   },100);
 }
 
-function dibujarTortaModalFin(wallet,fletes,costo,fletesDev){
+function actualizarFinReal(nombre,walletBruta,totalPedidos,desp,ent){
+  const cpaReal=parseFloat($('cpa-real')?.value||0);
+  const elNeta=$('fin-real-neta');
+  const elCpas=$('fin-real-cpas');
+  const pautaReal=cpaReal*totalPedidos;
+
+  if(elCpas){
+    elCpas.innerHTML=cpaReal>0?`
+      <div class="cr"><div class="cl2">CPA por pedido generado</div><div class="cv" style="color:var(--red)">−${fmt(cpaReal)}</div></div>
+      <div class="cr"><div class="cl2">CPA por pedido despachado</div><div class="cv" style="color:var(--red)">−${fmt(desp>0?pautaReal/desp:0)}</div></div>
+      <div class="cr"><div class="cl2">CPA por pedido entregado</div><div class="cv" style="color:var(--red)">−${fmt(ent>0?pautaReal/ent:0)}</div></div>
+    `:'';
+  }
+  if(elNeta){
+    elNeta.innerHTML=cpaReal>0?`<div class="cr" style="border-top:1px solid var(--border2);margin-top:4px;padding-top:6px"><div class="cl2" style="font-weight:600;color:var(--text)">Utilidad neta (wallet − pauta real)</div><div class="cv" style="color:${walletBruta-pautaReal>0?'var(--green)':'var(--red)'};font-weight:700">${fmt(walletBruta-pautaReal)}</div></div>`:'';
+  }
+  dibujarTortaModalFin(walletBruta,cpaReal,totalPedidos);
+}
+
+function dibujarTortaModalFin(walletBruta,cpaReal,totalPedidos){
   const canvas=$('modal-torta-fin');if(!canvas)return;
   const ctx=canvas.getContext('2d');
   const cx=100,cy=100,r=85;
   ctx.clearRect(0,0,200,200);
-  const datos=[
-    {label:'Wallet',v:Math.max(wallet,0),color:'#22c55e'},
-    {label:'Fletes entrega',v:fletes,color:'#3b82f6'},
-    {label:'Costo proveedor',v:costo,color:'#f59e0b'},
-    {label:'Fletes dev.',v:fletesDev,color:'#ef4444'},
-  ].filter(x=>x.v>0);
+  const pautaReal=(cpaReal||0)*(totalPedidos||0);
+  const walletNeta=Math.max(walletBruta-pautaReal,0);
+  const datos=pautaReal>0?[
+    {label:'Utilidad neta',v:walletNeta,color:'#22c55e'},
+    {label:'Pauta',v:pautaReal,color:'#3b82f6'},
+  ].filter(x=>x.v>0):[
+    {label:'Utilidad bruta',v:Math.max(walletBruta,0),color:'#22c55e'},
+  ];
   const total=datos.reduce((s,d)=>s+d.v,0);if(!total)return;
   let ang=-Math.PI/2;
   datos.forEach(d=>{
@@ -1399,99 +1508,284 @@ function dibujarTortaModalFin(wallet,fletes,costo,fletesDev){
   if(leg)leg.innerHTML=datos.map(d=>`<div style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)"><div style="width:8px;height:8px;border-radius:2px;background:${d.color}"></div>${d.label} <strong style="color:var(--text)">${fmt(d.v)}</strong></div>`).join('');
 }
 
-function actualizarSim(nombre,ticketProm,fleteProm,costoProm,walletPorEnt,EF){
+function actualizarSim(nombre){
+  const ctx=window._modalCtx;if(!ctx)return;
   const nPed=parseFloat($('sim-pedidos')?.value||100);
   const cpa=parseFloat($('sim-cpa')?.value||0);
   const el=$('sim-resultado');if(!el)return;
 
-  // Proyecciones con EF real del producto
-  const simEnt=Math.round(nPed*EF);
-  const simDev=Math.round(nPed*(1-EF)*0.7); // ~70% de los no entregados son devoluciones
-  const simCan=nPed-simEnt-simDev;
-  const simDesp=Math.round(nPed*0.85); // tasa despacho típica
+  // Base de la simulacion = proyeccion del producto (entregados reales + proyeccion de los en
+  // movimiento, calculada con la EF madura de -10 dias). Esto evita partir del % crudo actual,
+  // que esta sub-reportado porque la operacion del rango aun no ha cerrado del todo.
+  const entP=ctx.entProy!==undefined?ctx.entProy:ctx.ent;
+  const devP=ctx.devProy!==undefined?ctx.devProy:ctx.dev;
+  const canP=ctx.canProy!==undefined?ctx.canProy:ctx.can;
+  const totalP=entP+devP+canP;
+  let fCan=totalP>0?canP/totalP:0;
+  let fDev=totalP>0?devP/totalP:0;
+  let fEnt=totalP>0?entP/totalP:0;
+  // Penalizacion adicional de 2 puntos por saturacion logistica en volumen alto
+  const penalizacion=0.02;
+  fEnt=Math.max(fEnt-penalizacion,0);
+  fDev=fDev+penalizacion;
+  const fEntFinal=fEnt;
+  const fDevFinal=fDev;
+
+  const simCan=Math.round(nPed*fCan);
+  const simDev=Math.round(nPed*fDevFinal);
+  const simEnt=nPed-simCan-simDev;
+  const simDesp=simEnt+simDev; // despachados = entregados + devueltos (cancelados no se despachan)
+
+  // Reparto de los simulados por transportadora segun distribucion real del producto
+  const transpDist=ctx.transpDist&&ctx.transpDist.length?ctx.transpDist:[{transp:'Sin info',pct:1}];
+
+  // Flete escalado segun ticket promedio (mismo ticket que el real, ya que se simula el mismo producto)
+  const fleteEntSim=ctx.fleteProm; // ya viene calculado con el ticket real del producto
+
+  // Flete de devolucion simulado: reparto por transportadora aplicando el ajuste real de cada una
+  let fleteDevPromSim=0;
+  transpDist.forEach(td=>{
+    const ajuste=ajusteFleteDevTransp[td.transp]!==undefined?ajusteFleteDevTransp[td.transp]:(fleteEntSim*0.15);
+    let ajusteFinal=ajuste;
+    if(td.transp.toUpperCase().includes('ENVIA'))ajusteFinal+=2000;
+    const fleteDevTransp=Math.max(fleteEntSim-ajusteFinal,0);
+    fleteDevPromSim+=fleteDevTransp*td.pct;
+  });
 
   // Financiero simulado
-  const simIngresos=simEnt*ticketProm;
-  const simFletes=simEnt*fleteProm;
-  const simCosto=simEnt*costoProm;
-  const simFletesDev=simDev*fleteProm;
-  const simWalletBruta=simIngresos-simFletes-simCosto-simFletesDev;
+  const simIngresos=simEnt*ctx.ticketPromedio;
+  const simFletesEnt=simEnt*fleteEntSim;
+  const simFletesDev=simDev*fleteDevPromSim;
+  const simCosto=simEnt*ctx.costoProm;
+  const simWalletBruta=simIngresos-simFletesEnt-simFletesDev-simCosto;
   const simPauta=nPed*cpa;
   const simWalletNeta=simWalletBruta-simPauta;
   const simCpaDesp=simDesp>0?simPauta/simDesp:0;
   const simCpaEnt=simEnt>0?simPauta/simEnt:0;
 
-  // Comparativa real
-  const p=gProductos.find(x=>x.nombre===nombre)||{};
-  const realEnt=p.ent||0;
-  const realDesp=p.desp||0;
-  const realWallet=p.utilBruta||0;
-  const realTotal=p.total||0;
+  // Comparativa real — usando datos reales (flete efectivo, ya sin doble cobro)
+  const realPauta=cpa>0?ctx.total*0:0; // no aplica aqui, el cpa real va en su propio campo
+
+  const transpDistHtml=ctx.transpDist&&ctx.transpDist.length
+    ?ctx.transpDist.sort((a,b)=>b.pct-a.pct).map(td=>`<div class="cr"><div class="cl2">${td.transp}</div><div class="cv">${(td.pct*100).toFixed(1)}% del despacho</div></div>`).join('')
+    :'<div class="empty" style="padding:10px">Sin datos de transportadora</div>';
 
   el.innerHTML=`
-    <!-- Comparativa Real vs Simulado -->
+    <div style="margin-bottom:14px">
+      <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px">Reparto por transportadora — usado en la simulación de flete</div>
+      ${transpDistHtml}
+    </div>
+    <hr class="sdv">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
       <div>
         <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px">Real actual</div>
-        <div class="cr"><div class="cl2">Pedidos totales</div><div class="cv">${realTotal}</div></div>
-        <div class="cr"><div class="cl2">Entregados</div><div class="cv" style="color:var(--green)">${realEnt} · ${realDesp>0?(realEnt/realDesp*100).toFixed(1):0}% s/desp.</div></div>
-        <div class="cr"><div class="cl2">Wallet bruta</div><div class="cv" style="color:var(--green)">${fmt(realWallet)}</div></div>
-        <div class="cr"><div class="cl2">Wallet por entrega</div><div class="cv">${fmt(realEnt>0?realWallet/realEnt:0)}</div></div>
-        ${cpa>0?`<div class="cr"><div class="cl2">CPA por generado</div><div class="cv" style="color:var(--red)">−${fmt(cpa)}</div></div>`:''}
-        ${cpa>0?`<div class="cr"><div class="cl2">CPA por despachado</div><div class="cv" style="color:var(--red)">−${fmt(realDesp>0?(realTotal*cpa)/realDesp:0)}</div></div>`:''}
-        ${cpa>0?`<div class="cr"><div class="cl2">CPA por entregado</div><div class="cv" style="color:var(--red)">−${fmt(realEnt>0?(realTotal*cpa)/realEnt:0)}</div></div>`:''}
-        ${cpa>0?`<div class="cr" style="border-top:1px solid var(--border2);margin-top:4px;padding-top:6px"><div class="cl2" style="font-weight:600">Wallet neta estimada</div><div class="cv" style="color:${realWallet-(realTotal*cpa)>0?'var(--green)':'var(--red)'};font-weight:700">${fmt(realWallet-(realTotal*cpa))}</div></div>`:''}
+        <div class="cr"><div class="cl2">Pedidos totales</div><div class="cv">${ctx.total}</div></div>
+        <div class="cr"><div class="cl2">Entregados</div><div class="cv" style="color:var(--green)">${ctx.ent} · ${(ctx.efTotal*100).toFixed(1)}% del total</div></div>
+        <div class="cr"><div class="cl2">Devueltos</div><div class="cv" style="color:var(--red)">${ctx.dev} · ${(ctx.total>0?ctx.dev/ctx.total*100:0).toFixed(1)}% del total</div></div>
+        <div class="cr"><div class="cl2">Cancelados</div><div class="cv" style="color:var(--orange)">${ctx.can} · ${(ctx.total>0?ctx.can/ctx.total*100:0).toFixed(1)}% del total</div></div>
+        <div class="cr"><div class="cl2">Wallet bruta</div><div class="cv" style="color:var(--green)">${fmt(ctx.walletBruta)}</div></div>
+        <div class="cr"><div class="cl2">Wallet por entrega</div><div class="cv">${fmt(ctx.ent>0?ctx.walletBruta/ctx.ent:0)}</div></div>
       </div>
       <div>
         <div style="font-size:10px;font-weight:700;color:var(--blue);letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px">Simulación — ${nPed} pedidos</div>
         <div class="cr"><div class="cl2">Pedidos a meter</div><div class="cv">${nPed}</div></div>
-        <div class="cr"><div class="cl2">Entregas estimadas</div><div class="cv" style="color:var(--green)">${simEnt} · ${(EF*100).toFixed(1)}% efectividad</div></div>
-        <div class="cr"><div class="cl2">Wallet bruta estimada</div><div class="cv" style="color:var(--green)">${fmt(simWalletBruta)}</div></div>
+        <div class="cr"><div class="cl2">Entregas simuladas</div><div class="cv" style="color:var(--green)">${simEnt} · ${(simEnt/nPed*100).toFixed(1)}% del total</div></div>
+        <div class="cr"><div class="cl2">Devoluciones simuladas</div><div class="cv" style="color:var(--red)">${simDev} · ${(simDev/nPed*100).toFixed(1)}% del total</div></div>
+        <div class="cr"><div class="cl2">Cancelación simulada</div><div class="cv" style="color:var(--orange)">${simCan} · ${(simCan/nPed*100).toFixed(1)}% del total</div></div>
+        <div class="cr"><div class="cl2">Wallet bruta simulada</div><div class="cv" style="color:var(--green)">${fmt(simWalletBruta)}</div></div>
         <div class="cr"><div class="cl2">Wallet por entrega</div><div class="cv">${fmt(simEnt>0?simWalletBruta/simEnt:0)}</div></div>
-        ${cpa>0?`<div class="cr"><div class="cl2">Gasto en pauta (${nPed}×${fmt(cpa)})</div><div class="cv" style="color:var(--red)">−${fmt(simPauta)}</div></div>`:''}
-        ${cpa>0?`<div class="cr"><div class="cl2">CPA por despachado</div><div class="cv" style="color:var(--red)">−${fmt(simCpaDesp)}</div></div>`:''}
-        ${cpa>0?`<div class="cr"><div class="cl2">CPA por entregado</div><div class="cv" style="color:var(--red)">−${fmt(simCpaEnt)}</div></div>`:''}
-        ${cpa>0?`<div class="cr" style="border-top:1px solid var(--border2);margin-top:4px;padding-top:6px"><div class="cl2" style="font-weight:600">Wallet neta proyectada</div><div class="cv" style="color:${simWalletNeta>0?'var(--green)':'var(--red)'};font-weight:700">${fmt(simWalletNeta)}</div></div>`:''}
       </div>
     </div>
-    <!-- Torta simulación -->
-    ${cpa>0||simWalletBruta>0?`
+    ${cpa>0?`
+    <div style="margin-bottom:16px">
+      <div class="cr"><div class="cl2">Gasto en pauta (${nPed}×${fmt(cpa)})</div><div class="cv" style="color:var(--red)">−${fmt(simPauta)}</div></div>
+      <div class="cr"><div class="cl2">CPA por despachado</div><div class="cv" style="color:var(--red)">−${fmt(simCpaDesp)}</div></div>
+      <div class="cr"><div class="cl2">CPA por entregado</div><div class="cv" style="color:var(--red)">−${fmt(simCpaEnt)}</div></div>
+      <div class="cr" style="border-top:1px solid var(--border2);margin-top:4px;padding-top:6px"><div class="cl2" style="font-weight:600">Wallet neta simulada</div><div class="cv" style="color:${simWalletNeta>0?'var(--green)':'var(--red)'};font-weight:700">${fmt(simWalletNeta)}</div></div>
+    </div>` : ''}
+    ${cpa>0?`
     <div style="display:flex;flex-direction:column;align-items:center;margin-top:8px">
       <span class="sl">Distribución financiera — simulación</span>
       <canvas id="modal-torta-sim" width="200" height="200" style="display:block;margin:0 auto"></canvas>
       <div id="modal-torta-sim-leg" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;justify-content:center"></div>
+    </div>
+    <div style="margin-top:20px">
+      <span class="sl">Crecimiento de utilidad según número de pedidos</span>
+      <div style="position:relative">
+        <canvas id="modal-linea-sim" width="800" height="280" style="display:block;width:100%;height:auto;cursor:crosshair"></canvas>
+        <div id="linea-tooltip" style="display:none;position:absolute;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;padding:8px 12px;font-size:11px;pointer-events:none;white-space:nowrap;z-index:10"></div>
+      </div>
+      <div style="display:flex;gap:14px;justify-content:center;margin-top:8px;font-size:10px;color:var(--muted)">
+        <div style="display:flex;align-items:center;gap:5px"><div style="width:14px;height:2px;background:#22c55e"></div>Utilidad bruta</div>
+        <div style="display:flex;align-items:center;gap:5px"><div style="width:14px;height:0;border-top:2px dashed #3b82f6"></div>Pauta (gasto)</div>
+      </div>
     </div>`:''}
   `;
 
-  // Dibujar torta simulación
-  if(cpa>0||simWalletBruta>0){
+  if(cpa>0){
     setTimeout(()=>{
       const canvas=$('modal-torta-sim');if(!canvas)return;
-      const ctx=canvas.getContext('2d');
+      const ctx2=canvas.getContext('2d');
       const cx=100,cy=100,r=85;
-      ctx.clearRect(0,0,200,200);
+      ctx2.clearRect(0,0,200,200);
       const datos=[
-        {label:'Wallet neta',v:Math.max(simWalletNeta,0),color:'#22c55e'},
-        {label:'Pauta',v:simPauta,color:'#3b82f6'},
-        {label:'Fletes entrega',v:simFletes,color:'#60a5fa'},
-        {label:'Costo proveedor',v:simCosto,color:'#f59e0b'},
-        {label:'Fletes dev.',v:simFletesDev,color:'#ef4444'},
+        {label:'Utilidad neta',v:Math.max(simWalletNeta,0),color:'#22c55e'},
+        {label:'Pauta ('+nPed+' × '+fmt(cpa)+')',v:simPauta,color:'#3b82f6'},
       ].filter(x=>x.v>0);
       const total=datos.reduce((s,d)=>s+d.v,0);if(!total)return;
       let ang=-Math.PI/2;
       datos.forEach(d=>{
         const sw=d.v/total*Math.PI*2;
-        ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,ang,ang+sw);ctx.closePath();
-        ctx.fillStyle=d.color;ctx.fill();ctx.strokeStyle='rgba(0,0,0,0.15)';ctx.lineWidth=1;ctx.stroke();
-        if(d.v/total>0.04){const mid=ang+sw/2;ctx.fillStyle='#fff';ctx.font='bold 10px Inter,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText((d.v/total*100).toFixed(0)+'%',cx+Math.cos(mid)*r*0.65,cy+Math.sin(mid)*r*0.65);}
+        ctx2.beginPath();ctx2.moveTo(cx,cy);ctx2.arc(cx,cy,r,ang,ang+sw);ctx2.closePath();
+        ctx2.fillStyle=d.color;ctx2.fill();ctx2.strokeStyle='rgba(0,0,0,0.15)';ctx2.lineWidth=1;ctx2.stroke();
+        if(d.v/total>0.04){const mid=ang+sw/2;ctx2.fillStyle='#fff';ctx2.font='bold 10px Inter,sans-serif';ctx2.textAlign='center';ctx2.textBaseline='middle';ctx2.fillText((d.v/total*100).toFixed(0)+'%',cx+Math.cos(mid)*r*0.65,cy+Math.sin(mid)*r*0.65);}
         ang+=sw;
       });
       const leg=$('modal-torta-sim-leg');
-      if(leg)leg.innerHTML=datos.map(d=>`<div style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)"><div style="width:8px;height:8px;border-radius:2px;background:${d.color}"></div>${d.label} <strong style="color:var(--text)">${fmt(d.v)}</strong></div>`).join('');
+      if(leg)leg.innerHTML=datos.map(d=>`<div style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)"><div style="width:8px;height:8px;border-radius:2px;background:${d.color}"></div>${d.label} <strong style="color:var(--text)">${fmt(d.v)}</strong></div>`).join('')
+        +`<div style="width:100%;margin-top:10px;padding-top:8px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;font-weight:600;color:var(--text)">Utilidad neta con CPA ${fmt(cpa)}/pedido</span><span style="font-size:14px;font-weight:700;color:${simWalletNeta>0?'var(--green)':'var(--red)'}">${fmt(simWalletNeta)}</span></div>`;
+
+      // Grafico lineal de crecimiento de utilidad vs pedidos
+      dibujarGraficoLineal(nPed,{
+        fEntFinal,fDevFinal,
+        ticketPromedio:ctx.ticketPromedio,
+        fleteEntSim,fleteDevPromSim,
+        costoProm:ctx.costoProm
+      },cpa);
     },50);
   }
 }
 
+
+
+
+function dibujarGraficoLineal(nPedTotal,ctx,cpa){
+  const canvas=$('modal-linea-sim');if(!canvas)return;
+  const c=canvas.getContext('2d');
+  const W=800,H=280;
+  canvas.width=W;canvas.height=H;
+  c.clearRect(0,0,W,H);
+
+  // Padding del area de dibujo
+  const padL=70,padR=20,padT=20,padB=40;
+  const plotW=W-padL-padR,plotH=H-padT-padB;
+
+  // Generar N puntos equidistantes en pedidos (siempre la misma cantidad de puntos, sin importar el total)
+  const numPuntos=9; // cantidad fija de puntos a mostrar a lo largo del eje X
+  const pasos=[];
+  for(let i=1;i<=numPuntos;i++){
+    pasos.push(Math.round(nPedTotal*i/numPuntos));
+  }
+  // Asegurar que el ultimo punto sea exactamente nPedTotal
+  pasos[pasos.length-1]=nPedTotal;
+
+  // Calcular utilidad bruta y pauta para cada paso, usando la MISMA logica que actualizarSim
+  // (proporciones fijas fEnt/fDev/fCan, fletes por transportadora, ticket y costo promedio)
+  function calcularEnPunto(n){
+    const simEnt=Math.round(n*ctx.fEntFinal);
+    const simDev=Math.round(n*ctx.fDevFinal);
+    const simIngresos=simEnt*ctx.ticketPromedio;
+    const simFletesEnt=simEnt*ctx.fleteEntSim;
+    const simFletesDev=simDev*ctx.fleteDevPromSim;
+    const simCosto=simEnt*ctx.costoProm;
+    const bruta=simIngresos-simFletesEnt-simFletesDev-simCosto;
+    const pauta=n*cpa;
+    return{bruta:Math.max(bruta,0),pauta};
+  }
+
+  const puntos=pasos.map(n=>({n,...calcularEnPunto(n)}));
+
+  // Escalas
+  const maxVal=Math.max(...puntos.map(p=>Math.max(p.bruta,p.pauta)),1);
+  const xFor=n=>padL+(n/nPedTotal)*plotW;
+  const yFor=v=>padT+plotH-(v/maxVal)*plotH;
+
+  // Grid horizontal (lineas de referencia)
+  c.strokeStyle='rgba(255,255,255,0.06)';
+  c.lineWidth=1;
+  const gridLines=4;
+  for(let i=0;i<=gridLines;i++){
+    const y=padT+plotH*(i/gridLines);
+    c.beginPath();c.moveTo(padL,y);c.lineTo(W-padR,y);c.stroke();
+    const val=maxVal*(1-i/gridLines);
+    c.fillStyle='#888';c.font='10px JetBrains Mono,monospace';c.textAlign='right';c.textBaseline='middle';
+    c.fillText(fmtShort(val),padL-8,y);
+  }
+
+  // Eje X labels
+  c.fillStyle='#888';c.font='10px JetBrains Mono,monospace';c.textAlign='center';c.textBaseline='top';
+  puntos.forEach(p=>{
+    c.fillText(p.n,xFor(p.n),H-padB+8);
+  });
+  c.fillStyle='#555';c.font='9px Inter,sans-serif';c.textAlign='center';
+  c.fillText('Pedidos simulados',padL+plotW/2,H-12);
+
+  // Linea de pauta (azul punteada)
+  c.strokeStyle='#3b82f6';c.lineWidth=2;c.setLineDash([5,4]);
+  c.beginPath();
+  puntos.forEach((p,i)=>{const x=xFor(p.n),y=yFor(p.pauta);if(i===0)c.moveTo(x,y);else c.lineTo(x,y);});
+  c.stroke();
+  c.setLineDash([]);
+
+  // Linea de utilidad bruta (verde solida)
+  c.strokeStyle='#22c55e';c.lineWidth=2.5;
+  c.beginPath();
+  puntos.forEach((p,i)=>{const x=xFor(p.n),y=yFor(p.bruta);if(i===0)c.moveTo(x,y);else c.lineTo(x,y);});
+  c.stroke();
+
+  // Puntos + lineas verticales punteadas conectando bruta-pauta en cada punto
+  puntos.forEach((p,i)=>{
+    const x=xFor(p.n);
+    const yB=yFor(p.bruta),yP=yFor(p.pauta);
+    // Linea vertical punteada gris conectando los dos puntos
+    c.strokeStyle='rgba(255,255,255,0.15)';c.lineWidth=1;c.setLineDash([3,3]);
+    c.beginPath();c.moveTo(x,yB);c.lineTo(x,yP);c.stroke();
+    c.setLineDash([]);
+    // Punto verde
+    c.fillStyle='#22c55e';
+    c.beginPath();c.arc(x,yB,i===puntos.length-1?6:4,0,Math.PI*2);c.fill();
+    c.strokeStyle='#0f0f0f';c.lineWidth=1.5;c.stroke();
+    // Punto azul
+    c.fillStyle='#3b82f6';
+    c.beginPath();c.arc(x,yP,i===puntos.length-1?6:4,0,Math.PI*2);c.fill();
+    c.strokeStyle='#0f0f0f';c.lineWidth=1.5;c.stroke();
+  });
+
+  // Interaccion: click/hover sobre los puntos muestra tooltip con utilidad neta y %
+  const tooltip=$('linea-tooltip');
+  canvas.onmousemove=function(e){
+    const rect=canvas.getBoundingClientRect();
+    const scaleX=W/rect.width,scaleY=H/rect.height;
+    const mx=(e.clientX-rect.left)*scaleX;
+    const my=(e.clientY-rect.top)*scaleY;
+    let closest=null,minDist=Infinity;
+    puntos.forEach(p=>{
+      const x=xFor(p.n),y=yFor(p.bruta);
+      const d=Math.hypot(mx-x,my-y);
+      if(d<minDist){minDist=d;closest=p;}
+    });
+    if(closest&&minDist<30){
+      const neta=closest.bruta-closest.pauta;
+      const pctNeta=closest.bruta>0?(neta/closest.bruta*100):0;
+      tooltip.style.display='block';
+      tooltip.style.left=((e.clientX-rect.left))+'px';
+      tooltip.style.top=((e.clientY-rect.top)-60)+'px';
+      tooltip.innerHTML=`<div style="font-weight:700;color:var(--text);margin-bottom:4px">${closest.n} pedidos</div>
+        <div style="color:var(--green)">Bruta: ${fmt(closest.bruta)}</div>
+        <div style="color:var(--blue)">Pauta: ${fmt(closest.pauta)}</div>
+        <div style="color:${neta>0?'var(--green)':'var(--red)'};font-weight:700;border-top:1px solid var(--border);margin-top:3px;padding-top:3px">Neta: ${fmt(neta)} (${pctNeta.toFixed(1)}%)</div>`;
+    } else {
+      tooltip.style.display='none';
+    }
+  };
+  canvas.onmouseleave=function(){tooltip.style.display='none';};
+}
+
+function fmtShort(n){
+  if(n>=1000000)return'$'+(n/1000000).toFixed(1)+'M';
+  if(n>=1000)return'$'+(n/1000).toFixed(0)+'K';
+  return'$'+Math.round(n);
+}
 
 
 function cerrarModal(){$('prod-modal').style.display='none';}
@@ -1587,7 +1881,6 @@ async function fetchAll(){
   }
 
   let wpData=null;
-  if(dropiData){setS('loading','Detectando WA/orgánicos...');wpData=calcWP(dropiData);}
 
   if(dropiData){
     setS('loading','Analizando guías sin movimiento...');
@@ -1985,11 +2278,11 @@ function calcProductosFinanciero(allValidas){
     if(EST_ENT.includes(ord.estatus)){
       p.ent.add(id);p.desp.add(id);
       p.ingresosBrutos+=ord.valor;
-      p.fletesEnt+=ord.flete;
+      p.fletesEnt+=fleteEfectivo(ord);
       p.costoProvEnt+=ord.costoProv;
     } else if(EST_DEV.includes(ord.estatus)){
       p.dev.add(id);p.desp.add(id);
-      if(ord.estatus==='DEVOLUCION')p.fletesDev+=ord.flete;
+      if(ord.estatus==='DEVOLUCION')p.fletesDev+=fleteEfectivo(ord);
     } else if(EST_CAN.includes(ord.estatus)){
       p.can.add(id);
     } else if(EST_PEND.includes(ord.estatus)){
@@ -2001,7 +2294,7 @@ function calcProductosFinanciero(allValidas){
 
   return Object.entries(byProd).map(([nombre,p])=>{
     const total=p.total.size,ent=p.ent.size,dev=p.dev.size,can=p.can.size,desp=p.desp.size;
-    const utilBruta=p.ingresosBrutos-p.fletesEnt-p.costoProvEnt-p.fletesDev;
+    const utilBruta=p.ingresosBrutos-p.fletesEnt-p.costoProvEnt; // fletesDev ya no se resta aparte (era doble cobro)
     return{
       nombre,total,ent,dev,can,desp,
       efDesp:desp>0?ent/desp:0,efTotal:total>0?ent/total:0,
@@ -2018,4 +2311,3 @@ loadKeys();setDates();
 </script>
 </body>
 </html>
-  
