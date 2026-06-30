@@ -239,6 +239,7 @@ tr:hover td{background:var(--bg3);}
     <div class="tab" onclick="st(5)">Transportadoras</div>
     <div class="tab" onclick="st(6)">Reporte IA</div>
     <div class="tab" onclick="st(7)" id="tab-traz">Trazabilidad</div>
+    <div class="tab" onclick="st(8)" id="tab-control">Control Diario</div>
   </div>
 
   <!-- TAB 0: RESUMEN -->
@@ -428,6 +429,65 @@ tr:hover td{background:var(--bg3);}
     </div>
 
   </div>
+  <!-- TAB 8: CONTROL DIARIO -->
+  <div class="tp" id="tp8">
+    <div class="card">
+      <div class="ct">Fecha de control</div>
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+        <button class="filter-btn active" id="cd-hoy" onclick="setControlRapido('hoy',this)">Hoy</button>
+        <button class="filter-btn" id="cd-ayer" onclick="setControlRapido('ayer',this)">Ayer</button>
+        <button class="filter-btn" id="cd-antier" onclick="setControlRapido('antier',this)">Antier</button>
+        <button class="filter-btn" id="cd-semana" onclick="setControlRapido('semana',this)">Última semana</button>
+        <button class="filter-btn" id="cd-mes" onclick="setControlRapido('mes',this)">Último mes</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:420px">
+        <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Desde</label><input type="date" id="control-desde" onchange="setControlManual()"></div>
+        <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Hasta</label><input type="date" id="control-hasta" onchange="setControlManual()"></div>
+      </div>
+      <div style="font-size:11px;color:var(--hint);margin-top:8px" id="control-rango-txt"></div>
+    </div>
+
+    <div id="control-notif"></div>
+
+    <div class="card">
+      <div class="ct">Confirmación de pedidos del día</div>
+      <div class="al ai" style="margin-bottom:12px">Compara los pedidos de hoy entre Shopify y Dropi. Si no subes el CSV de Shopify, se muestra solo el avance de confirmación dentro de Dropi.</div>
+      <div class="mg" id="m-confirm"></div>
+      <div id="confirm-detalle" style="display:none;margin-top:10px">
+        <div class="tw2">
+          <table>
+            <thead><tr><th>Cliente</th><th>Teléfono</th><th>Producto</th><th>Estado</th></tr></thead>
+            <tbody id="tb-confirm"></tbody>
+          </table>
+        </div>
+      </div>
+      <button class="bs" style="margin-top:10px;font-size:12px" id="btn-confirm-toggle" onclick="toggleConfirmDetalle()">Ver pedidos pendientes por confirmar</button>
+    </div>
+
+    <div class="card">
+      <div class="ct">Novedades pendientes — sin cambio de estado desde ayer</div>
+      <div class="al aw" style="margin-bottom:12px">Calendario especial de este apartado: solo se excluyen domingos y festivos (los sábados SÍ cuentan como día hábil aquí, porque el equipo trabaja ese día). 🟠 +1 día sin resolver · 🔴 +2 días sin resolver.</div>
+      <div class="mg" id="m-novpend"></div>
+      <div class="tw2" style="margin-top:10px">
+        <table>
+          <thead><tr><th>Cliente</th><th>Guía</th><th>Transportadora</th><th>Novedad</th><th>Fecha novedad</th><th>Días sin resolver</th></tr></thead>
+          <tbody id="tb-novpend"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ct">Novedades solucionadas hoy</div>
+      <div class="mg" id="m-novsol"></div>
+      <div class="tw2" style="margin-top:10px">
+        <table>
+          <thead><tr><th>Cliente</th><th>Guía</th><th>Fecha y hora solución</th><th>Solución aplicada</th><th>Usuario</th></tr></thead>
+          <tbody id="tb-novsol"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
 </div>
 </div>
 
@@ -1906,6 +1966,9 @@ async function fetchAll(){
   setS('loading','Generando análisis IA...');
   await genIA(ck,dropiData,shopData,metaData,wpData,gP,df,dt);
 
+  // Control diario
+  renderControlDiario();
+
   $('results').style.display='block';
   $('btn-run').disabled=false;$('spin').style.display='none';
   st(0);
@@ -1977,6 +2040,12 @@ function procesarShopify(rows,df,dt){
 
   gS={tot,pagados,pend,ingresos,cancelados,ords};
   return gS;
+}
+
+// Procesa TODAS las ordenes de Shopify sin filtrar por fecha, para que Control Diario
+// pueda usar su propio rango independiente del rango general del reporte.
+function procesarShopifyCompleto(rows){
+  return procesarShopify(rows,null,null);
 }
 
 // ---- RENDER META MANUAL ----
@@ -2306,6 +2375,242 @@ function calcProductosFinanciero(allValidas){
     };
   });
 }
+
+
+// ---- CONTROL DIARIO ----
+// Calendario especial SOLO para este apartado: excluye domingos y festivos (sabados SI cuentan,
+// porque el equipo trabaja ese dia). No se usa en ningun otro calculo del dashboard.
+function diasHabilesControl(fechaStr){
+  try {
+    const s=String(fechaStr||'').trim();
+    let d;
+    const p=s.includes('-')?s.split('-'):s.split('/');
+    if(p[0].length===2)d=new Date(`${p[2]}-${p[1]}-${p[0]}`);
+    else d=new Date(s);
+    if(isNaN(d))return -1;
+    const hoy=new Date();hoy.setHours(0,0,0,0);
+    const fechaMov=new Date(d);fechaMov.setHours(0,0,0,0);
+    if(fechaMov>=hoy)return 0;
+    let habiles=0;
+    let cur=new Date(fechaMov);cur.setDate(cur.getDate()+1);
+    while(cur<hoy){
+      const dow=cur.getDay();
+      const iso=cur.toISOString().slice(0,10);
+      if(dow!==0&&!FESTIVOS_CO.has(iso))habiles++; // solo excluye domingo (0), sabado SI cuenta
+      cur.setDate(cur.getDate()+1);
+    }
+    return habiles;
+  } catch { return -1; }
+}
+
+function parseFechaControl(s){
+  // Normaliza DD-MM-YYYY o YYYY-MM-DD a YYYY-MM-DD
+  const str=String(s||'').trim();
+  if(!str)return '';
+  const p=str.includes('-')?str.split('-'):str.split('/');
+  if(p[0].length===4)return str.slice(0,10);
+  if(p[0].length===2)return`${p[2]}-${p[1]}-${p[0]}`;
+  return str;
+}
+
+// ---- SELECTOR DE RANGO PARA CONTROL DIARIO ----
+let controlDesde='',controlHasta='';
+
+function fmtISO(d){return d.toISOString().slice(0,10);}
+
+function setControlRapido(tipo,el){
+  document.querySelectorAll('#cd-hoy,#cd-ayer,#cd-antier,#cd-semana,#cd-mes').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  const hoy=new Date();hoy.setHours(0,0,0,0);
+  let desde=new Date(hoy),hasta=new Date(hoy);
+  if(tipo==='hoy'){ /* desde=hasta=hoy */ }
+  else if(tipo==='ayer'){desde.setDate(desde.getDate()-1);hasta.setDate(hasta.getDate()-1);}
+  else if(tipo==='antier'){desde.setDate(desde.getDate()-2);hasta.setDate(hasta.getDate()-2);}
+  else if(tipo==='semana'){desde.setDate(desde.getDate()-7);}
+  else if(tipo==='mes'){desde.setDate(desde.getDate()-30);}
+  controlDesde=fmtISO(desde);controlHasta=fmtISO(hasta);
+  $('control-desde').value=controlDesde;
+  $('control-hasta').value=controlHasta;
+  actualizarRangoTxt();
+  renderControlDiario();
+}
+
+function setControlManual(){
+  document.querySelectorAll('#cd-hoy,#cd-ayer,#cd-antier,#cd-semana,#cd-mes').forEach(b=>b.classList.remove('active'));
+  let d=$('control-desde').value,h=$('control-hasta').value;
+  // Si solo se llena uno de los dos, usar el mismo dia para ambos
+  if(d&&!h){h=d;$('control-hasta').value=h;}
+  if(h&&!d){d=h;$('control-desde').value=d;}
+  // Si la fecha "desde" es posterior a "hasta", intercambiar automaticamente
+  if(d&&h&&d>h){
+    const tmp=d;d=h;h=tmp;
+    $('control-desde').value=d;$('control-hasta').value=h;
+  }
+  controlDesde=d;controlHasta=h;
+  actualizarRangoTxt();
+  if(controlDesde&&controlHasta)renderControlDiario();
+}
+
+function actualizarRangoTxt(){
+  const el=$('control-rango-txt');if(!el)return;
+  if(controlDesde===controlHasta){
+    el.textContent=`Mostrando control del día ${controlDesde}`;
+  } else {
+    el.textContent=`Mostrando control del ${controlDesde} al ${controlHasta}`;
+  }
+}
+
+
+function renderControlDiario(){
+  if(!dOrd.length){
+    $('control-notif').innerHTML='<div class="al aw">Sube el archivo de órdenes de Dropi para ver el control diario</div>';
+    return;
+  }
+  // Inicializar rango por defecto en "hoy" si aun no se ha tocado el selector
+  if(!controlDesde||!controlHasta){
+    const hoy=new Date();hoy.setHours(0,0,0,0);
+    controlDesde=fmtISO(hoy);controlHasta=fmtISO(hoy);
+    const elD=$('control-desde'),elH=$('control-hasta');
+    if(elD)elD.value=controlDesde;
+    if(elH)elH.value=controlHasta;
+    actualizarRangoTxt();
+  }
+  const df=controlDesde,dt=controlHasta;
+  const enRango=f=>f&&f>=df&&f<=dt;
+
+  // ---- NOTIFICACION DE MIGRACION (si hay Shopify) ----
+  if(dShopi.length){
+    const gSCompleto=procesarShopifyCompleto(dShopi);
+    const ordsRango=gSCompleto.ords.filter(o=>enRango(o.fecha)&&!o.cancelado);
+    const dropiTels=new Set(allOrds.filter(o=>!o.dup).map(o=>normTel(o.tel)));
+    const noMigrados=ordsRango.filter(o=>{const t=normTel(o.tel);return t&&!dropiTels.has(t);});
+    if(noMigrados.length===0&&ordsRango.length>0){
+      $('control-notif').innerHTML=`<div class="al ao">✅ Todos los pedidos de Shopify del período se encuentran en Dropi (${ordsRango.length} pedidos)</div>`;
+    } else if(noMigrados.length>0){
+      $('control-notif').innerHTML=`<div class="al aw" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px"><span>⚠️ Faltan ${noMigrados.length} pedido${noMigrados.length>1?'s':''} del período por migrar a Dropi</span><button class="bs" style="font-size:11px;padding:5px 12px" onclick="st(7);toggleTrazDetalle();setTrazFilter('no',document.getElementById('tf-no'))">Revisar en Trazabilidad →</button></div>`;
+    } else {
+      $('control-notif').innerHTML='';
+    }
+  } else {
+    $('control-notif').innerHTML='<div class="al ai">Sube también el CSV de Shopify para comparar pedidos generados vs confirmados en Dropi</div>';
+  }
+
+  // ---- BLOQUE 1: CONFIRMACION DE PEDIDOS ----
+  // "Confirmado/gestionado" = cualquier pedido creado en el periodo cuyo estado actual
+  // NO sea Pendiente confirmacion, Cancelado o Rechazado (sin importar si esta en movimiento,
+  // entregado, en novedad, etc. -- solo importa que YA salio del limbo de "pendiente").
+  const ordsDropiPeriodo=allOrds.filter(o=>!o.dup&&enRango(o.fecha));
+  const noGestionados=['PENDIENTE CONFIRMACION','CANCELADO','RECHAZADO'];
+  const gestionados=ordsDropiPeriodo.filter(o=>!noGestionados.includes(o.estatus));
+  const pendConfirm=ordsDropiPeriodo.filter(o=>EST_PEND.includes(o.estatus));
+  const totalPeriodo=ordsDropiPeriodo.length;
+  const pctGestion=totalPeriodo>0?(gestionados.length/totalPeriodo*100):0;
+  const shopifyPeriodo=dShopi.length?procesarShopifyCompleto(dShopi).ords.filter(o=>enRango(o.fecha)&&!o.cancelado).length:null;
+
+  $('m-confirm').innerHTML=`
+    ${shopifyPeriodo!==null?`<div class="mc p"><div class="lb">Pedidos Shopify</div><div class="vl">${shopifyPeriodo}</div></div>`:''}
+    <div class="mc b"><div class="lb">Pedidos Dropi</div><div class="vl">${totalPeriodo}</div></div>
+    <div class="mc g"><div class="lb">Gestionados</div><div class="vl">${gestionados.length}</div><div class="sb">${pctGestion.toFixed(1)}% del período</div></div>
+    <div class="mc a"><div class="lb">Pendiente confirmación</div><div class="vl">${pendConfirm.length}</div></div>
+  `;
+
+  $('tb-confirm').innerHTML=pendConfirm.map(o=>{
+    return`<tr><td>${o.cliente}</td><td style="font-family:'JetBrains Mono',monospace">${o.tel}</td><td style="color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.productos}</td><td><span class="pill pa">Pend. confirmación</span></td></tr>`;
+  }).join('')||'<tr><td colspan="4" class="empty">Todos los pedidos del período están gestionados ✓</td></tr>';
+
+  // ---- BLOQUE 2: NOVEDADES PENDIENTES (sin resolver, fecha de novedad dentro o antes del rango) ----
+  const fechaNovByID={},novTextByID={},transpByID={},guiaByID={},clienteByID={};
+  dOrd.forEach(r=>{
+    const id=String(r['ID']||'');
+    fechaNovByID[id]=r['FECHA DE NOVEDAD']||'';
+    novTextByID[id]=r['NOVEDAD']||'';
+    transpByID[id]=r['TRANSPORTADORA']||'';
+    guiaByID[id]=r['NÚMERO GUIA']||'';
+    clienteByID[id]=r['NOMBRE CLIENTE']||'';
+  });
+
+  const novedadesPendientes=allOrds.filter(o=>!o.dup&&o.estatus==='NOVEDAD').map(o=>{
+    const fech=parseFechaControl(fechaNovByID[o.id]||'');
+    const dh=diasHabilesControl(fech);
+    return{...o,fechaNov:fech,diasHab:dh,novTexto:novTextByID[o.id]||'',transp:transpByID[o.id]||o.transp,guia:guiaByID[o.id]||o.guia};
+  }).filter(o=>o.fechaNov&&o.fechaNov<=dt&&o.diasHab>=1)
+    .sort((a,b)=>b.diasHab-a.diasHab);
+
+  const naranjas=novedadesPendientes.filter(o=>o.diasHab===1).length;
+  const rojos=novedadesPendientes.filter(o=>o.diasHab>=2).length;
+
+  $('m-novpend').innerHTML=`
+    <div class="mc a"><div class="lb">Total sin resolver</div><div class="vl">${novedadesPendientes.length}</div></div>
+    <div class="mc o"><div class="lb">+1 día (alerta naranja)</div><div class="vl" style="color:#f59e0b">${naranjas}</div></div>
+    <div class="mc r"><div class="lb">+2 días (alerta roja)</div><div class="vl">${rojos}</div></div>
+  `;
+
+  $('tb-novpend').innerHTML=novedadesPendientes.map(o=>{
+    const color=o.diasHab>=2?'style="color:var(--red)"':o.diasHab>=1?'style="color:var(--amber)"':'';
+    return`<tr>
+      <td>${o.cliente}</td>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:11px">${o.guia||'—'}</td>
+      <td style="color:var(--muted)">${o.transp}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)">${o.novTexto}</td>
+      <td style="color:var(--muted)">${o.fechaNov}</td>
+      <td ${color} style="text-align:center;font-weight:700">${o.diasHab}d</td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="6" class="empty">Sin novedades atrasadas en este período ✓</td></tr>';
+
+  const tabControl=$('tab-control');
+  if(tabControl){
+    if(rojos>0||naranjas>0){
+      tabControl.innerHTML=`Control Diario <span style="background:${rojos>0?'var(--red)':'#f59e0b'};color:#fff;font-size:9px;padding:1px 5px;border-radius:10px;margin-left:4px">${naranjas+rojos}</span>`;
+    } else {
+      tabControl.textContent='Control Diario';
+    }
+  }
+
+  // ---- BLOQUE 3: NOVEDADES SOLUCIONADAS EN EL RANGO ----
+  const fechaSolByID={},horaSolByID={},solTextByID={},usuarioSolByID={};
+  dOrd.forEach(r=>{
+    const id=String(r['ID']||'');
+    fechaSolByID[id]=r['FECHA DE SOLUCIÓN']||'';
+    horaSolByID[id]=r['HORA DE SOLUCIÓN']||'';
+    solTextByID[id]=r['SOLUCIÓN']||'';
+    usuarioSolByID[id]=String(r['USUARIO QUE SOLUCIONA LA NOVEDAD']||'').split(' ').pop()||'—';
+  });
+
+  const novedadesSolRango=allOrds.filter(o=>!o.dup).filter(o=>{
+    const fechaSol=parseFechaControl(fechaSolByID[o.id]||'');
+    return enRango(fechaSol);
+  }).map(o=>({
+    ...o,
+    fechaSol:parseFechaControl(fechaSolByID[o.id]||''),
+    horaSol:horaSolByID[o.id]||'',
+    solTexto:solTextByID[o.id]||'',
+    usuarioSol:usuarioSolByID[o.id]||'',
+    guia:guiaByID[o.id]||o.guia
+  })).sort((a,b)=>(b.fechaSol+b.horaSol).localeCompare(a.fechaSol+a.horaSol));
+
+  $('m-novsol').innerHTML=`
+    <div class="mc g"><div class="lb">Novedades solucionadas en el período</div><div class="vl">${novedadesSolRango.length}</div></div>
+  `;
+
+  $('tb-novsol').innerHTML=novedadesSolRango.map(o=>{
+    return`<tr>
+      <td>${o.cliente}</td>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:11px">${o.guia||'—'}</td>
+      <td style="color:var(--muted)">${o.fechaSol} ${o.horaSol||''}</td>
+      <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)">${o.solTexto}</td>
+      <td style="color:var(--muted);font-size:11px">${o.usuarioSol}</td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="5" class="empty">Sin novedades solucionadas en este período</td></tr>';
+}
+
+function toggleConfirmDetalle(){
+  const det=$('confirm-detalle');
+  const btn=$('btn-confirm-toggle');
+  const visible=det.style.display!=='none';
+  det.style.display=visible?'none':'block';
+  btn.textContent=visible?'Ver pedidos pendientes por confirmar':'Ocultar detalle';
+}
+
 
 loadKeys();setDates();
 </script>
