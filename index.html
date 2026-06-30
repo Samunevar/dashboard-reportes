@@ -330,6 +330,14 @@ tr:hover td{background:var(--bg3);}
     </div>
   </div>
 
+  <!-- MODAL DETALLE NOVEDAD -->
+  <div id="novedad-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;overflow-y:auto;padding:20px" onclick="if(event.target===this)cerrarDetalleNovedad()">
+    <div style="max-width:560px;margin:0 auto;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rl);padding:24px;position:relative">
+      <button onclick="cerrarDetalleNovedad()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer">✕</button>
+      <div id="novedad-modal-content"></div>
+    </div>
+  </div>
+
   <!-- MODAL PRODUCTO -->
   <div id="prod-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;overflow-y:auto;padding:20px" onclick="if(event.target===this)cerrarModal()">
     <div style="max-width:800px;margin:0 auto;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rl);padding:24px;position:relative">
@@ -481,7 +489,7 @@ tr:hover td{background:var(--bg3);}
       <div class="mg" id="m-novsol"></div>
       <div class="tw2" style="margin-top:10px">
         <table>
-          <thead><tr><th>Cliente</th><th>Guía</th><th>Fecha y hora solución</th><th>Solución aplicada</th><th>Usuario</th></tr></thead>
+          <thead><tr><th>Cliente</th><th>Guía</th><th>Fecha y hora solución</th><th>Tipo de novedad</th><th>Solución aplicada</th><th>Usuario</th></tr></thead>
           <tbody id="tb-novsol"></tbody>
         </table>
       </div>
@@ -2584,23 +2592,29 @@ function renderControlDiario(){
     fechaSol:parseFechaControl(fechaSolByID[o.id]||''),
     horaSol:horaSolByID[o.id]||'',
     solTexto:solTextByID[o.id]||'',
+    novTexto:novTextByID[o.id]||'',
     usuarioSol:usuarioSolByID[o.id]||'',
-    guia:guiaByID[o.id]||o.guia
+    guia:guiaByID[o.id]||o.guia,
+    transp:transpByID[o.id]||o.transp,
+    fechaNov:parseFechaControl(fechaNovByID[o.id]||'')
   })).sort((a,b)=>(b.fechaSol+b.horaSol).localeCompare(a.fechaSol+a.horaSol));
+
+  window._novSolData=novedadesSolRango;
 
   $('m-novsol').innerHTML=`
     <div class="mc g"><div class="lb">Novedades solucionadas en el período</div><div class="vl">${novedadesSolRango.length}</div></div>
   `;
 
-  $('tb-novsol').innerHTML=novedadesSolRango.map(o=>{
-    return`<tr>
+  $('tb-novsol').innerHTML=novedadesSolRango.map((o,i)=>{
+    return`<tr style="cursor:pointer" onclick="abrirDetalleNovedad(${i})">
       <td>${o.cliente}</td>
       <td style="font-family:'JetBrains Mono',monospace;font-size:11px">${o.guia||'—'}</td>
       <td style="color:var(--muted)">${o.fechaSol} ${o.horaSol||''}</td>
-      <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)">${o.solTexto}</td>
+      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)" title="${o.novTexto.replace(/"/g,'&quot;')}">${o.novTexto||'—'}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)">${o.solTexto}</td>
       <td style="color:var(--muted);font-size:11px">${o.usuarioSol}</td>
     </tr>`;
-  }).join('')||'<tr><td colspan="5" class="empty">Sin novedades solucionadas en este período</td></tr>';
+  }).join('')||'<tr><td colspan="6" class="empty">Sin novedades solucionadas en este período</td></tr>';
 }
 
 function toggleConfirmDetalle(){
@@ -2611,6 +2625,40 @@ function toggleConfirmDetalle(){
   btn.textContent=visible?'Ver pedidos pendientes por confirmar':'Ocultar detalle';
 }
 
+
+
+function abrirDetalleNovedad(i){
+  const o=window._novSolData?.[i];if(!o)return;
+  $('novedad-modal-content').innerHTML=`
+    <div style="margin-bottom:16px">
+      <div style="font-size:17px;font-weight:700;color:var(--text);margin-bottom:4px">${o.cliente}</div>
+      <div style="font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace">${o.id} · Guía ${o.guia||'—'}</div>
+    </div>
+    <div class="cr"><div class="cl2">Teléfono</div><div class="cv">${o.tel||'—'}</div></div>
+    <div class="cr"><div class="cl2">Ciudad</div><div class="cv">${o.ciudad||'—'}</div></div>
+    <div class="cr"><div class="cl2">Transportadora</div><div class="cv">${o.transp||'—'}</div></div>
+    <div class="cr"><div class="cl2">Producto</div><div class="cv" style="text-align:right;max-width:250px">${o.productos||'—'}</div></div>
+    <hr class="sdv">
+    <div style="margin-bottom:10px">
+      <div style="font-size:10px;font-weight:600;color:var(--hint);letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px">Tipo de novedad</div>
+      <div style="font-size:13px;color:var(--text);background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px">${o.novTexto||'Sin descripción'}</div>
+    </div>
+    <div style="margin-bottom:10px">
+      <div style="font-size:10px;font-weight:600;color:var(--hint);letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px">Fecha en que entró en novedad</div>
+      <div style="font-size:13px;color:var(--muted)">${o.fechaNov||'—'}</div>
+    </div>
+    <hr class="sdv">
+    <div style="margin-bottom:10px">
+      <div style="font-size:10px;font-weight:600;color:var(--green);letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px">Solución aplicada</div>
+      <div style="font-size:13px;color:var(--text);background:var(--gd);border:1px solid rgba(34,197,94,.2);border-radius:var(--r);padding:10px 12px">${o.solTexto||'Sin descripción'}</div>
+    </div>
+    <div class="cr"><div class="cl2">Solucionado</div><div class="cv" style="color:var(--green)">${o.fechaSol} ${o.horaSol||''}</div></div>
+    <div class="cr"><div class="cl2">Usuario</div><div class="cv">${o.usuarioSol||'—'}</div></div>
+  `;
+  $('novedad-modal').style.display='block';
+}
+
+function cerrarDetalleNovedad(){$('novedad-modal').style.display='none';}
 
 loadKeys();setDates();
 </script>
