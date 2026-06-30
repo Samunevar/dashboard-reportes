@@ -178,20 +178,11 @@ tr:hover td{background:var(--bg3);}
   <div class="ct">Credenciales</div>
   <div class="cg">
     <div class="fl">
-      <label><span class="tag ts">Shopify</span> URL reporte Mipler</label>
-      <div class="ir"><input type="password" id="mipler-url" placeholder="https://app.mipler.com/public/xxx/view/xxx.json" autocomplete="off"><button class="vb" onclick="tv('mipler-url')">ver</button></div>
+      <label><span class="tag tm">Meta Ads</span> Gasto Meta del período</label>
+      <input type="number" id="meta-spend" placeholder="0 COP" min="0" step="1000">
     </div>
     <div class="fl">
-      <label><span class="tag tm">Meta Ads</span> Access Token</label>
-      <div class="ir"><input type="password" id="meta-token" placeholder="EAAxxxxxxxxxxxxx" autocomplete="off"><button class="vb" onclick="tv('meta-token')">ver</button></div>
-    </div>
-    <div class="fl">
-      <label><span class="tag tm">Meta Ads</span> Gasto manual <span class="tag to">Opcional</span></label>
-      <input type="number" id="meta-spend" placeholder="0 COP — override manual" min="0" step="1000">
-      <div style="font-size:10px;color:var(--hint);margin-top:2px">Si lo llenas, reemplaza el gasto calculado por API</div>
-    </div>
-    <div class="fl">
-      <label><span class="tag tt">TikTok</span> Gasto del período <span class="tag to">Opcional</span></label>
+      <label><span class="tag tt">TikTok</span> Gasto TikTok del período</label>
       <input type="number" id="tiktok-spend" placeholder="0 COP" min="0" step="1000">
     </div>
     <div class="fl">
@@ -212,17 +203,22 @@ tr:hover td{background:var(--bg3);}
 </div>
 
 <div class="card">
-  <div class="ct">Archivos Dropi</div>
-  <div class="ug">
+  <div class="ct">Archivos</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
     <div>
-      <span class="sl">Órdenes — una orden por fila</span>
+      <span class="sl">Dropi — Órdenes (una por fila)</span>
       <div id="ua-ord"><div class="uz" onclick="document.getElementById('uf-ord').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="df(event,'ord')"><p style="font-size:20px;margin-bottom:5px">📋</p><p><strong>Clic o arrastra</strong> — ordenes_xxx.xlsx</p><input type="file" id="uf-ord" accept=".xlsx,.xls" onchange="hf(this.files[0],'ord')"></div></div>
       <div id="ok-ord" style="display:none"></div>
     </div>
     <div>
-      <span class="sl">Órdenes con productos — un producto por fila</span>
+      <span class="sl">Dropi — Órdenes con productos</span>
       <div id="ua-prod"><div class="uz" onclick="document.getElementById('uf-prod').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="df(event,'prod')"><p style="font-size:20px;margin-bottom:5px">📦</p><p><strong>Clic o arrastra</strong> — ordenes_productos_xxx.xlsx</p><input type="file" id="uf-prod" accept=".xlsx,.xls" onchange="hf(this.files[0],'prod')"></div></div>
       <div id="ok-prod" style="display:none"></div>
+    </div>
+    <div>
+      <span class="sl">Shopify — Pedidos exportados <span class="tag ts" style="margin-left:4px">CSV</span></span>
+      <div id="ua-shopi"><div class="uz" onclick="document.getElementById('uf-shopi').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="df(event,'shopi')"><p style="font-size:20px;margin-bottom:5px">🛍️</p><p><strong>Clic o arrastra</strong> — orders_export.csv</p><input type="file" id="uf-shopi" accept=".csv,.xlsx,.xls" onchange="hf(this.files[0],'shopi')"></div></div>
+      <div id="ok-shopi" style="display:none"></div>
     </div>
   </div>
 </div>
@@ -236,13 +232,13 @@ tr:hover td{background:var(--bg3);}
   <div class="tabs">
     <div class="tab active" onclick="st(0)">Resumen</div>
     <div class="tab" onclick="st(1)">Logística</div>
-    <div class="tab" onclick="st(2)">Meta Ads</div>
-    <div class="tab" onclick="st(3)">WhatsApp</div>
-    <div class="tab" onclick="st(4)">Proyección</div>
-    <div class="tab" onclick="st(5)" id="tab-sin-mov">Sin movimiento</div>
-    <div class="tab" onclick="st(6)">Productos</div>
-    <div class="tab" onclick="st(7)">Transportadoras</div>
-    <div class="tab" onclick="st(8)">Reporte IA</div>
+    
+    <div class="tab" onclick="st(2)">Proyección</div>
+    <div class="tab" onclick="st(3)" id="tab-sin-mov">Sin movimiento</div>
+    <div class="tab" onclick="st(4)">Productos</div>
+    <div class="tab" onclick="st(5)">Transportadoras</div>
+    <div class="tab" onclick="st(6)">Reporte IA</div>
+    <div class="tab" onclick="st(7)" id="tab-traz">Trazabilidad</div>
   </div>
 
   <!-- TAB 0: RESUMEN -->
@@ -292,23 +288,13 @@ tr:hover td{background:var(--bg3);}
     </div>
   </div>
 
-  <!-- TAB 2: META -->
-  <div class="tp" id="tp2">
-    <div class="card"><div class="ct">Meta Ads — todas las cuentas</div><div class="mg" id="m-meta"></div><hr class="sdv"><div id="meta-tt" style="margin-bottom:12px"></div><div class="tw2"><table><thead><tr><th>Cuenta</th><th>Campaña</th><th>Gasto</th><th>Clics</th><th>CTR</th><th>CPC</th><th>CPM</th><th>CPA</th></tr></thead><tbody id="tb-meta"></tbody></table></div></div>
-  </div>
-
-  <!-- TAB 3: WHATSAPP -->
-  <div class="tp" id="tp3">
-    <div class="card"><div class="ct">Pedidos WhatsApp & Orgánicos</div><div class="mg" id="m-wp"></div><hr class="sdv"><div class="al ai" style="margin-bottom:12px">Pedidos en Dropi sin ID de orden de tienda — llegaron por WhatsApp u otro canal externo a Shopify</div><div class="tw2"><table><thead><tr><th>ID Dropi</th><th>Cliente</th><th>Teléfono</th><th>Ciudad</th><th>Producto</th><th>Valor</th><th>Estado</th></tr></thead><tbody id="tb-wp"></tbody></table></div></div>
-  </div>
-
   <!-- TAB 4: PROYECCIÓN -->
-  <div class="tp" id="tp4">
+  <div class="tp" id="tp2">
     <div class="card"><div class="ct">Proyección de ingresos</div><div class="pbox" id="pbox"></div><div class="al ai" style="margin-bottom:12px">Proyección = 85% × pedidos en movimiento. Ingreso neto = (Valor − Flete − Costo proveedor) × 0.85</div><div class="tw2"><table><thead><tr><th>ID</th><th>Cliente</th><th>Producto</th><th>Estado</th><th>Valor</th><th>Costo prov.</th><th>Flete</th><th>Ingreso neto estimado</th></tr></thead><tbody id="tb-proy"></tbody></table></div></div>
   </div>
 
   <!-- TAB 5: SIN MOVIMIENTO -->
-  <div class="tp" id="tp5">
+  <div class="tp" id="tp3">
     <div class="card">
       <div class="ct">Pedidos sin movimiento +48 horas hábiles</div>
       <div class="mg" id="m-sinmov"></div>
@@ -329,14 +315,15 @@ tr:hover td{background:var(--bg3);}
   </div>
 
   <!-- TAB 6: PRODUCTOS -->
-  <div class="tp" id="tp6">
+  <div class="tp" id="tp4">
     <div class="card">
       <div class="ct">Rendimiento por producto</div>
       <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
-        <button class="filter-btn active" id="pf-ped" onclick="setProdSort('ped',this)">📦 Pedidos</button>
-        <button class="filter-btn" id="pf-ef" onclick="setProdSort('ef',this)">📊 Efectividad</button>
-        <button class="filter-btn active" id="pf-comb" onclick="toggleProdComb(this)" title="Combinar ambos filtros">🔗 Combinado</button>
-        <button class="filter-btn" id="pf-dir" onclick="toggleProdDir(this)">↓ Desc</button>
+        <button class="filter-btn active" id="pf-best" onclick="setProdSort('best',this)">⭐ Mejor producto</button>
+        <button class="filter-btn" id="pf-dinero" onclick="setProdSort('dinero',this)">💰 Más dinero en wallet</button>
+        <button class="filter-btn" id="pf-ef" onclick="setProdSort('ef',this)">📊 Mejor entrega</button>
+        <button class="filter-btn" id="pf-ped" onclick="setProdSort('ped',this)">📦 Más pedidos</button>
+        <button class="filter-btn" id="pf-dir" onclick="toggleProdDir(this)">↓ Mayor a menor</button>
       </div>
       <div id="prod-ranking"></div>
     </div>
@@ -351,7 +338,7 @@ tr:hover td{background:var(--bg3);}
   </div>
 
   <!-- TAB 7: TRANSPORTADORAS + CIUDADES -->
-  <div class="tp" id="tp7">
+  <div class="tp" id="tp5">
     <div class="card">
       <div class="ct">Transportadoras</div>
       <div id="transp-list"></div>
@@ -371,8 +358,75 @@ tr:hover td{background:var(--bg3);}
   </div>
 
   <!-- TAB 8: IA -->
-  <div class="tp" id="tp8">
+  <div class="tp" id="tp6">
     <div class="card"><div class="ct">Análisis IA</div><div id="ia-c"><div class="empty">Presiona Generar reporte para el análisis</div></div><div class="ar" id="ia-ar" style="display:none"><button class="bs" onclick="expTxt()">Exportar .txt</button><button class="bs" onclick="copIA()">Copiar</button></div></div>
+  </div>
+
+  <!-- TAB 9: TRAZABILIDAD -->
+  <div class="tp" id="tp7">
+
+    <!-- SECCIÓN 1: Shopify → Dropi -->
+    <div class="card">
+      <div class="ct">Trazabilidad Shopify ↔ Dropi</div>
+      <div class="al ai" style="margin-bottom:12px">Cruza los pedidos de Shopify con Dropi por número de teléfono. Detecta pedidos no migrados, migraciones con producto diferente y posibles testeos de landing.</div>
+      <div class="mg" id="m-traz"></div>
+      <hr class="sdv">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+        <div style="display:flex;gap:6px;flex-wrap:wrap" id="traz-filtros">
+          <button class="filter-btn active" id="tf-all" onclick="setTrazFilter('all',this)">📋 Todos</button>
+          <button class="filter-btn" id="tf-ok" onclick="setTrazFilter('ok',this)">✅ Migrados</button>
+          <button class="filter-btn" id="tf-diff" onclick="setTrazFilter('diff',this)">⚠️ Producto diferente</button>
+          <button class="filter-btn" id="tf-no" onclick="setTrazFilter('no',this)">❌ No migrados</button>
+        </div>
+        <button class="bp" style="font-size:12px;padding:7px 18px" id="btn-traz-toggle" onclick="toggleTrazDetalle()">Ver detalle de pedidos</button>
+      </div>
+      <div id="traz-detalle" style="display:none">
+        <div class="tw2">
+          <table>
+            <thead><tr><th>Orden Shopify</th><th>Cliente</th><th>Teléfono</th><th>Producto Shopify</th><th>Producto Dropi</th><th>Estado Dropi</th><th>Estado</th></tr></thead>
+            <tbody id="tb-traz"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECCIÓN 2: Pedidos adicionales WhatsApp / Carritos -->
+    <div class="card">
+      <div class="ct">Pedidos adicionales — WhatsApp / Carritos recuperados</div>
+      <div class="al ao" style="margin-bottom:12px">Pedidos en Dropi cuyo teléfono <strong>no aparece en ninguna orden de Shopify</strong> del período. Son pedidos que no se contaban — llegaron por WhatsApp directo o carrito recuperado por el bot.</div>
+      <div class="mg" id="m-adic"></div>
+      <hr class="sdv">
+      <div class="tw" style="margin-bottom:16px">
+        <div>
+          <span class="sl">Distribución por estado</span>
+          <div class="slist" id="adic-estados"></div>
+        </div>
+        <div>
+          <span class="sl">Métricas del canal</span>
+          <div id="adic-metricas"></div>
+        </div>
+      </div>
+      <hr class="sdv">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+        <div style="display:flex;gap:6px;flex-wrap:wrap" id="adic-filtros" style="display:none">
+          <button class="filter-btn active" id="af-all" onclick="setAdicFilter('all',this)">📋 Todos</button>
+          <button class="filter-btn" id="af-ent" onclick="setAdicFilter('ent',this)">✅ Entregados</button>
+          <button class="filter-btn" id="af-mov" onclick="setAdicFilter('mov',this)">🚚 En movimiento</button>
+          <button class="filter-btn" id="af-dev" onclick="setAdicFilter('dev',this)">↩️ Devoluciones</button>
+          <button class="filter-btn" id="af-can" onclick="setAdicFilter('can',this)">❌ Cancelados</button>
+        </div>
+        <button class="bp" style="font-size:12px;padding:7px 18px" id="btn-adic-toggle" onclick="toggleAdicDetalle()">Ver detalle de pedidos</button>
+      </div>
+      <div id="adic-detalle" style="display:none">
+        <div class="tw2">
+          <table>
+            <thead><tr><th>ID Dropi</th><th>Cliente</th><th>Teléfono</th><th>Ciudad</th><th>Producto</th><th>Valor</th><th>Estado</th></tr></thead>
+            <tbody id="tb-adic"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 </div>
@@ -384,7 +438,7 @@ const fmt=n=>'$'+Math.round(n||0).toLocaleString('es-CO');
 const pct=n=>(parseFloat(n)||0).toFixed(1)+'%';
 const mono=n=>Math.round(n||0).toLocaleString('es-CO');
 
-let dOrd=[],dProd=[],selProds=new Set(),allOrds=[];
+let dOrd=[],dProd=[],dShopi=[],selProds=new Set(),allOrds=[];
 let gD={},gS={},gM={},gW={},gP={};
 
 const EST_ENT=['ENTREGADO'];
@@ -437,26 +491,79 @@ const scrollObserver=new IntersectionObserver((entries)=>{
 
 function observarLogistica(){const sec=$('logistica-section');if(sec)scrollObserver.observe(sec);}
 
-function saveKeys(){localStorage.setItem(LS,JSON.stringify({mu:$('mipler-url').value,mt:$('meta-token').value,ck:$('claude-key').value,tt:$('tiktok-spend').value,ms:$('meta-spend').value}));setS('ok','Credenciales guardadas');}
-function loadKeys(){const d=JSON.parse(localStorage.getItem(LS)||'{}');if(d.mu)$('mipler-url').value=d.mu;if(d.mt)$('meta-token').value=d.mt;if(d.ck)$('claude-key').value=d.ck;if(d.tt)$('tiktok-spend').value=d.tt;if(d.ms)$('meta-spend').value=d.ms;}
+function saveKeys(){localStorage.setItem(LS,JSON.stringify({ck:$('claude-key').value,tt:$('tiktok-spend').value,ms:$('meta-spend').value}));setS('ok','Valores guardados');}
+function loadKeys(){const d=JSON.parse(localStorage.getItem(LS)||'{}');if(d.ck)$('claude-key').value=d.ck;if(d.tt)$('tiktok-spend').value=d.tt;if(d.ms)$('meta-spend').value=d.ms;}
 function setDates(){const t=new Date(),f=new Date(t.getFullYear(),t.getMonth(),1);$('date-to').value=t.toISOString().slice(0,10);$('date-from').value=f.toISOString().slice(0,10);}
 
 function df(e,t){e.preventDefault();e.currentTarget.classList.remove('drag');hf(e.dataTransfer.files[0],t);}
 function hf(file,tipo){
   if(!file)return;
+  if(tipo==='shopi'&&file.name.endsWith('.csv')){
+    // Leer CSV de Shopify con PapaParse-style manual
+    const r=new FileReader();
+    r.onload=function(e){
+      const txt=e.target.result;
+      const lines=txt.split('\n');
+      const headers=lines[0].split(',').map(h=>h.replace(/"/g,'').trim());
+      const rows=[];
+      let i=1;
+      let lastValidPhone='',lastValidName='',lastValidCity='',lastOrderName='';
+      while(i<lines.length){
+        let line=lines[i];
+        // Manejar campos con comas dentro de comillas
+        const cells=[];
+        let inQ=false,cell='';
+        for(let c=0;c<line.length;c++){
+          if(line[c]==='"')inQ=!inQ;
+          else if(line[c]===','&&!inQ){cells.push(cell.trim());cell='';}
+          else cell+=line[c];
+        }
+        cells.push(cell.trim());
+        if(cells.length>=2){
+          const obj={};
+          headers.forEach((h,idx)=>obj[h]=cells[idx]||'');
+          // Forward fill: si es la misma orden, propagar teléfono y nombre
+          const orderName=obj['Name']||'';
+          if(orderName&&orderName!==lastOrderName){
+            lastOrderName=orderName;
+            if(obj['Billing Phone'])lastValidPhone=obj['Billing Phone'];
+            if(obj['Billing Name'])lastValidName=obj['Billing Name'];
+            if(obj['Billing City'])lastValidCity=obj['Billing City'];
+          } else if(orderName===lastOrderName){
+            // Misma orden — aplicar forward fill si el campo está vacío
+            if(!obj['Billing Phone']&&lastValidPhone)obj['Billing Phone']=lastValidPhone;
+            if(!obj['Billing Name']&&lastValidName)obj['Billing Name']=lastValidName;
+            if(!obj['Billing City']&&lastValidCity)obj['Billing City']=lastValidCity;
+          }
+          rows.push(obj);
+        }
+        i++;
+      }
+      dShopi=rows;
+      showOk('ua-shopi','ok-shopi',file.name,rows.length,'shopi');
+      setS('ok',`${file.name} — ${rows.length} filas Shopify`);
+    };
+    r.readAsText(file,'UTF-8');
+    return;
+  }
   const r=new FileReader();
   r.onload=function(e){
     const wb=XLSX.read(e.target.result,{type:'binary'});
     const ws=wb.Sheets[wb.SheetNames[0]];
     const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
     if(tipo==='ord'){dOrd=rows;showOk('ua-ord','ok-ord',file.name,rows.length,'ord');}
-    else{dProd=rows;showOk('ua-prod','ok-prod',file.name,rows.length,'prod');}
+    else if(tipo==='prod'){dProd=rows;showOk('ua-prod','ok-prod',file.name,rows.length,'prod');}
+    else if(tipo==='shopi'){dShopi=rows;showOk('ua-shopi','ok-shopi',file.name,rows.length,'shopi');}
     setS('ok',`${file.name} — ${rows.length} filas`);
   };
   r.readAsBinaryString(file);
 }
 function showOk(a,o,n,c,t){$(a).style.display='none';$(o).style.display='block';$(o).innerHTML=`<div class="fok">✓ <strong>${n}</strong> — ${c} filas <button onclick="resetF('${t}')">×</button></div>`;}
-function resetF(t){if(t==='ord'){dOrd=[];$('ua-ord').style.display='block';$('ok-ord').style.display='none';$('uf-ord').value='';}else{dProd=[];$('ua-prod').style.display='block';$('ok-prod').style.display='none';$('uf-prod').value='';}}
+function resetF(t){
+  if(t==='ord'){dOrd=[];$('ua-ord').style.display='block';$('ok-ord').style.display='none';$('uf-ord').value='';}
+  else if(t==='prod'){dProd=[];$('ua-prod').style.display='block';$('ok-prod').style.display='none';$('uf-prod').value='';}
+  else if(t==='shopi'){dShopi=[];$('ua-shopi').style.display='block';$('ok-shopi').style.display='none';$('uf-shopi').value='';}
+}
 
 function buildPF(ords){
   const ps=new Set();
@@ -584,10 +691,36 @@ function calcEfectividad(d){
   const df=$('date-from').value,dt=$('date-to').value;
   let diasRango=0;
   if(df&&dt){const d1=new Date(df),d2=new Date(dt);diasRango=Math.round((d2-d1)/(1000*60*60*24));}
-  let EF,fuente;
-  if(diasRango>14&&d.desp>0){EF=d.ent/d.desp;fuente=`${pct(EF*100)} real (${d.ent}/${d.desp} desp.)`;}
-  else{EF=0.80;fuente='80% conservador (<14 días)';}
-  return{EF,fuente,diasRango};
+
+  // Rango <= 14 dias: conservador
+  if(diasRango<=14||!dt){
+    return{EF:0.80,fuente:'80% conservador (rango menor a 14 dias)',diasRango};
+  }
+
+  // Rango > 14 dias: KPI basado en pedidos con fecha <= (fecha_fin - 10 dias)
+  // Esos pedidos ya tienen tiempo suficiente para estar cerrados
+  const fechaCorteD=new Date(dt);
+  fechaCorteD.setDate(fechaCorteD.getDate()-10);
+  const fechaCorte=fechaCorteD.toISOString().slice(0,10);
+
+  const cerrados=allOrds.filter(o=>!o.dup&&o.fecha&&o.fecha<=fechaCorte);
+  const entC=cerrados.filter(o=>EST_ENT.includes(o.estatus)).length;
+  const devC=cerrados.filter(o=>EST_DEV.includes(o.estatus)).length;
+  const movC=cerrados.filter(o=>EST_MOV.includes(o.estatus)).length;
+  const despC=entC+devC+movC;
+
+  if(despC<10){
+    // Pocos datos en periodo cerrado — usar ratio general como fallback
+    if(d.desp>0){
+      const EF=d.ent/d.desp;
+      return{EF,fuente:`${pct(EF*100)} real general (pocos datos antes del corte)`,diasRango,fechaCorte};
+    }
+    return{EF:0.80,fuente:'80% conservador (datos insuficientes)',diasRango};
+  }
+
+  const EF=entC/despC;
+  const fuente=`${pct(EF*100)} real · ${entC}/${despC} desp. hasta ${fechaCorte} (-10 dias del cierre)`;
+  return{EF,fuente,diasRango,fechaCorte,entC,despC};
 }
 
 function renderProy(d){
@@ -667,10 +800,7 @@ function calcWP(dropiData){
   gW={totWP,pWP};return gW;
 }
 
-async function fetchMeta(token,df,dt){
-  const r1=await fetch('/.netlify/functions/meta',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token,dateFrom:df,dateTo:dt})});
-  const d=await r1.json();if(d.error)throw new Error(d.error);return d;
-}
+// fetchMeta eliminado — usar gasto manual
 
 function renderMeta(data,tt,ms){
   const cs=data.data||[];
@@ -829,10 +959,7 @@ function renderRes(d,s,m,w){
   $('hdate').textContent=`${$('date-from').value} → ${$('date-to').value}`;
 }
 
-async function fetchMipler(url,df,dt){
-  const r=await fetch('/.netlify/functions/mipler',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({shareUrl:url,dateFrom:df,dateTo:dt})});
-  const d=await r.json();if(d.error)throw new Error(d.error);return d.rows||d.data||[];
-}
+// fetchMipler eliminado — usar CSV de Shopify
 
 async function genIA(ck,d,s,m,w,p,df,dt){
   const el=$('ia-c');
@@ -964,18 +1091,40 @@ function calcProductos(allValidas){
   });
 }
 
-let prodSort='ped',prodDir='desc',prodComb=true;
+let prodSort='best',prodDir='desc';
 
-function setProdSort(tipo,el){prodSort=tipo;document.querySelectorAll('#pf-ped,#pf-ef').forEach(b=>b.classList.remove('active'));el.classList.add('active');renderProductos(gProductos);}
-function toggleProdDir(el){prodDir=prodDir==='desc'?'asc':'desc';el.textContent=prodDir==='desc'?'↓ Desc':'↑ Asc';renderProductos(gProductos);}
-function toggleProdComb(el){prodComb=!prodComb;el.classList.toggle('active',prodComb);renderProductos(gProductos);}
+function setProdSort(tipo,el){
+  prodSort=tipo;
+  document.querySelectorAll('#pf-best,#pf-dinero,#pf-ef,#pf-ped').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderProductos(gProductos);
+}
+function toggleProdDir(el){
+  prodDir=prodDir==='desc'?'asc':'desc';
+  el.textContent=prodDir==='desc'?'↓ Mayor a menor':'↑ Menor a mayor';
+  renderProductos(gProductos);
+}
 
 function sortProductos(lista){
   return lista.slice().sort((a,b)=>{
     let v;
-    if(prodComb){const maxT=Math.max(...lista.map(x=>x.total),1);const sa=a.efDesp*100+(a.total/maxT*30);const sb=b.efDesp*100+(b.total/maxT*30);v=sa-sb;}
-    else if(prodSort==='ped')v=a.total-b.total;
-    else v=a.efDesp-b.efDesp;
+    const maxD=Math.max(...lista.map(x=>x.utilBruta||0),1);
+    const maxT=Math.max(...lista.map(x=>x.total),1);
+    if(prodSort==='best'){
+      // Mejor producto = wallet por entrega normalizada × efectividad
+      const maxWE=Math.max(...lista.map(x=>x.ent>0?(x.utilBruta||0)/x.ent:0),1);
+      const waA=a.ent>0?(a.utilBruta||0)/a.ent:0;
+      const waB=b.ent>0?(b.utilBruta||0)/b.ent:0;
+      const sa=(waA/maxWE*0.5)+(a.efDesp*0.5);
+      const sb=(waB/maxWE*0.5)+(b.efDesp*0.5);
+      v=sa-sb;
+    } else if(prodSort==='dinero'){
+      v=(a.utilBruta||0)-(b.utilBruta||0);
+    } else if(prodSort==='ef'){
+      v=a.efDesp-b.efDesp;
+    } else {
+      v=a.total-b.total;
+    }
     return prodDir==='desc'?-v:v;
   });
 }
@@ -984,9 +1133,15 @@ let gProductos=[];
 
 function renderProductos(productos){
   gProductos=productos;
-  if(!productos.length){$('prod-ranking').innerHTML='<div class="empty">Sube el archivo de órdenes con productos para ver este apartado</div>';return;}
-  const sorted=sortProductos(productos);
+  // Filtrar productos con menos de 30 pedidos para el ranking
+  const minPedidos=30;
+  const productosFiltrados=productos.filter(p=>p.total>=minPedidos);
+  const productosPocos=productos.filter(p=>p.total<minPedidos);
+  if(!productosFiltrados.length&&!productos.length){$('prod-ranking').innerHTML='<div class="empty">Sube el archivo de órdenes con productos para ver este apartado</div>';return;}
+  const sorted=sortProductos(productosFiltrados.length?productosFiltrados:productos);
+  const mostrandoFiltrados=productosFiltrados.length>0;
   const medals=['🥇','🥈','🥉'];
+  const notaPocos=mostrandoFiltrados&&productosPocos.length>0?`<div class="al ai" style="margin-top:12px;font-size:11px">📊 ${productosPocos.length} producto${productosPocos.length>1?'s':''} con menos de ${minPedidos} pedidos no aparece${productosPocos.length>1?'n':''} en el ranking (datos insuficientes para comparar): ${productosPocos.map(p=>p.nombre).join(', ')}</div>`:'';
   $('prod-ranking').innerHTML=sorted.map((p,i)=>{
     const efDespPct=(p.efDesp*100).toFixed(1),efTotalPct=(p.efTotal*100).toFixed(1);
     const barDesp=Math.min(p.efDesp/0.85*100,100).toFixed(1),barTotal=Math.min(p.efTotal/0.85*100,100).toFixed(1);
@@ -997,24 +1152,25 @@ function renderProductos(productos){
         ${posHTML}
         <div class="rank-name">${p.nombre}</div>
         <div class="rank-stats">
-          <div class="rank-stat"><span class="lbl">Entrega</span><span style="color:${vD}">${efDespPct}%</span></div>
-          <div class="rank-stat"><span class="lbl">Tasa de entrega general</span><span style="color:${vT}">${efTotalPct}%</span></div>
+          <div class="rank-stat"><span class="lbl">Wallet total</span><span style="color:${p.utilBruta>0?'var(--green)':'var(--hint)'};font-size:10px">${p.utilBruta>0?fmt(p.utilBruta):'—'}</span></div>
+          <div class="rank-stat"><span class="lbl">Wallet/entrega</span><span style="color:${p.utilBruta>0&&p.ent>0?'var(--green)':'var(--hint)'};font-size:10px">${p.utilBruta>0&&p.ent>0?fmt(Math.round(p.utilBruta/p.ent)):'—'}</span></div>
+          <div class="rank-stat"><span class="lbl">Entrega s/desp.</span><span style="color:${vD}">${efDespPct}%</span></div>
+          <div class="rank-stat"><span class="lbl">Entrega general</span><span style="color:${vT}">${efTotalPct}%</span></div>
           <div class="rank-stat"><span class="lbl">Devoluciones</span><span style="color:var(--red)">${(p.pctDev*100).toFixed(1)}%</span></div>
-          <div class="rank-stat"><span class="lbl">Cancelados</span><span style="color:var(--orange)">${(p.pctCan*100).toFixed(1)}%</span></div>
           <div class="rank-stat"><span class="lbl">Total</span><span style="color:var(--blue)">${p.total}</span></div>
-          <div class="rank-stat"><span class="lbl">Despachados</span><span style="color:var(--muted)">${p.desp}</span></div>
         </div>
       </div>
       <div class="rank-bars">
-        <div class="rank-bar-row"><div class="rank-bar-label">Entrega sobre despachadosachado</div><div class="rank-bar-track"><div class="rank-bar-fill" style="width:${barDesp}%;background:${cD}"></div></div><div class="rank-bar-val" style="color:${vD}">${efDespPct}%</div></div>
-        <div class="rank-bar-row"><div class="rank-bar-label">Efectividad general</div><div class="rank-bar-track"><div class="rank-bar-fill" style="width:${barTotal}%;background:${cT}"></div></div><div class="rank-bar-val" style="color:${vT}">${efTotalPct}%</div></div>
+        <div class="rank-bar-row"><div class="rank-bar-label">Entrega sobre despachados</div><div class="rank-bar-track"><div class="rank-bar-fill" style="width:${barDesp}%;background:${cD}"></div></div><div class="rank-bar-val" style="color:${vD}">${efDespPct}%</div></div>
+        <div class="rank-bar-row"><div class="rank-bar-label">Entrega general</div><div class="rank-bar-track"><div class="rank-bar-fill" style="width:${barTotal}%;background:${cT}"></div></div><div class="rank-bar-val" style="color:${vT}">${efTotalPct}%</div></div>
+        <div class="rank-bar-row"><div class="rank-bar-label">Dinero en wallet</div><div class="rank-bar-track"><div class="rank-bar-fill" style="width:${Math.min(((p.utilBruta||0)/Math.max(...gProductos.map(x=>x.utilBruta||0),1)*100),100).toFixed(1)}%;background:#22c55e"></div></div><div class="rank-bar-val" style="color:var(--green);font-size:10px">${p.utilBruta>0?fmt(p.utilBruta):'—'}</div></div>
       </div>
       <div style="font-size:10px;color:var(--hint);margin-top:4px">Clic para ver desglose completo →</div>
     </div>`;
-  }).join('');
+  }).join('');;
 }
 
-// ---- MODAL PRODUCTO (CON PROYECCIÓN MEJORADA) ----
+// ---- MODAL PRODUCTO (CON PROYECCIÓN MEJORADA + SIMULADOR) ----
 function abrirModal(nombre){
   const p=gProductos.find(x=>x.nombre===nombre);
   if(!p)return;
@@ -1032,10 +1188,23 @@ function abrirModal(nombre){
   const desp=ent+dev+mov;
   const efDesp=desp>0?ent/desp:0;
   const efTotal=total>0?ent/total:0;
-  const {EF}=calcEfectividad({desp,ent});
+  const {EF,fuente}=calcEfectividad({desp,ent});
   const proyEnt=Math.round(mov*EF);
 
-  // Nuevas métricas de proyección
+  // Métricas financieras reales
+  const ordsEnt=ords.filter(o=>EST_ENT.includes(o.estatus));
+  const ordsDev=ords.filter(o=>o.estatus==='DEVOLUCION');
+  const ingresosBrutos=ordsEnt.reduce((s,o)=>s+o.valor,0);
+  const fletesEnt=ordsEnt.reduce((s,o)=>s+o.flete,0);
+  const costoProvEnt=ordsEnt.reduce((s,o)=>s+o.costoProv,0);
+  const fletesDev=ordsDev.reduce((s,o)=>s+o.flete,0);
+  const walletBruta=ingresosBrutos-fletesEnt-costoProvEnt-fletesDev;
+  const ticketPromedio=ent>0?ingresosBrutos/ent:0;
+  const walletPorEntrega=ent>0?walletBruta/ent:0;
+  const fleteProm=ent>0?fletesEnt/ent:0;
+  const costoProm=ent>0?costoProvEnt/ent:0;
+
+  // Proyección de devoluciones
   const devProy=Math.round(mov*(1-EF));
   const devTotal=dev+devProy;
   const efProyPct=total>0?((ent+proyEnt)/total*100):0;
@@ -1056,7 +1225,7 @@ function abrirModal(nombre){
     return`<div class="transp-item"><div class="transp-name">${t}</div><div class="transp-bar-track"><div class="transp-bar-fill" style="width:${bar}%;background:${c}"></div></div><div class="transp-val" style="color:${v}">${(ef*100).toFixed(1)}%</div><div class="transp-ped">${d.desp} desp.</div></div>`;
   }).join('');
 
-  // Por ciudad (top 15)
+  // Por ciudad top 15
   const byC={};
   ords.forEach(o=>{
     const c=(o.ciudad||'Sin ciudad').toUpperCase();
@@ -1081,12 +1250,13 @@ function abrirModal(nombre){
       <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px">${nombre}</div>
       <div style="font-size:11px;color:var(--muted)">${total} pedidos totales · ${desp} despachados · ${mov} en movimiento</div>
     </div>
-    <!-- KPIs -->
+
+    <!-- KPIs principales -->
     <div class="mg" style="margin-bottom:16px">
-      <div class="mc b"><div class="lb">Total</div><div class="vl">${total}</div></div>
+      <div class="mc b"><div class="lb">Total pedidos</div><div class="vl">${total}</div></div>
       <div class="mc g"><div class="lb">Entregados</div><div class="vl">${ent}</div><div class="sb">${(efDesp*100).toFixed(1)}% sobre despachados</div></div>
       <div class="mc"><div class="lb">En movimiento</div><div class="vl">${mov}</div></div>
-      <div class="mc g" style="border:1px solid rgba(34,197,94,0.2)"><div class="lb">Proyección entregas</div><div class="vl">${proyEnt}</div><div class="sb">de ${mov} en movimiento · ${(EF*100).toFixed(0)}% efectividad</div></div>
+      <div class="mc g" style="border:1px solid rgba(34,197,94,0.25)"><div class="lb">Proyección entregas</div><div class="vl">${proyEnt}</div><div class="sb">de ${mov} en mov. · ${(EF*100).toFixed(0)}% efectividad</div></div>
       <div class="mc g" style="border:1px solid rgba(34,197,94,0.15)"><div class="lb">Efectividad proyectada</div><div class="vl">${efProyPct.toFixed(1)}%</div><div class="sb">(${ent}+${proyEnt}) / ${total} total</div></div>
       <div class="mc r"><div class="lb">Devoluciones reales</div><div class="vl">${dev}</div><div class="sb">${total>0?(dev/total*100).toFixed(1):0}% del total</div></div>
       <div class="mc r" style="border:1px solid rgba(239,68,68,0.2);opacity:0.8"><div class="lb">Devoluciones adicionales proyectadas</div><div class="vl">${devProy}</div><div class="sb">de ${mov} en movimiento · ${(EF*100).toFixed(0)}% efectividad</div></div>
@@ -1095,8 +1265,60 @@ function abrirModal(nombre){
       <div class="mc a"><div class="lb">Pendiente confirmación</div><div class="vl">${pend}</div></div>
       <div class="mc"><div class="lb">Tasa de entrega general</div><div class="vl">${(efTotal*100).toFixed(1)}%</div></div>
     </div>
+
     <hr class="sdv">
-    <!-- Mini torta + estados -->
+
+    <!-- Financiero real -->
+    <div class="ct">Financiero real</div>
+    <div class="tw" style="margin-bottom:16px">
+      <div>
+        <div class="mg">
+          <div class="mc g"><div class="lb">Dinero en wallet</div><div class="vl" style="font-size:13px">${fmt(walletBruta)}</div><div class="sb">ingresos − fletes − proveedor − dev.</div></div>
+          <div class="mc"><div class="lb">Ticket promedio</div><div class="vl" style="font-size:13px">${fmt(ticketPromedio)}</div><div class="sb">por pedido entregado</div></div>
+          <div class="mc g" style="border:1px solid rgba(34,197,94,0.2)"><div class="lb">Wallet por entrega</div><div class="vl" style="font-size:13px">${fmt(walletPorEntrega)}</div><div class="sb">ganancia neta por entregado</div></div>
+          <div class="mc"><div class="lb">Flete promedio</div><div class="vl" style="font-size:13px">${fmt(fleteProm)}</div></div>
+          <div class="mc"><div class="lb">Costo proveedor prom.</div><div class="vl" style="font-size:13px">${fmt(costoProm)}</div></div>
+        </div>
+        <div id="fin-real-detalle" style="margin-top:8px">
+          <div class="cr"><div class="cl2">Ingresos brutos entregados</div><div class="cv">${fmt(ingresosBrutos)}</div></div>
+          <div class="cr"><div class="cl2">Fletes de entrega</div><div class="cv" style="color:var(--red)">−${fmt(fletesEnt)}</div></div>
+          <div class="cr"><div class="cl2">Costo proveedor</div><div class="cv" style="color:var(--red)">−${fmt(costoProvEnt)}</div></div>
+          <div class="cr"><div class="cl2">Fletes de devolución</div><div class="cv" style="color:var(--red)">−${fmt(fletesDev)}</div></div>
+          <div class="cr" style="border-top:1px solid var(--border2);margin-top:4px;padding-top:8px"><div class="cl2" style="font-weight:600;color:var(--text)">Dinero en wallet</div><div class="cv" style="color:var(--green);font-weight:700">${fmt(walletBruta)}</div></div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center">
+        <span class="sl" style="align-self:flex-start">Distribución wallet real</span>
+        <canvas id="modal-torta-fin" width="200" height="200" style="display:block;margin:0 auto"></canvas>
+        <div id="modal-torta-fin-leg" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;justify-content:center"></div>
+      </div>
+    </div>
+
+    <hr class="sdv">
+
+    <!-- Simulador -->
+    <div class="ct">Simulador de ventas</div>
+    <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:16px;margin-bottom:16px">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px">
+        <div>
+          <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Pedidos a simular</label>
+          <input type="number" id="sim-pedidos" value="100" min="1" step="10" oninput="actualizarSim('${nombre.replace(/'/g,"\\'")}',${ticketPromedio},${fleteProm},${costoProm},${walletPorEntrega},${EF})" style="width:100%">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">CPA Promedio Meta Ads (por pedido generado)</label>
+          <input type="number" id="sim-cpa" value="0" min="0" step="1000" oninput="actualizarSim('${nombre.replace(/'/g,"\\'")}',${ticketPromedio},${fleteProm},${costoProm},${walletPorEntrega},${EF})" style="width:100%">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Efectividad usada</label>
+          <div style="padding:8px 11px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);font-size:12px;color:var(--green)">${(EF*100).toFixed(1)}% · ${fuente.split('·')[0].trim()}</div>
+        </div>
+      </div>
+      <div id="sim-resultado"></div>
+    </div>
+
+    <hr class="sdv">
+
+    <!-- Distribución + estados -->
     <div class="tw" style="margin-bottom:16px">
       <div>
         <span class="sl">Distribución</span>
@@ -1120,7 +1342,10 @@ function abrirModal(nombre){
       </div>
     </div>
   `;
+
   $('prod-modal').style.display='block';
+
+  // Torta distribución logística
   setTimeout(()=>{
     const datos=[
       {label:'Entregados',v:ent,color:'#22c55e'},{label:'En mov.',v:mov,color:'#f59e0b'},
@@ -1141,8 +1366,133 @@ function abrirModal(nombre){
       ang+=sw;
     });
     $('modal-torta-leg').innerHTML=datos.map(d=>`<div style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)"><div style="width:8px;height:8px;border-radius:2px;background:${d.color}"></div>${d.label} <strong style="color:var(--text)">${d.v}</strong></div>`).join('');
+
+    // Torta financiera real
+    dibujarTortaModalFin(walletBruta,fletesEnt,costoProvEnt,fletesDev);
+
+    // Inicializar simulador
+    actualizarSim(nombre,ticketPromedio,fleteProm,costoProm,walletPorEntrega,EF);
   },100);
 }
+
+function dibujarTortaModalFin(wallet,fletes,costo,fletesDev){
+  const canvas=$('modal-torta-fin');if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  const cx=100,cy=100,r=85;
+  ctx.clearRect(0,0,200,200);
+  const datos=[
+    {label:'Wallet',v:Math.max(wallet,0),color:'#22c55e'},
+    {label:'Fletes entrega',v:fletes,color:'#3b82f6'},
+    {label:'Costo proveedor',v:costo,color:'#f59e0b'},
+    {label:'Fletes dev.',v:fletesDev,color:'#ef4444'},
+  ].filter(x=>x.v>0);
+  const total=datos.reduce((s,d)=>s+d.v,0);if(!total)return;
+  let ang=-Math.PI/2;
+  datos.forEach(d=>{
+    const sw=d.v/total*Math.PI*2;
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,ang,ang+sw);ctx.closePath();
+    ctx.fillStyle=d.color;ctx.fill();ctx.strokeStyle='rgba(0,0,0,0.15)';ctx.lineWidth=1;ctx.stroke();
+    if(d.v/total>0.04){const mid=ang+sw/2;ctx.fillStyle='#fff';ctx.font='bold 10px Inter,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText((d.v/total*100).toFixed(0)+'%',cx+Math.cos(mid)*r*0.65,cy+Math.sin(mid)*r*0.65);}
+    ang+=sw;
+  });
+  const leg=$('modal-torta-fin-leg');
+  if(leg)leg.innerHTML=datos.map(d=>`<div style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)"><div style="width:8px;height:8px;border-radius:2px;background:${d.color}"></div>${d.label} <strong style="color:var(--text)">${fmt(d.v)}</strong></div>`).join('');
+}
+
+function actualizarSim(nombre,ticketProm,fleteProm,costoProm,walletPorEnt,EF){
+  const nPed=parseFloat($('sim-pedidos')?.value||100);
+  const cpa=parseFloat($('sim-cpa')?.value||0);
+  const el=$('sim-resultado');if(!el)return;
+
+  // Proyecciones con EF real del producto
+  const simEnt=Math.round(nPed*EF);
+  const simDev=Math.round(nPed*(1-EF)*0.7); // ~70% de los no entregados son devoluciones
+  const simCan=nPed-simEnt-simDev;
+  const simDesp=Math.round(nPed*0.85); // tasa despacho típica
+
+  // Financiero simulado
+  const simIngresos=simEnt*ticketProm;
+  const simFletes=simEnt*fleteProm;
+  const simCosto=simEnt*costoProm;
+  const simFletesDev=simDev*fleteProm;
+  const simWalletBruta=simIngresos-simFletes-simCosto-simFletesDev;
+  const simPauta=nPed*cpa;
+  const simWalletNeta=simWalletBruta-simPauta;
+  const simCpaDesp=simDesp>0?simPauta/simDesp:0;
+  const simCpaEnt=simEnt>0?simPauta/simEnt:0;
+
+  // Comparativa real
+  const p=gProductos.find(x=>x.nombre===nombre)||{};
+  const realEnt=p.ent||0;
+  const realDesp=p.desp||0;
+  const realWallet=p.utilBruta||0;
+  const realTotal=p.total||0;
+
+  el.innerHTML=`
+    <!-- Comparativa Real vs Simulado -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+      <div>
+        <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px">Real actual</div>
+        <div class="cr"><div class="cl2">Pedidos totales</div><div class="cv">${realTotal}</div></div>
+        <div class="cr"><div class="cl2">Entregados</div><div class="cv" style="color:var(--green)">${realEnt} · ${realDesp>0?(realEnt/realDesp*100).toFixed(1):0}% s/desp.</div></div>
+        <div class="cr"><div class="cl2">Wallet bruta</div><div class="cv" style="color:var(--green)">${fmt(realWallet)}</div></div>
+        <div class="cr"><div class="cl2">Wallet por entrega</div><div class="cv">${fmt(realEnt>0?realWallet/realEnt:0)}</div></div>
+        ${cpa>0?`<div class="cr"><div class="cl2">CPA por generado</div><div class="cv" style="color:var(--red)">−${fmt(cpa)}</div></div>`:''}
+        ${cpa>0?`<div class="cr"><div class="cl2">CPA por despachado</div><div class="cv" style="color:var(--red)">−${fmt(realDesp>0?(realTotal*cpa)/realDesp:0)}</div></div>`:''}
+        ${cpa>0?`<div class="cr"><div class="cl2">CPA por entregado</div><div class="cv" style="color:var(--red)">−${fmt(realEnt>0?(realTotal*cpa)/realEnt:0)}</div></div>`:''}
+        ${cpa>0?`<div class="cr" style="border-top:1px solid var(--border2);margin-top:4px;padding-top:6px"><div class="cl2" style="font-weight:600">Wallet neta estimada</div><div class="cv" style="color:${realWallet-(realTotal*cpa)>0?'var(--green)':'var(--red)'};font-weight:700">${fmt(realWallet-(realTotal*cpa))}</div></div>`:''}
+      </div>
+      <div>
+        <div style="font-size:10px;font-weight:700;color:var(--blue);letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px">Simulación — ${nPed} pedidos</div>
+        <div class="cr"><div class="cl2">Pedidos a meter</div><div class="cv">${nPed}</div></div>
+        <div class="cr"><div class="cl2">Entregas estimadas</div><div class="cv" style="color:var(--green)">${simEnt} · ${(EF*100).toFixed(1)}% efectividad</div></div>
+        <div class="cr"><div class="cl2">Wallet bruta estimada</div><div class="cv" style="color:var(--green)">${fmt(simWalletBruta)}</div></div>
+        <div class="cr"><div class="cl2">Wallet por entrega</div><div class="cv">${fmt(simEnt>0?simWalletBruta/simEnt:0)}</div></div>
+        ${cpa>0?`<div class="cr"><div class="cl2">Gasto en pauta (${nPed}×${fmt(cpa)})</div><div class="cv" style="color:var(--red)">−${fmt(simPauta)}</div></div>`:''}
+        ${cpa>0?`<div class="cr"><div class="cl2">CPA por despachado</div><div class="cv" style="color:var(--red)">−${fmt(simCpaDesp)}</div></div>`:''}
+        ${cpa>0?`<div class="cr"><div class="cl2">CPA por entregado</div><div class="cv" style="color:var(--red)">−${fmt(simCpaEnt)}</div></div>`:''}
+        ${cpa>0?`<div class="cr" style="border-top:1px solid var(--border2);margin-top:4px;padding-top:6px"><div class="cl2" style="font-weight:600">Wallet neta proyectada</div><div class="cv" style="color:${simWalletNeta>0?'var(--green)':'var(--red)'};font-weight:700">${fmt(simWalletNeta)}</div></div>`:''}
+      </div>
+    </div>
+    <!-- Torta simulación -->
+    ${cpa>0||simWalletBruta>0?`
+    <div style="display:flex;flex-direction:column;align-items:center;margin-top:8px">
+      <span class="sl">Distribución financiera — simulación</span>
+      <canvas id="modal-torta-sim" width="200" height="200" style="display:block;margin:0 auto"></canvas>
+      <div id="modal-torta-sim-leg" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;justify-content:center"></div>
+    </div>`:''}
+  `;
+
+  // Dibujar torta simulación
+  if(cpa>0||simWalletBruta>0){
+    setTimeout(()=>{
+      const canvas=$('modal-torta-sim');if(!canvas)return;
+      const ctx=canvas.getContext('2d');
+      const cx=100,cy=100,r=85;
+      ctx.clearRect(0,0,200,200);
+      const datos=[
+        {label:'Wallet neta',v:Math.max(simWalletNeta,0),color:'#22c55e'},
+        {label:'Pauta',v:simPauta,color:'#3b82f6'},
+        {label:'Fletes entrega',v:simFletes,color:'#60a5fa'},
+        {label:'Costo proveedor',v:simCosto,color:'#f59e0b'},
+        {label:'Fletes dev.',v:simFletesDev,color:'#ef4444'},
+      ].filter(x=>x.v>0);
+      const total=datos.reduce((s,d)=>s+d.v,0);if(!total)return;
+      let ang=-Math.PI/2;
+      datos.forEach(d=>{
+        const sw=d.v/total*Math.PI*2;
+        ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,ang,ang+sw);ctx.closePath();
+        ctx.fillStyle=d.color;ctx.fill();ctx.strokeStyle='rgba(0,0,0,0.15)';ctx.lineWidth=1;ctx.stroke();
+        if(d.v/total>0.04){const mid=ang+sw/2;ctx.fillStyle='#fff';ctx.font='bold 10px Inter,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText((d.v/total*100).toFixed(0)+'%',cx+Math.cos(mid)*r*0.65,cy+Math.sin(mid)*r*0.65);}
+        ang+=sw;
+      });
+      const leg=$('modal-torta-sim-leg');
+      if(leg)leg.innerHTML=datos.map(d=>`<div style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)"><div style="width:8px;height:8px;border-radius:2px;background:${d.color}"></div>${d.label} <strong style="color:var(--text)">${fmt(d.v)}</strong></div>`).join('');
+    },50);
+  }
+}
+
+
 
 function cerrarModal(){$('prod-modal').style.display='none';}
 
@@ -1202,7 +1552,8 @@ function filtrarCiudades(){renderCiudadesFiltradas();}
 
 function renderTodoAnalisis(dropiData){
   if(!dropiData)return;
-  const prods=calcProductos(dropiData.allV);
+  // Usar financiero si hay dProd, sino básico
+  const prods=dProd.length?calcProductosFinanciero(dropiData.allV):calcProductos(dropiData.allV);
   renderProductos(prods);
   const ts=calcTransportadoras(dropiData.allV);
   renderTransportadoras(ts);
@@ -1214,7 +1565,7 @@ function expTxt(){if(!window._rpt)return;const a=document.createElement('a');a.h
 function copIA(){if(!window._rpt)return;navigator.clipboard.writeText(window._rpt).then(()=>setS('ok','Copiado'));}
 
 async function fetchAll(){
-  const mu=$('mipler-url').value.trim(),mt=$('meta-token').value.trim(),ck=$('claude-key').value.trim();
+  const ck=$('claude-key').value.trim();
   const tt=parseFloat($('tiktok-spend').value||0),ms=parseFloat($('meta-spend').value||0),df=$('date-from').value,dt=$('date-to').value;
   if(!df||!dt){setS('err','Selecciona el rango de fechas');return;}
   $('btn-run').disabled=true;$('spin').style.display='block';
@@ -1226,14 +1577,14 @@ async function fetchAll(){
     setS('loading','Procesando Dropi...');
     dropiData=procesarDropi(df,dt);
     if(dropiData){renderLog(dropiData);renderProy(dropiData);}
-  }else errs.push('Dropi: sube el archivo de órdenes');
+  }else errs.push('Sube el archivo de órdenes de Dropi');
 
-  let shopRows=[],shopData=null;
-  if(mu){
-    setS('loading','Consultando Shopify...');
-    try{shopRows=await fetchMipler(mu,df,dt);shopData=renderShop(shopRows);}
-    catch(e){errs.push('Shopify: '+e.message);}
-  }else errs.push('Mipler: ingresa la URL');
+  // Shopify desde CSV subido
+  let shopData=null;
+  if(dShopi.length){
+    setS('loading','Procesando Shopify...');
+    shopData=procesarShopify(dShopi,df,dt);
+  }
 
   let wpData=null;
   if(dropiData){setS('loading','Detectando WA/orgánicos...');wpData=calcWP(dropiData);}
@@ -1244,14 +1595,21 @@ async function fetchAll(){
     renderTodoAnalisis(dropiData);
   }
 
-  let metaData={tG:ms||0,tot:(ms||0)+tt,tt,tI:0,tC:0,ctr:0,cpc:0};
-  if(mt){
-    setS('loading','Consultando Meta Ads...');
-    try{const raw=await fetchMeta(mt,df,dt);metaData=renderMeta(raw,tt,ms);}
-    catch(e){errs.push('Meta: '+e.message);}
-  }else errs.push('Meta: ingresa el token');
+  // Meta Ads — solo gasto manual
+  const metaData={tG:ms||0,tot:(ms||0)+tt,tt,tI:0,tC:0,ctr:0,cpc:0};
 
   renderRes(dropiData,shopData,metaData,wpData);
+
+  // Trazabilidad
+  if(dropiData&&dShopi.length){
+    setS('loading','Calculando trazabilidad...');
+    calcTrazabilidad(dShopi,dropiData,df,dt);
+    calcPedidosAdicionales(dropiData,dShopi);
+  } else if(dropiData&&!dShopi.length){
+    // Sin Shopify — calcular adicionales como los que no tienen tel en Shopify vacío
+    calcPedidosAdicionales(dropiData,[]);
+  }
+
   setS('loading','Generando análisis IA...');
   await genIA(ck,dropiData,shopData,metaData,wpData,gP,df,dt);
 
@@ -1262,7 +1620,402 @@ async function fetchAll(){
   else setS('ok','✓ Reporte generado · '+new Date().toLocaleTimeString('es-CO'));
 }
 
+
+// ---- NORMALIZAR TELÉFONO ----
+function normTel(t){
+  if(!t)return'';
+  t=String(t).replace(/\s/g,'').replace(/[^\d]/g,'');
+  if(t.startsWith('57')&&t.length===12)t=t.slice(2);
+  return t;
+}
+
+// ---- PROCESAR SHOPIFY DESDE CSV ----
+function procesarShopify(rows,df,dt){
+  // PASO 1: Forward fill del teléfono y cliente por número de orden
+  // El CSV de Shopify pone el teléfono solo en la primera fila de cada orden
+  // Las filas siguientes del mismo pedido (multi-producto) quedan vacías
+  const telPorOrden={},clientePorOrden={},ciudadPorOrden={};
+  rows.forEach(r=>{
+    const name=String(r['Name']||'').trim();
+    if(!name||name==='Name')return;
+    const tel=normTel(r['Billing Phone']||r['Shipping Phone']||'');
+    const cli=String(r['Billing Name']||r['Shipping Name']||'').trim();
+    const city=String(r['Billing City']||r['Shipping City']||'').trim();
+    if(tel)telPorOrden[name]=tel;
+    if(cli)clientePorOrden[name]=cli;
+    if(city)ciudadPorOrden[name]=city;
+  });
+
+  // PASO 2: Agrupar por orden con forward fill aplicado
+  const byOrder={};
+  rows.forEach(r=>{
+    const name=String(r['Name']||'').trim();
+    if(!name||name==='Name')return;
+    const fecha=(r['Created at']||'').slice(0,10);
+    if(df&&dt&&(fecha<df||fecha>dt))return;
+    if(!byOrder[name]){
+      byOrder[name]={
+        name,
+        id:String(r['Id']||''),
+        cliente:clientePorOrden[name]||'—',
+        tel:telPorOrden[name]||'',   // forward fill
+        ciudad:ciudadPorOrden[name]||'—',
+        total:parseFloat(r['Total']||0),
+        estado:r['Financial Status']||'',
+        fulfillment:r['Fulfillment Status']||'',
+        fecha,
+        productos:[],
+        cancelado:!!(r['Cancelled at']&&String(r['Cancelled at']).trim())
+      };
+    }
+    const prod=String(r['Lineitem name']||'').trim();
+    // Filtrar upsells/complementos que no son el producto principal
+    const skip=['agrega','complementa','tu proceso','envío prioritario','\ud83e','relax'];
+    const esProductoPrincipal=prod&&!skip.some(s=>prod.toLowerCase().startsWith(s));
+    if(prod&&esProductoPrincipal)byOrder[name].productos.push(prod);
+  });
+
+  const ords=Object.values(byOrder);
+  const tot=ords.length;
+  const pagados=ords.filter(o=>o.estado==='paid').length;
+  const pend=ords.filter(o=>o.estado==='pending').length;
+  const ingresos=ords.reduce((s,o)=>s+o.total,0);
+  const cancelados=ords.filter(o=>o.cancelado).length;
+
+  gS={tot,pagados,pend,ingresos,cancelados,ords};
+  return gS;
+}
+
+// ---- RENDER META MANUAL ----
+function renderMetaManual(ms,tt){
+  const tot=(ms||0)+(tt||0);
+  const sumarios=[];
+  if(ms>0)sumarios.push(`Meta: ${fmt(ms)}`);
+  if(tt>0)sumarios.push(`TikTok: ${fmt(tt)}`);
+  $('m-meta').innerHTML=`
+    <div class="mc a"><div class="lb">Gasto Meta</div><div class="vl" style="font-size:13px">${fmt(ms||0)}</div><div class="sb">ingresado manualmente</div></div>
+    ${tt>0?`<div class="mc"><div class="lb">Gasto TikTok</div><div class="vl" style="font-size:13px">${fmt(tt)}</div><div class="sb">ingresado manualmente</div></div>`:''}
+    <div class="mc o"><div class="lb">Total publicidad</div><div class="vl" style="font-size:13px">${fmt(tot)}</div></div>
+  `;
+  const metaTt=$('meta-tt');
+  if(metaTt)metaTt.innerHTML=sumarios.length?`<div class="al ai">${sumarios.join(' + ')} = <strong>Total: ${fmt(tot)}</strong></div>`:'';
+  $('tb-meta').innerHTML=`<tr><td colspan="8" class="empty">Sin datos de campañas — ingresa los gastos manualmente arriba</td></tr>`;
+  gM={tG:ms||0,tot,tt:tt||0,ms:ms||0,tI:0,tC:0,ctr:0,cpc:0};
+}
+
+// ---- TRAZABILIDAD SHOPIFY ↔ DROPI ----
+let trazData=[];
+let trazFilter='all';
+
+function normProd(p){
+  return String(p||'').toLowerCase()
+    .replace(/[^a-záéíóúñ0-9 ]/gi,'')
+    .replace(/\s+/g,' ').trim();
+}
+
+function prodSimilar(shopProd,dropiProd){
+  const s=normProd(shopProd),d=normProd(dropiProd);
+  if(!s||!d)return false;
+  // Palabras clave del producto Shopify en el nombre Dropi
+  const palabras=s.split(' ').filter(w=>w.length>3);
+  const matches=palabras.filter(w=>d.includes(w));
+  return matches.length>=1||(s.length>4&&d.includes(s.slice(0,6)))||(d.length>4&&s.includes(d.slice(0,6)));
+}
+
+function calcTrazabilidad(shopiRows,dropiData,df,dt){
+  // Procesar Shopify agrupado por orden
+  const shopOrdenes=gS?.ords||[];
+  if(!shopOrdenes.length){$('m-traz').innerHTML='<div class="empty">Sube el CSV de Shopify para ver la trazabilidad</div>';return;}
+
+  // Índice Dropi por teléfono normalizado
+  const dropiByTel={};
+  dropiData.allV.forEach(o=>{
+    const tel=normTel(o.tel);
+    if(!tel)return;
+    if(!dropiByTel[tel])dropiByTel[tel]=[];
+    dropiByTel[tel].push(o);
+  });
+
+  const resultados=[];
+
+  shopOrdenes.forEach(sOrd=>{
+    if(sOrd.cancelado)return; // ignorar cancelados en Shopify
+    const tel=sOrd.tel;
+    const dropiOrdenes=dropiByTel[tel]||[];
+    const shopProds=sOrd.productos;
+
+    if(shopProds.length===0){
+      // Orden sin producto principal identificable
+      resultados.push({
+        shopName:sOrd.name,cliente:sOrd.cliente,tel,fecha:sOrd.fecha,
+        shopProd:'(sin producto principal)',dropiProd:'—',dropiEstado:'—',
+        estado:'sin_prod',dropiId:'—'
+      });
+      return;
+    }
+
+    shopProds.forEach(shopProd=>{
+      if(!dropiOrdenes.length){
+        // No hay ningún pedido Dropi para este teléfono
+        resultados.push({
+          shopName:sOrd.name,cliente:sOrd.cliente,tel,fecha:sOrd.fecha,
+          shopProd,dropiProd:'—',dropiEstado:'—',
+          estado:'no_migrado',dropiId:'—'
+        });
+        return;
+      }
+
+      // Buscar coincidencia por producto similar
+      const exactMatch=dropiOrdenes.find(d=>prodSimilar(shopProd,d.productos));
+      if(exactMatch){
+        resultados.push({
+          shopName:sOrd.name,cliente:sOrd.cliente,tel,fecha:sOrd.fecha,
+          shopProd,dropiProd:exactMatch.productos,dropiEstado:exactMatch.estatus,
+          estado:'migrado',dropiId:exactMatch.id
+        });
+      } else {
+        // Hay pedidos Dropi del tel pero con producto diferente
+        const cualquiera=dropiOrdenes[0];
+        resultados.push({
+          shopName:sOrd.name,cliente:sOrd.cliente,tel,fecha:sOrd.fecha,
+          shopProd,dropiProd:cualquiera.productos,dropiEstado:cualquiera.estatus,
+          estado:'prod_diferente',dropiId:cualquiera.id
+        });
+      }
+    });
+  });
+
+  trazData=resultados;
+
+  // KPIs
+  const migrados=resultados.filter(r=>r.estado==='migrado').length;
+  const noBajados=resultados.filter(r=>r.estado==='no_migrado').length;
+  const diffProd=resultados.filter(r=>r.estado==='prod_diferente').length;
+  const total=resultados.length;
+
+  $('m-traz').innerHTML=`
+    <div class="mc g"><div class="lb">Migrados correctamente</div><div class="vl">${migrados}</div><div class="sb">${total>0?(migrados/total*100).toFixed(1):0}% del total</div></div>
+    <div class="mc r"><div class="lb">No migrados a Dropi</div><div class="vl">${noBajados}</div><div class="sb">${total>0?(noBajados/total*100).toFixed(1):0}% del total</div></div>
+    <div class="mc a"><div class="lb">Producto diferente</div><div class="vl">${diffProd}</div><div class="sb">mismo cliente, producto distinto</div></div>
+    <div class="mc b"><div class="lb">Total Shopify analizados</div><div class="vl">${total}</div></div>
+  `;
+
+  // Badge en tab
+  if(noBajados>0){
+    const tab=$('tab-traz');
+    if(tab)tab.innerHTML=`Trazabilidad <span style="background:var(--red);color:#fff;font-size:9px;padding:1px 5px;border-radius:10px;margin-left:4px">${noBajados} sin migrar</span>`;
+  }
+
+  renderTrazabilidad();
+}
+
+function toggleTrazDetalle(){
+  const det=$('traz-detalle');
+  const btn=$('btn-traz-toggle');
+  const visible=det.style.display!=='none';
+  det.style.display=visible?'none':'block';
+  btn.textContent=visible?'Ver detalle de pedidos':'Ocultar detalle';
+  if(!visible)renderTrazabilidad();
+}
+
+function setTrazFilter(f,el){
+  trazFilter=f;
+  document.querySelectorAll('#tf-all,#tf-ok,#tf-diff,#tf-no').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderTrazabilidad();
+}
+
+function renderTrazabilidad(){
+  let lista=trazData;
+  if(trazFilter==='ok')lista=lista.filter(r=>r.estado==='migrado');
+  else if(trazFilter==='diff')lista=lista.filter(r=>r.estado==='prod_diferente');
+  else if(trazFilter==='no')lista=lista.filter(r=>r.estado==='no_migrado');
+
+  const estadoInfo={
+    migrado:['✅ Migrado','pg'],
+    no_migrado:['❌ No migrado','pr'],
+    prod_diferente:['⚠️ Prod. diferente','pa'],
+    sin_prod:['— Sin producto','pgr']
+  };
+
+  $('tb-traz').innerHTML=lista.map(r=>{
+    const[lbl,cls]=estadoInfo[r.estado]||['—','pgr'];
+    return`<tr>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:11px">${r.shopName}</td>
+      <td>${r.cliente}</td>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:11px">${r.tel}</td>
+      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)">${r.shopProd}</td>
+      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)">${r.dropiProd}</td>
+      <td>${r.dropiEstado!=='—'?`<span class="pill ${PILL(r.dropiEstado)[1]}">${PILL(r.dropiEstado)[0]}</span>`:'—'}</td>
+      <td><span class="pill ${cls}">${lbl}</span></td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="7" class="empty">Sin datos</td></tr>';
+}
+
+// ---- PEDIDOS ADICIONALES WHATSAPP / CARRITOS ----
+let adicData=[];
+let adicFilter='all';
+
+function calcPedidosAdicionales(dropiData,shopiRows){
+  if(!dropiData||!dropiData.allV)return;
+
+  // Construir set de teléfonos que SÍ están en Shopify
+  const telsShopify=new Set();
+  shopiRows.forEach(r=>{
+    const tel=normTel(r['Billing Phone']||r['Shipping Phone']||'');
+    if(tel)telsShopify.add(tel);
+  });
+
+  // Pedidos de Dropi cuyo teléfono NO aparece en Shopify
+  const adicionales=dropiData.allV.filter(o=>{
+    const tel=normTel(o.tel);
+    return tel&&!telsShopify.has(tel);
+  });
+
+  adicData=adicionales;
+
+  // KPIs
+  const total=adicionales.length;
+  const ent=adicionales.filter(o=>EST_ENT.includes(o.estatus)).length;
+  const dev=adicionales.filter(o=>EST_DEV.includes(o.estatus)).length;
+  const can=adicionales.filter(o=>EST_CAN.includes(o.estatus)).length;
+  const mov=adicionales.filter(o=>EST_MOV.includes(o.estatus)).length;
+  const desp=ent+dev+mov;
+  const efDesp=desp>0?(ent/desp*100):0;
+  const valorTotal=adicionales.filter(o=>EST_ENT.includes(o.estatus)).reduce((s,o)=>s+o.valor,0);
+  const utilBruta=adicionales.filter(o=>EST_ENT.includes(o.estatus)).reduce((s,o)=>s+o.valor-o.flete-o.costoProv,0)
+    -adicionales.filter(o=>o.estatus==='DEVOLUCION').reduce((s,o)=>s+o.flete,0);
+
+  // Porcentaje sobre el total general de Dropi
+  const pctTotal=dropiData.total>0?(total/dropiData.total*100).toFixed(1):0;
+
+  $('m-adic').innerHTML=`
+    <div class="mc g"><div class="lb">Total adicionales</div><div class="vl">${total}</div><div class="sb">${pctTotal}% del total Dropi</div></div>
+    <div class="mc g"><div class="lb">Entregados</div><div class="vl">${ent}</div><div class="sb">${efDesp.toFixed(1)}% sobre despachados</div></div>
+    <div class="mc b"><div class="lb">En movimiento</div><div class="vl">${mov}</div></div>
+    <div class="mc r"><div class="lb">Devoluciones</div><div class="vl">${dev}</div><div class="sb">${desp>0?(dev/desp*100).toFixed(1):0}% sobre despachados</div></div>
+    <div class="mc o"><div class="lb">Cancelados</div><div class="vl">${can}</div><div class="sb">${total>0?(can/total*100).toFixed(1):0}% del total</div></div>
+    <div class="mc g" style="border:1px solid rgba(34,197,94,0.25)"><div class="lb">Dinero en wallet</div><div class="vl" style="font-size:13px">${fmt(utilBruta)}</div><div class="sb">canal adicional</div></div>
+  `;
+
+  // Distribución por estado
+  const ec={};
+  adicionales.forEach(o=>{ec[o.estatus]=(ec[o.estatus]||0)+1;});
+  $('adic-estados').innerHTML=Object.entries(ec).sort((a,b)=>b[1]-a[1]).map(([e,n])=>`
+    <div class="si">
+      <div class="sn">${e}</div>
+      <div class="sb2"><div class="sf" style="width:${(n/total*100).toFixed(1)}%;background:${CEST[e]||'#555'}"></div></div>
+      <div class="snn">${n}</div>
+      <div class="sp2">${(n/total*100).toFixed(1)}%</div>
+    </div>`).join('');
+
+  // Métricas del canal vs general
+  const efGeneral=dropiData.desp>0?(dropiData.ent/dropiData.desp*100).toFixed(1):0;
+  $('adic-metricas').innerHTML=`
+    <div class="cr"><div class="cl2">Tasa de entrega sobre despachados (este canal)</div><div class="cv" style="color:${efDesp>=parseFloat(efGeneral)?'var(--green)':'var(--amber)'}">${efDesp.toFixed(1)}%</div></div>
+    <div class="cr"><div class="cl2">Tasa de entrega sobre despachados (general Dropi)</div><div class="cv">${efGeneral}%</div></div>
+    <div class="cr"><div class="cl2">Valor total entregado</div><div class="cv">${fmt(valorTotal)}</div></div>
+    <div class="cr"><div class="cl2">Dinero en wallet (canal)</div><div class="cv" style="color:var(--green)">${fmt(utilBruta)}</div></div>
+    <div class="cr"><div class="cl2">Estos pedidos en el total general</div><div class="cv" style="color:var(--blue)">✅ Incluidos en todos los KPIs</div></div>
+  `;
+
+  renderPedidosAdicionales();
+}
+
+function toggleAdicDetalle(){
+  const det=$('adic-detalle');
+  const btn=$('btn-adic-toggle');
+  const filtros=$('adic-filtros');
+  const visible=det.style.display!=='none';
+  det.style.display=visible?'none':'block';
+  filtros.style.display=visible?'none':'flex';
+  btn.textContent=visible?'Ver detalle de pedidos':'Ocultar detalle';
+  if(!visible)renderPedidosAdicionales();
+}
+
+function setAdicFilter(f,el){
+  adicFilter=f;
+  document.querySelectorAll('#af-all,#af-ent,#af-mov,#af-dev,#af-can').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderPedidosAdicionales();
+}
+
+function renderPedidosAdicionales(){
+  let lista=adicData;
+  if(adicFilter==='ent')lista=lista.filter(o=>EST_ENT.includes(o.estatus));
+  else if(adicFilter==='mov')lista=lista.filter(o=>EST_MOV.includes(o.estatus));
+  else if(adicFilter==='dev')lista=lista.filter(o=>EST_DEV.includes(o.estatus));
+  else if(adicFilter==='can')lista=lista.filter(o=>EST_CAN.includes(o.estatus));
+
+  $('tb-adic').innerHTML=lista.map(o=>{
+    const[lbl,cls]=PILL(o.estatus);
+    return`<tr>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:11px">${o.id}</td>
+      <td>${o.cliente}</td>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:11px">${o.tel}</td>
+      <td style="color:var(--muted)">${o.ciudad}</td>
+      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)">${o.productos}</td>
+      <td style="font-family:'JetBrains Mono',monospace">${fmt(o.valor)}</td>
+      <td><span class="pill ${cls}">${lbl}</span></td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="7" class="empty">Sin pedidos adicionales detectados</td></tr>';
+}
+
+// ---- PRODUCTOS POR DINERO EN WALLET ----
+function calcProductosFinanciero(allValidas){
+  const byProd={};
+  const idToOrden={};
+  allValidas.forEach(o=>idToOrden[o.id]=o);
+
+  dProd.forEach(r=>{
+    const id=String(r['ID']||'');
+    const ord=idToOrden[id];
+    if(!ord)return;
+    const prod=String(r['PRODUCTO']||'—').trim();
+    if(!prod||prod==='—')return;
+
+    if(!byProd[prod])byProd[prod]={
+      nombre:prod,total:new Set(),ent:new Set(),dev:new Set(),can:new Set(),
+      pend:new Set(),mov:new Set(),desp:new Set(),
+      ingresosBrutos:0,fletesEnt:0,costoProvEnt:0,fletesDev:0
+    };
+    const p=byProd[prod];
+    p.total.add(id);
+
+    if(EST_ENT.includes(ord.estatus)){
+      p.ent.add(id);p.desp.add(id);
+      p.ingresosBrutos+=ord.valor;
+      p.fletesEnt+=ord.flete;
+      p.costoProvEnt+=ord.costoProv;
+    } else if(EST_DEV.includes(ord.estatus)){
+      p.dev.add(id);p.desp.add(id);
+      if(ord.estatus==='DEVOLUCION')p.fletesDev+=ord.flete;
+    } else if(EST_CAN.includes(ord.estatus)){
+      p.can.add(id);
+    } else if(EST_PEND.includes(ord.estatus)){
+      p.pend.add(id);
+    } else if(EST_MOV.includes(ord.estatus)){
+      p.mov.add(id);p.desp.add(id);
+    }
+  });
+
+  return Object.entries(byProd).map(([nombre,p])=>{
+    const total=p.total.size,ent=p.ent.size,dev=p.dev.size,can=p.can.size,desp=p.desp.size;
+    const utilBruta=p.ingresosBrutos-p.fletesEnt-p.costoProvEnt-p.fletesDev;
+    return{
+      nombre,total,ent,dev,can,desp,
+      efDesp:desp>0?ent/desp:0,efTotal:total>0?ent/total:0,
+      pctDev:desp>0?dev/desp:0,pctCan:total>0?can/total:0,
+      ingresosBrutos:p.ingresosBrutos,fletesEnt:p.fletesEnt,
+      costoProvEnt:p.costoProvEnt,fletesDev:p.fletesDev,
+      utilBruta:Math.max(utilBruta,0),
+      utilPorEntrega:ent>0?Math.max(utilBruta,0)/ent:0
+    };
+  });
+}
+
 loadKeys();setDates();
 </script>
 </body>
 </html>
+  
