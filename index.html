@@ -220,6 +220,18 @@ tr:hover td{background:var(--bg3);}
       <div id="ua-shopi"><div class="uz" onclick="document.getElementById('uf-shopi').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="df(event,'shopi')"><p style="font-size:20px;margin-bottom:5px">🛍️</p><p><strong>Clic o arrastra</strong> — orders_export.csv</p><input type="file" id="uf-shopi" accept=".csv,.xlsx,.xls" onchange="hf(this.files[0],'shopi')"></div></div>
       <div id="ok-shopi" style="display:none"></div>
     </div>
+    <div>
+      <span class="sl">Meta Ads — Informes de campañas <span class="tag tm" style="margin-left:4px">XLSX</span> <span class="tag to" style="margin-left:2px">Múltiples</span></span>
+      <div id="ua-meta-files">
+        <div class="uz" onclick="document.getElementById('uf-meta').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="df(event,'meta')">
+          <p style="font-size:20px;margin-bottom:5px">📊</p>
+          <p><strong>Clic o arrastra</strong> — Informe sin título xxx.xlsx</p>
+          <input type="file" id="uf-meta" accept=".xlsx,.xls" multiple onchange="hfMeta(this.files)">
+        </div>
+      </div>
+      <div id="ok-meta-files" style="margin-top:6px"></div>
+      <div id="meta-files-count" style="font-size:11px;color:var(--muted);margin-top:4px"></div>
+    </div>
   </div>
 </div>
 
@@ -240,6 +252,7 @@ tr:hover td{background:var(--bg3);}
     <div class="tab" onclick="st(6)">Reporte IA</div>
     <div class="tab" onclick="st(7)" id="tab-traz">Trazabilidad</div>
     <div class="tab" onclick="st(8)" id="tab-control">Control Diario</div>
+    <div class="tab" onclick="st(9)" id="tab-pauta">Pauta Meta</div>
   </div>
 
   <!-- TAB 0: RESUMEN -->
@@ -321,8 +334,11 @@ tr:hover td{background:var(--bg3);}
       <div class="ct">Rendimiento por producto</div>
       <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
         <button class="filter-btn active" id="pf-best" onclick="setProdSort('best',this)">⭐ Mejor producto</button>
-        <button class="filter-btn" id="pf-dinero" onclick="setProdSort('dinero',this)">💰 Más dinero en wallet</button>
+        <button class="filter-btn" id="pf-neta" onclick="setProdSort('neta',this)">🏆 Mayor utilidad neta</button>
+        <button class="filter-btn" id="pf-dinero" onclick="setProdSort('dinero',this)">💰 Más wallet bruta</button>
+        <button class="filter-btn" id="pf-cpa" onclick="setProdSort('cpa',this)">💸 Mejor CPA</button>
         <button class="filter-btn" id="pf-ef" onclick="setProdSort('ef',this)">📊 Mejor entrega</button>
+        <button class="filter-btn" id="pf-dev" onclick="setProdSort('dev',this)">📉 Menor devolución</button>
         <button class="filter-btn" id="pf-ped" onclick="setProdSort('ped',this)">📦 Más pedidos</button>
         <button class="filter-btn" id="pf-dir" onclick="toggleProdDir(this)">↓ Mayor a menor</button>
       </div>
@@ -437,6 +453,79 @@ tr:hover td{background:var(--bg3);}
     </div>
 
   </div>
+  <!-- TAB 9: PAUTA META -->
+  <div class="tp" id="tp9">
+    <div class="card">
+      <div class="ct">Campañas cargadas</div>
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+        <span id="meta-camp-count" style="font-size:12px;color:var(--muted)">Sin campañas cargadas</span>
+        <span id="meta-gasto-total" style="font-size:12px;font-weight:700;color:var(--amber)"></span>
+        <div style="margin-left:auto;display:flex;gap:6px">
+          <button class="bs" style="font-size:11px" onclick="exportarConfigPauta()">💾 Exportar config</button>
+          <button class="bs" style="font-size:11px" onclick="document.getElementById('uf-import-pauta').click()">📂 Importar config</button>
+          <input type="file" id="uf-import-pauta" accept=".json" style="display:none" onchange="importarConfigPauta(this.files[0])">
+        </div>
+      </div>
+      <div id="meta-campanas-lista" style="max-height:300px;overflow-y:auto;margin-bottom:16px"></div>
+    </div>
+
+    <div class="card">
+      <div class="ct">Paquetes de campañas → Producto</div>
+      <div class="al ai" style="margin-bottom:14px">Agrupa campañas de distintos informes bajo un mismo producto. El gasto total del paquete se usará para calcular CPA real y utilidad neta por producto.</div>
+
+      <!-- Buscador de campañas para paquetizar -->
+      <div style="margin-bottom:14px">
+        <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+          <input type="text" id="busca-camp" placeholder="Buscar campaña..." style="flex:1;min-width:200px" oninput="filtrarCampanas()">
+          <button class="bs" style="font-size:11px" onclick="seleccionarTodosFiltrados()">Seleccionar todos los filtrados</button>
+          <button class="bs" style="font-size:11px" onclick="limpiarSeleccion()">Limpiar selección</button>
+        </div>
+        <div id="campanas-buscador" style="max-height:250px;overflow-y:auto;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:8px"></div>
+        <div style="margin-top:8px;font-size:11px;color:var(--muted)" id="seleccion-count">0 campañas seleccionadas</div>
+      </div>
+
+      <!-- Crear paquete -->
+      <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:14px;margin-bottom:16px">
+        <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.06em">Crear / editar paquete</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end;flex-wrap:wrap">
+          <div>
+            <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Nombre del paquete</label>
+            <input type="text" id="paquete-nombre" placeholder="Ej: Ethiopian Black Seed Oil Junio">
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Producto Dropi asociado</label>
+            <select id="paquete-producto" style="width:100%;padding:8px 11px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-size:12px"><option value="">— Seleccionar producto —</option></select>
+          </div>
+          <div>
+            <button class="bp" style="font-size:12px;padding:9px 16px;white-space:nowrap" onclick="crearPaquete()">+ Crear paquete</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lista de paquetes creados -->
+      <div id="paquetes-lista"></div>
+    </div>
+
+    <div class="card">
+      <div class="ct">Fusión de productos Dropi</div>
+      <div class="al ai" style="margin-bottom:12px">Agrupa PRODUCTO IDs distintos que son el mismo producto bajo un nombre unificado. Útil cuando cambias de stock o ID privado.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end;margin-bottom:14px">
+        <div>
+          <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Nombre unificado</label>
+          <input type="text" id="fusion-nombre" placeholder="Ej: Ethiopian Black Seed Oil">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Productos a fusionar</label>
+          <div id="fusion-selector" style="max-height:200px;overflow-y:auto;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:8px"></div>
+        </div>
+        <div>
+          <button class="bp" style="font-size:12px;padding:9px 16px;white-space:nowrap" onclick="crearFusion()">+ Fusionar</button>
+        </div>
+      </div>
+      <div id="fusiones-lista"></div>
+    </div>
+  </div>
+
   <!-- TAB 8: CONTROL DIARIO -->
   <div class="tp" id="tp8">
     <div class="card">
@@ -560,7 +649,7 @@ const scrollObserver=new IntersectionObserver((entries)=>{
 function observarLogistica(){const sec=$('logistica-section');if(sec)scrollObserver.observe(sec);}
 
 function saveKeys(){localStorage.setItem(LS,JSON.stringify({ck:$('claude-key').value,tt:$('tiktok-spend').value,ms:$('meta-spend').value}));setS('ok','Valores guardados');}
-function loadKeys(){const d=JSON.parse(localStorage.getItem(LS)||'{}');if(d.ck)$('claude-key').value=d.ck;if(d.tt)$('tiktok-spend').value=d.tt;if(d.ms)$('meta-spend').value=d.ms;}
+function loadKeys(){const d=JSON.parse(localStorage.getItem(LS)||'{}');if(d.ck)$('claude-key').value=d.ck;if(d.tt)$('tiktok-spend').value=d.tt;if(d.ms)$('meta-spend').value=d.ms;cargarPautaLS();}
 function setDates(){const t=new Date(),f=new Date(t.getFullYear(),t.getMonth(),1);$('date-to').value=t.toISOString().slice(0,10);$('date-from').value=f.toISOString().slice(0,10);}
 
 function df(e,t){e.preventDefault();e.currentTarget.classList.remove('drag');hf(e.dataTransfer.files[0],t);}
@@ -1180,7 +1269,7 @@ let prodSort='best',prodDir='desc';
 
 function setProdSort(tipo,el){
   prodSort=tipo;
-  document.querySelectorAll('#pf-best,#pf-dinero,#pf-ef,#pf-ped').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#pf-best,#pf-neta,#pf-dinero,#pf-cpa,#pf-ef,#pf-dev,#pf-ped').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
   renderProductos(gProductos);
 }
@@ -1196,17 +1285,26 @@ function sortProductos(lista){
     const maxD=Math.max(...lista.map(x=>x.utilBruta||0),1);
     const maxT=Math.max(...lista.map(x=>x.total),1);
     if(prodSort==='best'){
-      // Mejor producto = wallet por entrega normalizada × efectividad
-      const maxWE=Math.max(...lista.map(x=>x.ent>0?(x.utilBruta||0)/x.ent:0),1);
-      const waA=a.ent>0?(a.utilBruta||0)/a.ent:0;
-      const waB=b.ent>0?(b.utilBruta||0)/b.ent:0;
+      // Score = wallet neta por entrega (si hay pauta) o bruta normalizada × efectividad
+      const maxWE=Math.max(...lista.map(x=>x.ent>0?((x.utilNeta||x.utilBruta)||0)/x.ent:0),1);
+      const waA=a.ent>0?((a.utilNeta||a.utilBruta)||0)/a.ent:0;
+      const waB=b.ent>0?((b.utilNeta||b.utilBruta)||0)/b.ent:0;
       const sa=(waA/maxWE*0.5)+(a.efDesp*0.5);
       const sb=(waB/maxWE*0.5)+(b.efDesp*0.5);
       v=sa-sb;
+    } else if(prodSort==='neta'){
+      v=(a.utilNeta||a.utilBruta||0)-(b.utilNeta||b.utilBruta||0);
     } else if(prodSort==='dinero'){
       v=(a.utilBruta||0)-(b.utilBruta||0);
+    } else if(prodSort==='cpa'){
+      // Menor CPA por entregado = mejor (invertido)
+      const cA=a.cpaEntregado||Infinity,cB=b.cpaEntregado||Infinity;
+      v=cB-cA; // invertido: menor CPA = mejor
     } else if(prodSort==='ef'){
       v=a.efDesp-b.efDesp;
+    } else if(prodSort==='dev'){
+      // Menor devolución = mejor (invertido)
+      v=b.pctDev-a.pctDev;
     } else {
       v=a.total-b.total;
     }
@@ -1242,18 +1340,20 @@ function renderProductos(productos){
         ${posHTML}
         <div class="rank-name">${p.nombre}</div>
         <div class="rank-stats">
-          <div class="rank-stat"><span class="lbl">Wallet total</span><span style="color:${p.utilBruta>0?'var(--green)':'var(--hint)'};font-size:10px">${p.utilBruta>0?fmt(p.utilBruta):'—'}</span></div>
-          <div class="rank-stat"><span class="lbl">Wallet/entrega</span><span style="color:${p.utilBruta>0&&p.ent>0?'var(--green)':'var(--hint)'};font-size:10px">${p.utilBruta>0&&p.ent>0?fmt(Math.round(p.utilBruta/p.ent)):'—'}</span></div>
+          <div class="rank-stat"><span class="lbl">Util. neta</span><span style="color:${p.utilNeta>0?'var(--green)':p.utilBruta>0?'var(--amber)':'var(--hint)'};font-size:10px">${p.utilNeta>0?fmt(p.utilNeta):p.utilBruta>0?fmt(p.utilBruta)+'*':'—'}</span></div>
+          <div class="rank-stat"><span class="lbl">Neta/entrega</span><span style="color:${(p.utilNetaPorEntrega||p.utilPorEntrega)>0?'var(--green)':'var(--hint)'};font-size:10px">${p.utilNetaPorEntrega>0?fmt(Math.round(p.utilNetaPorEntrega)):p.utilPorEntrega>0?fmt(Math.round(p.utilPorEntrega))+'*':'—'}</span></div>
+          <div class="rank-stat"><span class="lbl">CPA/entregado</span><span style="color:${p.cpaEntregado>0?'var(--amber)':'var(--hint)'};font-size:10px">${p.cpaEntregado>0?fmt(p.cpaEntregado):'—'}</span></div>
           <div class="rank-stat"><span class="lbl">Entrega s/desp.</span><span style="color:${vD}">${efDespPct}%</span></div>
-          <div class="rank-stat"><span class="lbl">Entrega general</span><span style="color:${vT}">${efTotalPct}%</span></div>
-          <div class="rank-stat"><span class="lbl">Devoluciones</span><span style="color:var(--red)">${(p.pctDev*100).toFixed(1)}%</span></div>
+          <div class="rank-stat"><span class="lbl">Dev.</span><span style="color:var(--red)">${(p.pctDev*100).toFixed(1)}%</span></div>
           <div class="rank-stat"><span class="lbl">Total</span><span style="color:var(--blue)">${p.total}</span></div>
         </div>
       </div>
       <div class="rank-bars">
         <div class="rank-bar-row"><div class="rank-bar-label">Entrega sobre despachados</div><div class="rank-bar-track"><div class="rank-bar-fill" style="width:${barDesp}%;background:${cD}"></div></div><div class="rank-bar-val" style="color:${vD}">${efDespPct}%</div></div>
         <div class="rank-bar-row"><div class="rank-bar-label">Entrega general</div><div class="rank-bar-track"><div class="rank-bar-fill" style="width:${barTotal}%;background:${cT}"></div></div><div class="rank-bar-val" style="color:${vT}">${efTotalPct}%</div></div>
-        <div class="rank-bar-row"><div class="rank-bar-label">Dinero en wallet</div><div class="rank-bar-track"><div class="rank-bar-fill" style="width:${Math.min(((p.utilBruta||0)/Math.max(...gProductos.map(x=>x.utilBruta||0),1)*100),100).toFixed(1)}%;background:#22c55e"></div></div><div class="rank-bar-val" style="color:var(--green);font-size:10px">${p.utilBruta>0?fmt(p.utilBruta):'—'}</div></div>
+        <div class="rank-bar-row"><div class="rank-bar-label">Wallet bruta</div><div class="rank-bar-track"><div class="rank-bar-fill" style="width:${Math.min(((p.utilBruta||0)/Math.max(...gProductos.map(x=>x.utilBruta||0),1)*100),100).toFixed(1)}%;background:#22c55e"></div></div><div class="rank-bar-val" style="color:var(--green);font-size:10px">${p.utilBruta>0?fmt(p.utilBruta):'—'}</div></div>
+        ${p.utilNeta>0?`<div class="rank-bar-row"><div class="rank-bar-label">Util. neta (−pauta)</div><div class="rank-bar-track"><div class="rank-bar-fill" style="width:${Math.min(((p.utilNeta||0)/Math.max(...gProductos.map(x=>x.utilBruta||0),1)*100),100).toFixed(1)}%;background:#a855f7"></div></div><div class="rank-bar-val" style="color:var(--purple);font-size:10px">${fmt(p.utilNeta)}</div></div>`:''}
+        ${p.pauta>0?`<div class="rank-bar-row"><div class="rank-bar-label">Pauta asignada</div><div class="rank-bar-track"><div class="rank-bar-fill" style="width:${Math.min(((p.pauta||0)/Math.max(...gProductos.map(x=>x.utilBruta||0),1)*100),100).toFixed(1)}%;background:#3b82f6"></div></div><div class="rank-bar-val" style="color:var(--blue);font-size:10px">${fmt(p.pauta)}</div></div>`:''}
       </div>
       <div style="font-size:10px;color:var(--hint);margin-top:4px">Clic para ver desglose completo →</div>
     </div>`;
@@ -1899,6 +1999,8 @@ function calcCiudades(allValidas){
 function setCiudadSort(tipo,el){ciudadSort=tipo;document.querySelectorAll('#cf-ped,#cf-ef').forEach(b=>b.classList.remove('active'));el.classList.add('active');renderCiudadesFiltradas();}
 function toggleCiudadDir(el){ciudadDir=ciudadDir==='desc'?'asc':'desc';el.textContent=ciudadDir==='desc'?'↓ Desc':'↑ Asc';renderCiudadesFiltradas();}
 
+let gCiudades=[],ciudadSort='ped',ciudadDir='desc';
+
 function renderCiudadesFiltradas(){
   const q=($('ciudad-search')?.value||'').toLowerCase();
   let lista=gCiudades.filter(c=>c.nombre.toLowerCase().includes(q));
@@ -1979,6 +2081,9 @@ async function fetchAll(){
 
   // Control diario
   renderControlDiario();
+
+  // Pauta Meta — actualizar selector de productos y paquetes con los datos cargados
+  if(dMetaFiles.length>0||paquetes.length>0) renderPauta();
 
   $('results').style.display='block';
   $('btn-run').disabled=false;$('spin').style.display='none';
@@ -2374,7 +2479,12 @@ function calcProductosFinanciero(allValidas){
 
   return Object.entries(byProd).map(([nombre,p])=>{
     const total=p.total.size,ent=p.ent.size,dev=p.dev.size,can=p.can.size,desp=p.desp.size;
-    const utilBruta=p.ingresosBrutos-p.fletesEnt-p.costoProvEnt; // fletesDev ya no se resta aparte (era doble cobro)
+    const utilBruta=p.ingresosBrutos-p.fletesEnt-p.costoProvEnt;
+    const pauta=gastoPorNombreProducto(nombre)||0;
+    const utilNeta=Math.max(utilBruta-pauta,0);
+    const cpaEntregado=ent>0&&pauta>0?pauta/ent:0;
+    const cpaGenerado=total>0&&pauta>0?pauta/total:0;
+    const cpaDesp=desp>0&&pauta>0?pauta/desp:0;
     return{
       nombre,total,ent,dev,can,desp,
       efDesp:desp>0?ent/desp:0,efTotal:total>0?ent/total:0,
@@ -2382,7 +2492,10 @@ function calcProductosFinanciero(allValidas){
       ingresosBrutos:p.ingresosBrutos,fletesEnt:p.fletesEnt,
       costoProvEnt:p.costoProvEnt,fletesDev:p.fletesDev,
       utilBruta:Math.max(utilBruta,0),
-      utilPorEntrega:ent>0?Math.max(utilBruta,0)/ent:0
+      utilPorEntrega:ent>0?Math.max(utilBruta,0)/ent:0,
+      pauta,utilNeta,
+      utilNetaPorEntrega:ent>0&&utilNeta>0?utilNeta/ent:0,
+      cpaEntregado,cpaGenerado,cpaDesp
     };
   });
 }
@@ -2662,6 +2775,418 @@ function abrirDetalleNovedad(i){
 }
 
 function cerrarDetalleNovedad(){$('novedad-modal').style.display='none';}
+
+
+// ========== SISTEMA DE PAUTA META ADS ==========
+// Persistencia en localStorage con clave dedicada
+const LS_PAUTA = 'vitalia_pauta_v1';
+
+let dMetaFiles = [];      // array de {filename, campanas:[{nombre, gasto, cuenta}]}
+let campSeleccion = new Set(); // campañas seleccionadas para paquetizar
+let paquetes = [];        // [{id, nombre, prodId, campanas:[nombre], gasto}]
+let fusiones = [];        // [{id, nombre, productoIds:[int]}]
+let campanasFiltradas = []; // resultado del buscador
+
+function cargarPautaLS(){
+  try {
+    const d = JSON.parse(localStorage.getItem(LS_PAUTA)||'{}');
+    paquetes = d.paquetes||[];
+    fusiones = d.fusiones||[];
+  } catch(e){ paquetes=[]; fusiones=[]; }
+}
+
+function guardarPautaLS(){
+  try {
+    localStorage.setItem(LS_PAUTA, JSON.stringify({paquetes, fusiones}));
+  } catch(e){}
+}
+
+function exportarConfigPauta(){
+  const data = JSON.stringify({paquetes, fusiones}, null, 2);
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([data], {type:'application/json'}));
+  a.download = 'vitalia-pauta-config.json';
+  a.click();
+}
+
+function importarConfigPauta(file){
+  if(!file) return;
+  const r = new FileReader();
+  r.onload = function(e){
+    try {
+      const d = JSON.parse(e.target.result);
+      paquetes = d.paquetes||[];
+      fusiones = d.fusiones||[];
+      guardarPautaLS();
+      renderPauta();
+      setS('ok', 'Configuración de pauta importada');
+    } catch(err){ setS('err', 'Error al importar: archivo inválido'); }
+  };
+  r.readAsText(file);
+}
+
+// ---- CARGA DE ARCHIVOS META ----
+function hfMeta(files){
+  if(!files||!files.length) return;
+  const pendientes = Array.from(files);
+  let procesados = 0;
+  pendientes.forEach(file => {
+    const r = new FileReader();
+    r.onload = function(e){
+      try {
+        const wb = XLSX.read(e.target.result, {type:'binary'});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+        const campanas = parsearInformeMeta(rows, file.name);
+        // Reemplazar si ya existía el mismo archivo
+        const idx = dMetaFiles.findIndex(f=>f.filename===file.name);
+        if(idx>=0) dMetaFiles[idx] = {filename:file.name, campanas};
+        else dMetaFiles.push({filename:file.name, campanas});
+        procesados++;
+        if(procesados===pendientes.length){
+          renderArchivosMeta();
+          renderPauta();
+          setS('ok', `${dMetaFiles.length} informe(s) Meta cargados — ${todasLasCampanas().length} campañas`);
+        }
+      } catch(err){ setS('err','Error al leer '+file.name+': '+err.message); }
+    };
+    r.readAsBinaryString(file);
+  });
+}
+
+function parsearInformeMeta(rows, filename){
+  // Encontrar la fila de headers (tiene "Nombre de la campaña")
+  let headerRow = -1;
+  let cuentaCol = -1, campanaCol = -1, gastoCol = -1;
+  for(let i=0; i<rows.length; i++){
+    const r = rows[i].map(c=>String(c||'').trim());
+    const ci = r.findIndex(c=>c.includes('Nombre de la cuenta'));
+    const cai = r.findIndex(c=>c.includes('Nombre de la campa'));
+    const gi = r.findIndex(c=>c.includes('Importe gastado'));
+    if(cai>=0 && gi>=0){
+      headerRow=i; cuentaCol=ci; campanaCol=cai; gastoCol=gi;
+      break;
+    }
+  }
+  if(headerRow<0) return [];
+
+  const campanas = [];
+  let cuentaActual = '';
+  for(let i=headerRow+1; i<rows.length; i++){
+    const r = rows[i];
+    const cuenta = cuentaCol>=0 ? String(r[cuentaCol]||'').trim() : '';
+    const campana = String(r[campanaCol]||'').trim();
+    const gastoRaw = String(r[gastoCol]||'').replace(/[^0-9.]/g,'');
+    const gasto = parseFloat(gastoRaw)||0;
+
+    if(!campana && !cuenta) continue;
+
+    // Fila de cuenta (subtotal) — tiene "All" en campana o campana vacía con cuenta llena
+    if(campana==='' && cuenta){
+      cuentaActual = cuenta;
+      continue;
+    }
+    if(campana==='All'){
+      if(cuenta) cuentaActual = cuenta;
+      continue; // es subtotal de cuenta
+    }
+
+    // Fila de total global — sin cuenta y sin campaña identificable
+    if(!cuenta && !campana) continue;
+
+    // Si tiene cuenta en esta fila, actualizarla
+    if(cuenta) cuentaActual = cuenta;
+
+    if(campana && gasto>0){
+      campanas.push({nombre:campana, gasto, cuenta:cuentaActual, archivo:filename});
+    }
+  }
+  return campanas;
+}
+
+function todasLasCampanas(){
+  const todas = [];
+  dMetaFiles.forEach(f => f.campanas.forEach(c => todas.push(c)));
+  return todas;
+}
+
+function gastoTotalMeta(){
+  // Suma de campañas no asignadas a ningún paquete + paquetes
+  // En realidad sumamos todas las campañas únicas
+  return todasLasCampanas().reduce((s,c)=>s+c.gasto,0);
+}
+
+function renderArchivosMeta(){
+  const cont = $('ok-meta-files');
+  const count = $('meta-files-count');
+  if(!cont||!count) return;
+  cont.innerHTML = dMetaFiles.map(f=>`
+    <div class="fok" style="margin-bottom:4px">
+      📊 <strong>${f.filename}</strong> — ${f.campanas.length} campañas · ${fmt(f.campanas.reduce((s,c)=>s+c.gasto,0))}
+      <button onclick="eliminarArchivoMeta('${f.filename.replace(/'/g,"\\'")}')" style="margin-left:auto;background:none;border:none;cursor:pointer;color:var(--muted);font-size:13px">×</button>
+    </div>
+  `).join('');
+  count.textContent = dMetaFiles.length>0 ? `${dMetaFiles.length} archivo(s) · ${todasLasCampanas().length} campañas · Total: ${fmt(gastoTotalMeta())}` : '';
+}
+
+function eliminarArchivoMeta(filename){
+  dMetaFiles = dMetaFiles.filter(f=>f.filename!==filename);
+  renderArchivosMeta();
+  renderPauta();
+}
+
+// ---- RENDER PRINCIPAL DE PAUTA ----
+function renderPauta(){
+  const todas = todasLasCampanas();
+  const totalGasto = todas.reduce((s,c)=>s+c.gasto,0);
+
+  const countEl = $('meta-camp-count');
+  const gastoEl = $('meta-gasto-total');
+  if(countEl) countEl.textContent = `${todas.length} campañas cargadas`;
+  if(gastoEl) gastoEl.textContent = todas.length>0 ? `Total: ${fmt(totalGasto)}` : '';
+
+  // Lista de campañas en el tab
+  const listEl = $('meta-campanas-lista');
+  if(listEl){
+    if(!todas.length){
+      listEl.innerHTML='<div class="empty">Sube informes de Meta Ads para ver las campañas</div>';
+    } else {
+      const porCuenta = {};
+      todas.forEach(c=>{ if(!porCuenta[c.cuenta])porCuenta[c.cuenta]=[]; porCuenta[c.cuenta].push(c); });
+      listEl.innerHTML = Object.entries(porCuenta).map(([cuenta,camps])=>`
+        <div style="margin-bottom:10px">
+          <div style="font-size:10px;font-weight:700;color:var(--orange);letter-spacing:.07em;text-transform:uppercase;margin-bottom:4px">${cuenta||'Sin cuenta'} — ${fmt(camps.reduce((s,c)=>s+c.gasto,0))}</div>
+          ${camps.map(c=>{
+            const enPaquete=paquetes.find(p=>p.campanas.includes(c.nombre));
+            return`<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--border);font-size:12px">
+              <div style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.nombre}</div>
+              <div style="color:var(--amber);font-family:'JetBrains Mono',monospace;flex-shrink:0">${fmt(c.gasto)}</div>
+              ${enPaquete?`<span style="font-size:10px;padding:2px 6px;border-radius:4px;background:var(--gd);color:var(--green)">${enPaquete.nombre}</span>`:'<span style="font-size:10px;color:var(--hint)">sin asignar</span>'}
+            </div>`;
+          }).join('')}
+        </div>
+      `).join('');
+    }
+  }
+
+  // Buscador de campañas
+  campanasFiltradas = todas;
+  renderBuscadorCampanas();
+
+  // Poblar selector de productos en el paquete
+  const selProd = $('paquete-producto');
+  if(selProd && allOrds.length){
+    const prodIds = new Set();
+    const prodNombres = {};
+    dProd.forEach(r=>{
+      const id=String(r['PRODUCTO ID']||'');
+      const nom=String(r['PRODUCTO']||'').trim();
+      if(id&&nom){prodIds.add(id);prodNombres[id]=nom;}
+    });
+    const opts = [...prodIds].sort().map(id=>`<option value="${id}">${prodNombres[id]} (ID: ${id})</option>`).join('');
+    selProd.innerHTML = '<option value="">— Seleccionar producto —</option>' + opts;
+  }
+
+  // Poblar selector de fusiones
+  const fusionSel = $('fusion-selector');
+  if(fusionSel && dProd.length){
+    const prodMap = {};
+    dProd.forEach(r=>{
+      const id=String(r['PRODUCTO ID']||'');
+      const nom=String(r['PRODUCTO']||'').trim();
+      if(id&&nom) prodMap[id]=nom;
+    });
+    fusionSel.innerHTML = Object.entries(prodMap).sort((a,b)=>a[1].localeCompare(b[1])).map(([id,nom])=>`
+      <label style="display:flex;align-items:center;gap:6px;padding:4px 0;font-size:12px;cursor:pointer">
+        <input type="checkbox" value="${id}" style="accent-color:var(--orange)"> ${nom} <span style="color:var(--hint);font-size:10px">#${id}</span>
+      </label>
+    `).join('');
+  }
+
+  // Render paquetes
+  renderPaquetes();
+  // Render fusiones
+  renderFusiones();
+}
+
+function filtrarCampanas(){
+  const q = ($('busca-camp')?.value||'').toLowerCase();
+  const todas = todasLasCampanas();
+  campanasFiltradas = q ? todas.filter(c=>c.nombre.toLowerCase().includes(q)||c.cuenta.toLowerCase().includes(q)) : todas;
+  renderBuscadorCampanas();
+}
+
+function renderBuscadorCampanas(){
+  const cont = $('campanas-buscador');
+  if(!cont) return;
+  if(!campanasFiltradas.length){
+    cont.innerHTML='<div class="empty" style="padding:10px">Sin campañas — sube informes de Meta Ads</div>';
+    $('seleccion-count').textContent='0 campañas seleccionadas';
+    return;
+  }
+  cont.innerHTML = campanasFiltradas.map(c=>{
+    const sel = campSeleccion.has(c.nombre);
+    const enPaquete = paquetes.find(p=>p.campanas.includes(c.nombre));
+    return`<label style="display:flex;align-items:center;gap:8px;padding:5px 4px;border-bottom:1px solid var(--border);cursor:pointer;font-size:12px${enPaquete?';opacity:.6':''}">
+      <input type="checkbox" ${sel?'checked':''} ${enPaquete?'disabled title="Ya está en un paquete"':''} onchange="toggleCampSel('${c.nombre.replace(/'/g,"\\'").replace(/"/g,'&quot;')}')" style="accent-color:var(--orange)">
+      <div style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${c.nombre}">${c.nombre}</div>
+      <div style="font-size:10px;color:var(--muted);flex-shrink:0">${c.cuenta||''}</div>
+      <div style="color:var(--amber);font-family:'JetBrains Mono',monospace;flex-shrink:0;font-size:11px">${fmt(c.gasto)}</div>
+      ${enPaquete?`<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:var(--gd);color:var(--green);flex-shrink:0">${enPaquete.nombre}</span>`:''}
+    </label>`;
+  }).join('');
+  actualizarConteoSeleccion();
+}
+
+function toggleCampSel(nombre){
+  if(campSeleccion.has(nombre)) campSeleccion.delete(nombre);
+  else campSeleccion.add(nombre);
+  actualizarConteoSeleccion();
+}
+
+function actualizarConteoSeleccion(){
+  const n = campSeleccion.size;
+  const gasto = todasLasCampanas().filter(c=>campSeleccion.has(c.nombre)).reduce((s,c)=>s+c.gasto,0);
+  const el = $('seleccion-count');
+  if(el) el.textContent = n>0 ? `${n} campaña(s) seleccionada(s) — ${fmt(gasto)} en pauta` : '0 campañas seleccionadas';
+}
+
+function seleccionarTodosFiltrados(){
+  campanasFiltradas.forEach(c=>{
+    const enPaquete=paquetes.find(p=>p.campanas.includes(c.nombre));
+    if(!enPaquete) campSeleccion.add(c.nombre);
+  });
+  renderBuscadorCampanas();
+}
+
+function limpiarSeleccion(){
+  campSeleccion.clear();
+  renderBuscadorCampanas();
+}
+
+function crearPaquete(){
+  const nombre = ($('paquete-nombre')?.value||'').trim();
+  const prodId = $('paquete-producto')?.value||'';
+  if(!nombre){ setS('err','Ponle un nombre al paquete'); return; }
+  if(!campSeleccion.size){ setS('err','Selecciona al menos una campaña'); return; }
+
+  const gasto = todasLasCampanas().filter(c=>campSeleccion.has(c.nombre)).reduce((s,c)=>s+c.gasto,0);
+  const id = Date.now();
+  paquetes.push({id, nombre, prodId, campanas:[...campSeleccion], gasto});
+
+  campSeleccion.clear();
+  if($('paquete-nombre')) $('paquete-nombre').value='';
+  if($('paquete-producto')) $('paquete-producto').value='';
+
+  guardarPautaLS();
+  renderPauta();
+  setS('ok', `Paquete "${nombre}" creado — ${fmt(gasto)}`);
+}
+
+function eliminarPaquete(id){
+  paquetes = paquetes.filter(p=>p.id!==id);
+  guardarPautaLS();
+  renderPauta();
+}
+
+function renderPaquetes(){
+  const cont = $('paquetes-lista');
+  if(!cont) return;
+  if(!paquetes.length){
+    cont.innerHTML='<div class="empty">Sin paquetes creados aún. Selecciona campañas arriba y crea un paquete.</div>';
+    return;
+  }
+  const prodNombres = {};
+  dProd.forEach(r=>{const id=String(r['PRODUCTO ID']||'');const nom=String(r['PRODUCTO']||'').trim();if(id&&nom)prodNombres[id]=nom;});
+
+  cont.innerHTML = paquetes.map(p=>{
+    const prodNom = p.prodId ? (prodNombres[p.prodId]||`ID ${p.prodId}`) : '— Sin producto asignado —';
+    const gastoReal = todasLasCampanas().filter(c=>p.campanas.includes(c.nombre)).reduce((s,c)=>s+c.gasto,0);
+    return`<div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:12px 14px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div style="font-size:13px;font-weight:700;color:var(--text);flex:1">${p.nombre}</div>
+        <div style="font-size:13px;font-weight:700;color:var(--amber);font-family:'JetBrains Mono',monospace">${fmt(gastoReal>0?gastoReal:p.gasto)}</div>
+        <button onclick="eliminarPaquete(${p.id})" style="background:none;border:none;cursor:pointer;color:var(--hint);font-size:14px">✕</button>
+      </div>
+      <div style="font-size:11px;color:${p.prodId?'var(--green)':'var(--hint)'}">📦 ${prodNom}</div>
+      <div style="margin-top:6px;font-size:10px;color:var(--hint)">${p.campanas.length} campaña(s): ${p.campanas.slice(0,3).join(', ')}${p.campanas.length>3?` +${p.campanas.length-3} más`:''}</div>
+    </div>`;
+  }).join('');
+}
+
+function crearFusion(){
+  const nombre = ($('fusion-nombre')?.value||'').trim();
+  if(!nombre){ setS('err','Ponle un nombre a la fusión'); return; }
+  const checks = document.querySelectorAll('#fusion-selector input[type=checkbox]:checked');
+  const ids = [...checks].map(c=>c.value);
+  if(ids.length<2){ setS('err','Selecciona al menos 2 productos para fusionar'); return; }
+
+  const id = Date.now();
+  fusiones.push({id, nombre, productoIds:ids});
+
+  if($('fusion-nombre')) $('fusion-nombre').value='';
+  document.querySelectorAll('#fusion-selector input[type=checkbox]').forEach(c=>c.checked=false);
+
+  guardarPautaLS();
+  renderFusiones();
+  setS('ok', `Fusión "${nombre}" creada`);
+}
+
+function eliminarFusion(id){
+  fusiones = fusiones.filter(f=>f.id!==id);
+  guardarPautaLS();
+  renderFusiones();
+}
+
+function renderFusiones(){
+  const cont = $('fusiones-lista');
+  if(!cont) return;
+  if(!fusiones.length){
+    cont.innerHTML='<div class="empty">Sin fusiones creadas aún.</div>';
+    return;
+  }
+  const prodNombres = {};
+  dProd.forEach(r=>{const id=String(r['PRODUCTO ID']||'');const nom=String(r['PRODUCTO']||'').trim();if(id&&nom)prodNombres[id]=nom;});
+
+  cont.innerHTML = fusiones.map(f=>`
+    <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:12px 14px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+        <div style="font-size:13px;font-weight:700;color:var(--text);flex:1">🔗 ${f.nombre}</div>
+        <button onclick="eliminarFusion(${f.id})" style="background:none;border:none;cursor:pointer;color:var(--hint);font-size:14px">✕</button>
+      </div>
+      <div style="font-size:11px;color:var(--muted)">${f.productoIds.map(id=>`${prodNombres[id]||'?'} <span style="color:var(--hint)">#${id}</span>`).join(' + ')}</div>
+    </div>
+  `).join('');
+}
+
+// ---- GASTO DE PAUTA POR PRODUCTO ----
+// Devuelve el gasto total asignado a un PRODUCTO ID (buscando en paquetes)
+function gastoPorProductoId(prodId){
+  return paquetes.filter(p=>p.prodId===String(prodId)).reduce((s,p)=>{
+    const gastoReal = todasLasCampanas().filter(c=>p.campanas.includes(c.nombre)).reduce((s2,c)=>s2+c.gasto,0);
+    return s+(gastoReal>0?gastoReal:p.gasto);
+  },0);
+}
+
+// Resuelve el nombre unificado de un producto (si tiene fusión)
+function nombreUnificado(prodNombre, prodId){
+  const fusion = fusiones.find(f=>f.productoIds.includes(String(prodId)));
+  return fusion ? fusion.nombre : prodNombre;
+}
+
+// Gasto de pauta para un nombre de producto (considerando fusiones)
+function gastoPorNombreProducto(nombre){
+  // Encontrar todos los PRODUCTO IDs que corresponden a este nombre (o fusión)
+  const prodIds = new Set();
+  dProd.forEach(r=>{
+    const id=String(r['PRODUCTO ID']||'');
+    const nom=String(r['PRODUCTO']||'').trim();
+    const nomUnif = nombreUnificado(nom, id);
+    if(nomUnif===nombre || nom===nombre) prodIds.add(id);
+  });
+  return [...prodIds].reduce((s,id)=>s+gastoPorProductoId(id),0);
+}
+
 
 loadKeys();setDates();
 </script>
