@@ -249,10 +249,9 @@ tr:hover td{background:var(--bg3);}
     <div class="tab" onclick="st(3)" id="tab-sin-mov">Sin movimiento</div>
     <div class="tab" onclick="st(4)">Productos</div>
     <div class="tab" onclick="st(5)">Transportadoras</div>
-    <div class="tab" onclick="st(6)">Reporte IA</div>
-    <div class="tab" onclick="st(7)" id="tab-traz">Trazabilidad</div>
-    <div class="tab" onclick="st(8)" id="tab-control">Control Diario</div>
-    <div class="tab" onclick="st(9)" id="tab-pauta">Pauta Meta</div>
+    <div class="tab" onclick="st(6)" id="tab-traz">Trazabilidad</div>
+    <div class="tab" onclick="st(7)" id="tab-control">Control Diario</div>
+    <div class="tab" onclick="st(8)" id="tab-pauta">Publicidad</div>
   </div>
 
   <!-- TAB 0: RESUMEN -->
@@ -330,6 +329,28 @@ tr:hover td{background:var(--bg3);}
 
   <!-- TAB 6: PRODUCTOS -->
   <div class="tp" id="tp4">
+    <!-- FUSION DE PRODUCTOS -->
+    <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rl);padding:14px 16px;margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div style="font-size:13px;font-weight:700;color:var(--text)">🔗 Fusión de productos</div>
+        <div style="font-size:11px;color:var(--muted)">Combina productos con distintos IDs bajo un nombre unificado</div>
+        <button class="bs" style="margin-left:auto;font-size:11px" onclick="toggleFusionPanel()">+ Nueva fusión</button>
+      </div>
+      <div id="fusion-form" style="display:none;margin-bottom:12px;padding:12px;background:var(--bg3);border-radius:var(--r)">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px">
+          <div>
+            <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Nombre unificado</label>
+            <input type="text" id="fusion-nombre" placeholder="Ej: Ethiopian Black Seed Oil" style="width:100%">
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Selecciona 2 o más productos</label>
+            <div id="fusion-checkboxes" style="max-height:160px;overflow-y:auto;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:8px"></div>
+          </div>
+        </div>
+        <button class="bp" style="font-size:12px" onclick="crearFusionProducto()">Crear fusión</button>
+      </div>
+      <div id="fusiones-lista-prod" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+    </div>
     <div class="card">
       <div class="ct">Rendimiento por producto</div>
       <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
@@ -384,11 +405,6 @@ tr:hover td{background:var(--bg3);}
 
   <!-- TAB 8: IA -->
   <div class="tp" id="tp6">
-    <div class="card"><div class="ct">Análisis IA</div><div id="ia-c"><div class="empty">Presiona Generar reporte para el análisis</div></div><div class="ar" id="ia-ar" style="display:none"><button class="bs" onclick="expTxt()">Exportar .txt</button><button class="bs" onclick="copIA()">Copiar</button></div></div>
-  </div>
-
-  <!-- TAB 9: TRAZABILIDAD -->
-  <div class="tp" id="tp7">
 
     <!-- SECCIÓN 1: Shopify → Dropi -->
     <div class="card">
@@ -454,7 +470,7 @@ tr:hover td{background:var(--bg3);}
 
   </div>
   <!-- TAB 9: PAUTA META -->
-  <div class="tp" id="tp9">
+  <div class="tp" id="tp8">
     <div class="card">
       <div class="ct">Campañas cargadas</div>
       <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
@@ -506,28 +522,10 @@ tr:hover td{background:var(--bg3);}
       <div id="paquetes-lista"></div>
     </div>
 
-    <div class="card">
-      <div class="ct">Fusión de productos Dropi</div>
-      <div class="al ai" style="margin-bottom:12px">Agrupa PRODUCTO IDs distintos que son el mismo producto bajo un nombre unificado. Útil cuando cambias de stock o ID privado.</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end;margin-bottom:14px">
-        <div>
-          <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Nombre unificado</label>
-          <input type="text" id="fusion-nombre" placeholder="Ej: Ethiopian Black Seed Oil">
-        </div>
-        <div>
-          <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Productos a fusionar</label>
-          <div id="fusion-selector" style="max-height:200px;overflow-y:auto;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:8px"></div>
-        </div>
-        <div>
-          <button class="bp" style="font-size:12px;padding:9px 16px;white-space:nowrap" onclick="crearFusion()">+ Fusionar</button>
-        </div>
-      </div>
-      <div id="fusiones-lista"></div>
-    </div>
   </div>
 
-  <!-- TAB 8: CONTROL DIARIO -->
-  <div class="tp" id="tp8">
+  <!-- TAB 7: CONTROL DIARIO -->
+  <div class="tp" id="tp7">
     <div class="card">
       <div class="ct">Fecha de control</div>
       <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
@@ -649,7 +647,8 @@ const scrollObserver=new IntersectionObserver((entries)=>{
 function observarLogistica(){const sec=$('logistica-section');if(sec)scrollObserver.observe(sec);}
 
 function saveKeys(){localStorage.setItem(LS,JSON.stringify({ck:$('claude-key').value,tt:$('tiktok-spend').value,ms:$('meta-spend').value}));setS('ok','Valores guardados');}
-function loadKeys(){const d=JSON.parse(localStorage.getItem(LS)||'{}');if(d.ck)$('claude-key').value=d.ck;if(d.tt)$('tiktok-spend').value=d.tt;if(d.ms)$('meta-spend').value=d.ms;cargarPautaLS();}
+function loadKeys(){
+  cargarFusionesLS();const d=JSON.parse(localStorage.getItem(LS)||'{}');if(d.ck)$('claude-key').value=d.ck;if(d.tt)$('tiktok-spend').value=d.tt;if(d.ms)$('meta-spend').value=d.ms;cargarPautaLS();}
 function setDates(){const t=new Date(),f=new Date(t.getFullYear(),t.getMonth(),1);$('date-to').value=t.toISOString().slice(0,10);$('date-from').value=f.toISOString().slice(0,10);}
 
 function df(e,t){e.preventDefault();e.currentTarget.classList.remove('drag');hf(e.dataTransfer.files[0],t);}
@@ -1021,13 +1020,16 @@ function renderMeta(data,tt,ms){
 
 function calcFinanciero(allValidas){
   const entregados=allValidas.filter(o=>EST_ENT.includes(o.estatus));
+  const devueltos=allValidas.filter(o=>o.estatus==='DEVOLUCION');
+  const enMov=allValidas.filter(o=>EST_MOV.includes(o.estatus));
   const totalOrdenEnt=entregados.reduce((s,o)=>s+o.valor,0);
+  // Flete se cobra a todo pedido despachado (entregado, devuelto o en movimiento)
   const fleteEnt=entregados.reduce((s,o)=>s+fleteEfectivo(o),0);
+  const fletesDev=devueltos.reduce((s,o)=>s+fleteEfectivo(o),0);
+  const fletesMov=enMov.reduce((s,o)=>s+o.flete,0);
   const costoProvEnt=entregados.reduce((s,o)=>s+o.costoProv,0);
-  // Wallet = total orden - flete - proveedor. Las devoluciones NO generan ingreso
-  // por lo que no entran a totalOrdenEnt, y su flete (ya descontado via fleteEfectivo) no se resta aqui
-  const utilBruta=totalOrdenEnt-fleteEnt-costoProvEnt;
-  return{totalOrdenEnt,fleteEnt,costoProvEnt,fletesDev:0,utilBruta};
+  const utilBruta=totalOrdenEnt-fleteEnt-fletesDev-fletesMov-costoProvEnt;
+  return{totalOrdenEnt,fleteEnt,fletesDev,fletesMov,costoProvEnt,utilBruta};
 }
 
 function dibujarTortaFin(utilBruta,gastMeta,gastTiktok){
@@ -1122,8 +1124,9 @@ function renderRes(d,s,m,w){
   $('res-fin').innerHTML=`
     <div class="cr"><div class="cl2">Total órdenes entregadas</div><div class="cv">${fmt(fin.totalOrdenEnt)}</div></div>
     <div class="cr"><div class="cl2">Fletes entregados</div><div class="cv" style="color:var(--red)">−${fmt(fin.fleteEnt)}</div></div>
-    <div class="cr"><div class="cl2">Costo proveedor (entregados)</div><div class="cv" style="color:var(--red)">−${fmt(fin.costoProvEnt)}</div></div>
     <div class="cr"><div class="cl2">Fletes devoluciones</div><div class="cv" style="color:var(--red)">−${fmt(fin.fletesDev)}</div></div>
+    <div class="cr"><div class="cl2">Fletes en movimiento</div><div class="cv" style="color:var(--red)">−${fmt(fin.fletesMov)}</div></div>
+    <div class="cr"><div class="cl2">Costo proveedor</div><div class="cv" style="color:var(--red)">−${fmt(fin.costoProvEnt)}</div></div>
     <div class="cr" style="border-top:1px solid var(--border2);margin-top:4px;padding-top:8px"><div class="cl2" style="font-weight:600;color:var(--text)">Utilidad bruta</div><div class="cv" style="color:var(--green);font-weight:700">${fmt(fin.utilBruta)}</div></div>
     <div class="cr"><div class="cl2">Gasto publicidad</div><div class="cv" style="color:var(--red)">−${fmt(tot)}</div></div>
     <div class="cr"><div class="cl2" style="font-weight:600;color:var(--text)">Utilidad neta</div><div class="cv" style="color:${utilNeta>0?'var(--green)':'var(--red)'};font-weight:700">${fmt(utilNeta)}</div></div>
@@ -1247,8 +1250,9 @@ function calcProductos(allValidas){
     const id=String(r['ID']||'');
     const est=idToEstatus[id];
     if(!est)return;
-    const prod=String(r['PRODUCTO']||'—').trim();
-    if(!prod||prod==='—')return;
+    const prodOriginal=String(r['PRODUCTO']||'—').trim();
+    if(!prodOriginal||prodOriginal==='—')return;
+    const prod=resolverNombreProducto(prodOriginal); // aplicar fusión si existe
     if(!byProd[prod])byProd[prod]={total:new Set(),ent:new Set(),dev:new Set(),can:new Set(),pend:new Set(),mov:new Set(),desp:new Set()};
     const p=byProd[prod];
     p.total.add(id);
@@ -1419,7 +1423,13 @@ function abrirModal(nombre){
   if(!p)return;
 
   const ids=new Set();
-  dProd.forEach(r=>{if(String(r['PRODUCTO']||'').trim()===nombre)ids.add(String(r['ID']||''));});
+  // Si "nombre" es un nombre fusionado, incluir IDs de todos los productos originales fusionados
+  const fusionAplicable=fusionesProducto.find(f=>f.nombre===nombre);
+  const nombresOriginales=fusionAplicable?fusionAplicable.productos:[nombre];
+  dProd.forEach(r=>{
+    const prodOriginal=String(r['PRODUCTO']||'').trim();
+    if(nombresOriginales.includes(prodOriginal))ids.add(String(r['ID']||''));
+  });
   const ords=allOrds.filter(o=>!o.dup&&ids.has(o.id));
 
   const ent=ords.filter(o=>EST_ENT.includes(o.estatus)).length;
@@ -2006,11 +2016,70 @@ function renderCiudadesFiltradas(){
   let lista=gCiudades.filter(c=>c.nombre.toLowerCase().includes(q));
   lista.sort((a,b)=>{const v=ciudadSort==='ped'?a.desp-b.desp:a.ef-b.ef;return ciudadDir==='desc'?-v:v;});
   $('ciudad-count').textContent=`${lista.length} ciudades`;
-  $('ciudades-list').innerHTML=lista.map(c=>{
+
+  // Construir índice producto→ciudad usando dProd + allOrds
+  const prodPorCiudad={};
+  if(dProd.length&&allOrds.length){
+    const idToOrd={};allOrds.filter(o=>!o.dup).forEach(o=>idToOrd[o.id]=o);
+    dProd.forEach(r=>{
+      const id=String(r['ID']||'');const ord=idToOrd[id];if(!ord)return;
+      const ciudad=(ord.ciudad||'Sin ciudad').toUpperCase().trim();
+      const prod=resolverNombreProducto(String(r['PRODUCTO']||'').trim());
+      if(!prod)return;
+      if(!prodPorCiudad[ciudad])prodPorCiudad[ciudad]={};
+      if(!prodPorCiudad[ciudad][prod])prodPorCiudad[ciudad][prod]={ent:0,dev:0,mov:0,can:0,pend:0,total:0};
+      const p=prodPorCiudad[ciudad][prod];
+      p.total++;
+      if(EST_ENT.includes(ord.estatus))p.ent++;
+      else if(ord.estatus==='DEVOLUCION'||ord.estatus==='RECHAZADO')p.dev++;
+      else if(EST_MOV.includes(ord.estatus))p.mov++;
+      else if(EST_CAN.includes(ord.estatus))p.can++;
+      else if(EST_PEND.includes(ord.estatus))p.pend++;
+    });
+  }
+
+  $('ciudades-list').innerHTML=lista.map((c,i)=>{
     const bar=Math.min(c.ef/1*100,100).toFixed(1);
     const col=colorBar(c.ef),v=colorVal(c.ef);
-    return`<div class="ciudad-item"><div class="ciudad-name">${c.nombre}</div><div class="ciudad-bar-track"><div class="ciudad-bar-fill" style="width:${bar}%;background:${col}"></div></div><div class="ciudad-val" style="color:${v}">${(c.ef*100).toFixed(1)}%</div><div class="ciudad-ped">${c.desp} desp.</div></div>`;
+    const prods=prodPorCiudad[c.nombre]||{};
+    const prodsHTML=Object.entries(prods).sort((a,b)=>b[1].total-a[1].total).map(([nom,d])=>{
+      // Base = despachados (entregado+devuelto+movimiento) para que el 100% de la barra
+      // corresponda solo a lo que ya salió de bodega, sin dejar hueco por cancelados/pendientes
+      const desp=d.ent+d.dev+d.mov;
+      const pctEnt=desp>0?(d.ent/desp*100):0;
+      const pctDev=desp>0?(d.dev/desp*100):0;
+      const pctMov=desp>0?(d.mov/desp*100):0;
+      const detalle=[
+        d.ent>0?`${d.ent} entregado${d.ent>1?'s':''}`:null,
+        d.dev>0?`${d.dev} devuelto${d.dev>1?'s':''}`:null,
+        d.mov>0?`${d.mov} en movimiento`:null,
+      ].filter(Boolean).join(' · ');
+      return`<div style="padding:6px 0;border-bottom:1px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px;gap:8px">
+          <span style="color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${nom}</span>
+          <span style="color:var(--muted);font-size:10px;flex-shrink:0">${detalle} · ${d.total} total</span>
+        </div>
+        <div style="height:7px;border-radius:4px;overflow:hidden;background:var(--bg2);display:flex">
+          <div style="width:${pctEnt.toFixed(1)}%;background:#22c55e"></div>
+          <div style="width:${pctDev.toFixed(1)}%;background:#ef4444"></div>
+          <div style="width:${pctMov.toFixed(1)}%;background:#a855f7"></div>
+        </div>
+      </div>`;
+    }).join('');
+
+    return`<div class="ciudad-item" style="cursor:pointer" onclick="toggleCiudadDetalle(${i})">
+      <div class="ciudad-name">${c.nombre}</div>
+      <div class="ciudad-bar-track"><div class="ciudad-bar-fill" style="width:${bar}%;background:${col}"></div></div>
+      <div class="ciudad-val" style="color:${v}">${(c.ef*100).toFixed(1)}%</div>
+      <div class="ciudad-ped">${c.desp} desp.</div>
+    </div>
+    ${Object.keys(prods).length>0?`<div id="ciudad-det-${i}" style="display:none;padding:8px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:0 0 var(--r) var(--r);margin-bottom:4px">${prodsHTML}</div>`:''}`;
   }).join('')||'<div class="empty">Sin ciudades</div>';
+}
+
+function toggleCiudadDetalle(i){
+  const el=$(`ciudad-det-${i}`);if(!el)return;
+  el.style.display=el.style.display==='none'?'block':'none';
 }
 
 
@@ -2018,6 +2087,7 @@ function renderCiudadesFiltradas(){
 function filtrarCiudades(){renderCiudadesFiltradas();}
 
 function renderTodoAnalisis(dropiData){
+  renderFusionesProducto();
   if(!dropiData)return;
   // Usar financiero si hay dProd, sino básico
   const prods=dProd.length?calcProductosFinanciero(dropiData.allV):calcProductos(dropiData.allV);
@@ -2076,8 +2146,7 @@ async function fetchAll(){
     calcPedidosAdicionales(dropiData,[]);
   }
 
-  setS('loading','Generando análisis IA...');
-  await genIA(ck,dropiData,shopData,metaData,wpData,gP,df,dt);
+  // await genIA(ck,dropiData,shopData,metaData,wpData,gP,df,dt);
 
   // Control diario
   renderControlDiario();
@@ -2449,13 +2518,14 @@ function calcProductosFinanciero(allValidas){
     const id=String(r['ID']||'');
     const ord=idToOrden[id];
     if(!ord)return;
-    const prod=String(r['PRODUCTO']||'—').trim();
-    if(!prod||prod==='—')return;
+    const prodOriginal=String(r['PRODUCTO']||'—').trim();
+    if(!prodOriginal||prodOriginal==='—')return;
+    const prod=resolverNombreProducto(prodOriginal); // aplicar fusión si existe
 
     if(!byProd[prod])byProd[prod]={
       nombre:prod,total:new Set(),ent:new Set(),dev:new Set(),can:new Set(),
       pend:new Set(),mov:new Set(),desp:new Set(),
-      ingresosBrutos:0,fletesEnt:0,costoProvEnt:0,fletesDev:0
+      ingresosBrutos:0,fletesEnt:0,costoProvEnt:0,fletesDev:0,fletesMov:0
     };
     const p=byProd[prod];
     p.total.add(id);
@@ -2467,19 +2537,20 @@ function calcProductosFinanciero(allValidas){
       p.costoProvEnt+=ord.costoProv;
     } else if(EST_DEV.includes(ord.estatus)){
       p.dev.add(id);p.desp.add(id);
-      if(ord.estatus==='DEVOLUCION')p.fletesDev+=fleteEfectivo(ord);
+      if(ord.estatus==='DEVOLUCION')p.fletesDev+=fleteEfectivo(ord); // flete real de devolución
     } else if(EST_CAN.includes(ord.estatus)){
       p.can.add(id);
     } else if(EST_PEND.includes(ord.estatus)){
       p.pend.add(id);
     } else if(EST_MOV.includes(ord.estatus)){
       p.mov.add(id);p.desp.add(id);
+      p.fletesMov+=ord.flete; // flete comprometido en movimiento
     }
   });
 
   return Object.entries(byProd).map(([nombre,p])=>{
     const total=p.total.size,ent=p.ent.size,dev=p.dev.size,can=p.can.size,desp=p.desp.size;
-    const utilBruta=p.ingresosBrutos-p.fletesEnt-p.costoProvEnt;
+    const utilBruta=p.ingresosBrutos-p.fletesEnt-p.fletesDev-p.fletesMov-p.costoProvEnt;
     const pauta=gastoPorNombreProducto(nombre)||0;
     const utilNeta=Math.max(utilBruta-pauta,0);
     const cpaEntregado=ent>0&&pauta>0?pauta/ent:0;
@@ -2784,20 +2855,18 @@ const LS_PAUTA = 'vitalia_pauta_v1';
 let dMetaFiles = [];      // array de {filename, campanas:[{nombre, gasto, cuenta}]}
 let campSeleccion = new Set(); // campañas seleccionadas para paquetizar
 let paquetes = [];        // [{id, nombre, prodId, campanas:[nombre], gasto}]
-let fusiones = [];        // [{id, nombre, productoIds:[int]}]
 let campanasFiltradas = []; // resultado del buscador
 
 function cargarPautaLS(){
   try {
     const d = JSON.parse(localStorage.getItem(LS_PAUTA)||'{}');
     paquetes = d.paquetes||[];
-    fusiones = d.fusiones||[];
-  } catch(e){ paquetes=[]; fusiones=[]; }
+  } catch(e){ paquetes=[]; }
 }
 
 function guardarPautaLS(){
   try {
-    localStorage.setItem(LS_PAUTA, JSON.stringify({paquetes, fusiones}));
+    localStorage.setItem(LS_PAUTA, JSON.stringify({paquetes}));
   } catch(e){}
 }
 
@@ -2975,32 +3044,15 @@ function renderPauta(){
 
   // Poblar selector de productos en el paquete
   const selProd = $('paquete-producto');
-  if(selProd && allOrds.length){
-    const prodIds = new Set();
-    const prodNombres = {};
+  if(selProd && dProd.length){
+    // Usar nombres RESUELTOS (con fusión aplicada) — coincide con calcProductosFinanciero
+    const nombresUnicos=new Set();
     dProd.forEach(r=>{
-      const id=String(r['PRODUCTO ID']||'');
-      const nom=String(r['PRODUCTO']||'').trim();
-      if(id&&nom){prodIds.add(id);prodNombres[id]=nom;}
+      const original=String(r['PRODUCTO']||'').trim();
+      if(original)nombresUnicos.add(resolverNombreProducto(original));
     });
-    const opts = [...prodIds].sort().map(id=>`<option value="${id}">${prodNombres[id]} (ID: ${id})</option>`).join('');
-    selProd.innerHTML = '<option value="">— Seleccionar producto —</option>' + opts;
-  }
-
-  // Poblar selector de fusiones
-  const fusionSel = $('fusion-selector');
-  if(fusionSel && dProd.length){
-    const prodMap = {};
-    dProd.forEach(r=>{
-      const id=String(r['PRODUCTO ID']||'');
-      const nom=String(r['PRODUCTO']||'').trim();
-      if(id&&nom) prodMap[id]=nom;
-    });
-    fusionSel.innerHTML = Object.entries(prodMap).sort((a,b)=>a[1].localeCompare(b[1])).map(([id,nom])=>`
-      <label style="display:flex;align-items:center;gap:6px;padding:4px 0;font-size:12px;cursor:pointer">
-        <input type="checkbox" value="${id}" style="accent-color:var(--orange)"> ${nom} <span style="color:var(--hint);font-size:10px">#${id}</span>
-      </label>
-    `).join('');
+    const opts=[...nombresUnicos].sort().map(nom=>`<option value="${nom.replace(/"/g,'&quot;')}">${nom}</option>`).join('');
+    selProd.innerHTML='<option value="">— Seleccionar producto —</option>'+opts;
   }
 
   // Render paquetes
@@ -3114,77 +3166,93 @@ function renderPaquetes(){
   }).join('');
 }
 
-function crearFusion(){
-  const nombre = ($('fusion-nombre')?.value||'').trim();
-  if(!nombre){ setS('err','Ponle un nombre a la fusión'); return; }
-  const checks = document.querySelectorAll('#fusion-selector input[type=checkbox]:checked');
-  const ids = [...checks].map(c=>c.value);
-  if(ids.length<2){ setS('err','Selecciona al menos 2 productos para fusionar'); return; }
-
-  const id = Date.now();
-  fusiones.push({id, nombre, productoIds:ids});
-
-  if($('fusion-nombre')) $('fusion-nombre').value='';
-  document.querySelectorAll('#fusion-selector input[type=checkbox]').forEach(c=>c.checked=false);
-
-  guardarPautaLS();
-  renderFusiones();
-  setS('ok', `Fusión "${nombre}" creada`);
-}
-
-function eliminarFusion(id){
-  fusiones = fusiones.filter(f=>f.id!==id);
-  guardarPautaLS();
-  renderFusiones();
-}
-
-function renderFusiones(){
-  const cont = $('fusiones-lista');
-  if(!cont) return;
-  if(!fusiones.length){
-    cont.innerHTML='<div class="empty">Sin fusiones creadas aún.</div>';
-    return;
-  }
-  const prodNombres = {};
-  dProd.forEach(r=>{const id=String(r['PRODUCTO ID']||'');const nom=String(r['PRODUCTO']||'').trim();if(id&&nom)prodNombres[id]=nom;});
-
-  cont.innerHTML = fusiones.map(f=>`
-    <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:12px 14px;margin-bottom:8px">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
-        <div style="font-size:13px;font-weight:700;color:var(--text);flex:1">🔗 ${f.nombre}</div>
-        <button onclick="eliminarFusion(${f.id})" style="background:none;border:none;cursor:pointer;color:var(--hint);font-size:14px">✕</button>
-      </div>
-      <div style="font-size:11px;color:var(--muted)">${f.productoIds.map(id=>`${prodNombres[id]||'?'} <span style="color:var(--hint)">#${id}</span>`).join(' + ')}</div>
-    </div>
-  `).join('');
-}
-
 // ---- GASTO DE PAUTA POR PRODUCTO ----
-// Devuelve el gasto total asignado a un PRODUCTO ID (buscando en paquetes)
-function gastoPorProductoId(prodId){
-  return paquetes.filter(p=>p.prodId===String(prodId)).reduce((s,p)=>{
-    const gastoReal = todasLasCampanas().filter(c=>p.campanas.includes(c.nombre)).reduce((s2,c)=>s2+c.gasto,0);
+// El paquete guarda prodId = nombre del producto (ya resuelto con fusión si aplica).
+// Match directo, sin pasos intermedios.
+function gastoPorNombreProducto(nombre){
+  return paquetes.filter(p=>p.prodId===nombre).reduce((s,p)=>{
+    const gastoReal=todasLasCampanas().filter(c=>p.campanas.includes(c.nombre)).reduce((s2,c)=>s2+c.gasto,0);
     return s+(gastoReal>0?gastoReal:p.gasto);
   },0);
 }
 
-// Resuelve el nombre unificado de un producto (si tiene fusión)
-function nombreUnificado(prodNombre, prodId){
-  const fusion = fusiones.find(f=>f.productoIds.includes(String(prodId)));
-  return fusion ? fusion.nombre : prodNombre;
+
+
+// ---- FUSIÓN DE PRODUCTOS ----
+const LS_FUSION = 'vitalia_fusiones_v1';
+let fusionesProducto = [];
+
+function cargarFusionesLS(){
+  try{ fusionesProducto=JSON.parse(localStorage.getItem(LS_FUSION)||'[]'); }catch(e){ fusionesProducto=[]; }
 }
 
-// Gasto de pauta para un nombre de producto (considerando fusiones)
-function gastoPorNombreProducto(nombre){
-  // Encontrar todos los PRODUCTO IDs que corresponden a este nombre (o fusión)
-  const prodIds = new Set();
-  dProd.forEach(r=>{
-    const id=String(r['PRODUCTO ID']||'');
-    const nom=String(r['PRODUCTO']||'').trim();
-    const nomUnif = nombreUnificado(nom, id);
-    if(nomUnif===nombre || nom===nombre) prodIds.add(id);
-  });
-  return [...prodIds].reduce((s,id)=>s+gastoPorProductoId(id),0);
+function guardarFusionesLS(){
+  try{ localStorage.setItem(LS_FUSION, JSON.stringify(fusionesProducto)); }catch(e){}
+}
+
+function toggleFusionPanel(){
+  const f=$('fusion-form');
+  if(!f)return;
+  const visible=f.style.display!=='none';
+  f.style.display=visible?'none':'block';
+  if(!visible) poblarFusionCheckboxes();
+}
+
+function poblarFusionCheckboxes(){
+  const cont=$('fusion-checkboxes');if(!cont)return;
+  // Sacar nombres únicos de productos de dProd
+  const nombres=new Set();
+  dProd.forEach(r=>{const n=String(r['PRODUCTO']||'').trim();if(n)nombres.add(n);});
+  cont.innerHTML=[...nombres].sort().map(n=>`
+    <label style="display:flex;align-items:center;gap:6px;padding:3px 0;font-size:12px;cursor:pointer">
+      <input type="checkbox" value="${n.replace(/"/g,'&quot;')}" style="accent-color:var(--orange)"> ${n}
+    </label>
+  `).join('');
+}
+
+function crearFusionProducto(){
+  const nombre=($('fusion-nombre')?.value||'').trim();
+  if(!nombre){setS('err','Ponle un nombre a la fusión');return;}
+  const checks=document.querySelectorAll('#fusion-checkboxes input:checked');
+  const productos=[...checks].map(c=>c.value);
+  if(productos.length<2){setS('err','Selecciona al menos 2 productos');return;}
+  // Verificar que no exista ya
+  const existe=fusionesProducto.find(f=>f.nombre===nombre);
+  if(existe){setS('err','Ya existe una fusión con ese nombre');return;}
+  fusionesProducto.push({id:Date.now(),nombre,productos});
+  guardarFusionesLS();
+  $('fusion-nombre').value='';
+  $('fusion-form').style.display='none';
+  renderFusionesProducto();
+  // Recalcular ranking con las fusiones
+  if(allOrds.length&&dProd.length) renderTodoAnalisis({allV:allOrds.filter(o=>!o.dup)});
+  setS('ok',`Fusión "${nombre}" creada`);
+}
+
+function eliminarFusionProducto(id){
+  fusionesProducto=fusionesProducto.filter(f=>f.id!==id);
+  guardarFusionesLS();
+  renderFusionesProducto();
+  if(allOrds.length&&dProd.length) renderTodoAnalisis({allV:allOrds.filter(o=>!o.dup)});
+}
+
+function renderFusionesProducto(){
+  const cont=$('fusiones-lista-prod');if(!cont)return;
+  if(!fusionesProducto.length){cont.innerHTML='';return;}
+  cont.innerHTML=fusionesProducto.map(f=>`
+    <div style="display:inline-flex;align-items:center;gap:6px;padding:5px 10px;background:var(--bg3);border:1px solid var(--border2);border-radius:20px;font-size:11px">
+      <span style="color:var(--orange)">🔗</span>
+      <span style="font-weight:600;color:var(--text)">${f.nombre}</span>
+      <span style="color:var(--muted)">${f.productos.join(' + ')}</span>
+      <button onclick="eliminarFusionProducto(${f.id})" style="background:none;border:none;cursor:pointer;color:var(--hint);font-size:12px;padding:0 2px">✕</button>
+    </div>
+  `).join('');
+}
+
+// Resolver nombre real de un producto (si está fusionado, devuelve el nombre de la fusión)
+function resolverNombreProducto(nombreOriginal){
+  const fusion=fusionesProducto.find(f=>f.productos.includes(nombreOriginal));
+  return fusion?fusion.nombre:nombreOriginal;
 }
 
 
