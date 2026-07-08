@@ -236,11 +236,6 @@ tr:hover td{background:var(--bg3);}
 </div>
 
 <div id="results" style="display:none">
-  <div class="pfw" id="pfw" style="display:none">
-    <div class="pft"><span>🔍 Filtrar por producto</span><button class="bs" style="font-size:11px;padding:4px 10px" onclick="clearPF()">Limpiar</button></div>
-    <div class="pftags" id="pftags"></div>
-  </div>
-
   <div class="tabs">
     <div class="tab active" onclick="st(0)">Resumen</div>
     <div class="tab" onclick="st(1)">Logística</div>
@@ -469,7 +464,52 @@ tr:hover td{background:var(--bg3);}
     </div>
 
   </div>
-  <!-- TAB 9: PAUTA META -->
+  <!-- TAB 7: CONTROL DIARIO -->
+  <div class="tp" id="tp7">
+    <div class="card">
+      <div class="ct">Fecha de control</div>
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+        <button class="filter-btn active" id="cd-hoy" onclick="setControlRapido('hoy',this)">Hoy</button>
+        <button class="filter-btn" id="cd-ayer" onclick="setControlRapido('ayer',this)">Ayer</button>
+        <button class="filter-btn" id="cd-antier" onclick="setControlRapido('antier',this)">Antier</button>
+        <button class="filter-btn" id="cd-semana" onclick="setControlRapido('semana',this)">Última semana</button>
+        <button class="filter-btn" id="cd-mes" onclick="setControlRapido('mes',this)">Último mes</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:420px">
+        <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Desde</label><input type="date" id="control-desde" onchange="setControlManual()"></div>
+        <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Hasta</label><input type="date" id="control-hasta" onchange="setControlManual()"></div>
+      </div>
+      <div style="font-size:11px;color:var(--hint);margin-top:8px" id="control-rango-txt"></div>
+    </div>
+
+    <div id="control-notif"></div>
+
+    <div class="card">
+      <div class="ct">Novedades pendientes — sin cambio de estado desde ayer</div>
+      <div class="al aw" style="margin-bottom:12px">Calendario especial de este apartado: solo se excluyen domingos y festivos (los sábados SÍ cuentan como día hábil aquí, porque el equipo trabaja ese día). 🟠 +1 día sin resolver · 🔴 +2 días sin resolver.</div>
+      <div class="mg" id="m-novpend"></div>
+      <div class="tw2" style="margin-top:10px">
+        <table>
+          <thead><tr><th>Cliente</th><th>Guía</th><th>Transportadora</th><th>Novedad</th><th>Fecha novedad</th><th>Días sin resolver</th></tr></thead>
+          <tbody id="tb-novpend"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ct">Efectividad de solución de novedades</div>
+      <div class="al ai" style="margin-bottom:12px">Sobre el total de novedades solucionadas en el período (FUE SOLUCIONADA LA NOVEDAD = SI), se calcula qué % termina en entrega vs devolución, excluyendo las que ya fueron directo a devolución (DEVOLVER AL REMITENTE / Devolución total del despacho — esas no fueron una gestión real, ya estaban perdidas).</div>
+      <div class="mg" id="m-novsol"></div>
+      <div class="tw2" style="margin-top:10px">
+        <table>
+          <thead><tr><th>Cliente</th><th>Guía</th><th>Fecha y hora solución</th><th>Tipo de novedad</th><th>Solución aplicada</th><th>Resultado final</th><th>Usuario</th></tr></thead>
+          <tbody id="tb-novsol"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 8: PUBLICIDAD -->
   <div class="tp" id="tp8">
     <div class="card">
       <div class="ct">Campañas cargadas</div>
@@ -522,65 +562,6 @@ tr:hover td{background:var(--bg3);}
       <div id="paquetes-lista"></div>
     </div>
 
-  </div>
-
-  <!-- TAB 7: CONTROL DIARIO -->
-  <div class="tp" id="tp7">
-    <div class="card">
-      <div class="ct">Fecha de control</div>
-      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-        <button class="filter-btn active" id="cd-hoy" onclick="setControlRapido('hoy',this)">Hoy</button>
-        <button class="filter-btn" id="cd-ayer" onclick="setControlRapido('ayer',this)">Ayer</button>
-        <button class="filter-btn" id="cd-antier" onclick="setControlRapido('antier',this)">Antier</button>
-        <button class="filter-btn" id="cd-semana" onclick="setControlRapido('semana',this)">Última semana</button>
-        <button class="filter-btn" id="cd-mes" onclick="setControlRapido('mes',this)">Último mes</button>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:420px">
-        <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Desde</label><input type="date" id="control-desde" onchange="setControlManual()"></div>
-        <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Hasta</label><input type="date" id="control-hasta" onchange="setControlManual()"></div>
-      </div>
-      <div style="font-size:11px;color:var(--hint);margin-top:8px" id="control-rango-txt"></div>
-    </div>
-
-    <div id="control-notif"></div>
-
-    <div class="card">
-      <div class="ct">Confirmación de pedidos del día</div>
-      <div class="al ai" style="margin-bottom:12px">Compara los pedidos de hoy entre Shopify y Dropi. Si no subes el CSV de Shopify, se muestra solo el avance de confirmación dentro de Dropi.</div>
-      <div class="mg" id="m-confirm"></div>
-      <div id="confirm-detalle" style="display:none;margin-top:10px">
-        <div class="tw2">
-          <table>
-            <thead><tr><th>Cliente</th><th>Teléfono</th><th>Producto</th><th>Estado</th></tr></thead>
-            <tbody id="tb-confirm"></tbody>
-          </table>
-        </div>
-      </div>
-      <button class="bs" style="margin-top:10px;font-size:12px" id="btn-confirm-toggle" onclick="toggleConfirmDetalle()">Ver pedidos pendientes por confirmar</button>
-    </div>
-
-    <div class="card">
-      <div class="ct">Novedades pendientes — sin cambio de estado desde ayer</div>
-      <div class="al aw" style="margin-bottom:12px">Calendario especial de este apartado: solo se excluyen domingos y festivos (los sábados SÍ cuentan como día hábil aquí, porque el equipo trabaja ese día). 🟠 +1 día sin resolver · 🔴 +2 días sin resolver.</div>
-      <div class="mg" id="m-novpend"></div>
-      <div class="tw2" style="margin-top:10px">
-        <table>
-          <thead><tr><th>Cliente</th><th>Guía</th><th>Transportadora</th><th>Novedad</th><th>Fecha novedad</th><th>Días sin resolver</th></tr></thead>
-          <tbody id="tb-novpend"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="ct">Novedades solucionadas hoy</div>
-      <div class="mg" id="m-novsol"></div>
-      <div class="tw2" style="margin-top:10px">
-        <table>
-          <thead><tr><th>Cliente</th><th>Guía</th><th>Fecha y hora solución</th><th>Tipo de novedad</th><th>Solución aplicada</th><th>Usuario</th></tr></thead>
-          <tbody id="tb-novsol"></tbody>
-        </table>
-      </div>
-    </div>
   </div>
 
 </div>
@@ -722,11 +703,7 @@ function resetF(t){
 }
 
 function buildPF(ords){
-  const ps=new Set();
-  ords.forEach(o=>{if(o.productos&&o.productos!=='—')o.productos.split(',').forEach(p=>ps.add(p.trim()));});
-  if(ps.size===0){$('pfw').style.display='none';return;}
-  $('pfw').style.display='block';
-  $('pftags').innerHTML=['<div class="pftag all active" data-p="__all__" onclick="tPF(this)">Todos</div>',...[...ps].sort().map(p=>`<div class="pftag" data-p="${p}" onclick="tPF(this)">${p}</div>`)].join('');
+  // Filtro global por producto eliminado del dashboard — función neutralizada
 }
 function tPF(el){
   const p=el.dataset.p;
@@ -918,24 +895,46 @@ function calcEfectividad(d){
   return{EF,fuente,diasRango,fechaCorte,entC,despC};
 }
 
+function diasDesdeHoyReal(fechaCreacion){
+  // Días transcurridos desde la creación del pedido hasta HOY (fecha real del sistema),
+  // sin importar qué rango de fechas se esté viendo en el reporte.
+  try{
+    const parseF=s=>{const str=String(s||'').trim();const p=str.split('-');if(p[0].length===2)return new Date(`${p[2]}-${p[1]}-${p[0]}`);return new Date(str);};
+    const hoy=new Date();hoy.setHours(0,0,0,0);
+    const fCre=parseF(fechaCreacion);fCre.setHours(0,0,0,0);
+    return Math.round((hoy-fCre)/(1000*60*60*24));
+  }catch{return 0;}
+}
+
 function renderProy(d){
   const {EF,fuente}=calcEfectividad(d);
+  // Pedidos en movimiento con +15 días desde su creación (contados desde HOY, la fecha real,
+  // no desde el rango del reporte) se consideran devolución segura — ya no se proyectan como entrega.
+  const UMBRAL_DIAS=15;
+  const movViejos=d.mov.filter(o=>diasDesdeHoyReal(o.fecha)>UMBRAL_DIAS);
+  const movRecientes=d.mov.filter(o=>diasDesdeHoyReal(o.fecha)<=UMBRAL_DIAS);
+  const devProyViejos=movViejos.length;
+  const entProyRecientes=Math.round(movRecientes.length*EF);
+  const devProyRecientes=movRecientes.length-entProyRecientes;
+  const devProyTotal=devProyViejos+devProyRecientes;
   let br=0,ne=0;
-  d.mov.forEach(o=>{const netoOrden=o.valor-o.flete-o.costoProv;br+=o.valor*EF;ne+=netoOrden*EF;});
-  const entProy=Math.round(d.numMov*EF);
+  movRecientes.forEach(o=>{const netoOrden=o.valor-o.flete-o.costoProv;br+=o.valor*EF;ne+=netoOrden*EF;});
+  const entProy=entProyRecientes;
   const pctEntActual=d.desp>0?(d.ent/d.desp*100):0;
   const pctAdicional=d.total>0?(entProy/d.total*100):0;
   const pctFinal=pctEntActual+pctAdicional;
 
   $('pbox').innerHTML=`
-    <div class="pt">📈 Proyección — ${d.numMov} pedidos en movimiento × ${pct(EF*100)} efectividad</div>
+    <div class="pt">📈 Proyección — ${d.numMov} pedidos en movimiento</div>
     <div class="pg2">
       <div class="pi"><div class="lb">En movimiento</div><div class="vl">${d.numMov}</div></div>
+      <div class="pi"><div class="lb">Recientes (≤${UMBRAL_DIAS}d desde hoy)</div><div class="vl">${movRecientes.length}</div></div>
+      <div class="pi"><div class="lb">+${UMBRAL_DIAS}d desde hoy → dev.</div><div class="vl" style="color:var(--red)">${movViejos.length}</div></div>
       <div class="pi"><div class="lb">Entregas proyectadas</div><div class="vl">${entProy}</div></div>
+      <div class="pi"><div class="lb">Devoluciones proyectadas</div><div class="vl" style="color:var(--red)">${devProyTotal}</div></div>
       <div class="pi"><div class="lb">Ingreso neto estimado</div><div class="vl" style="font-size:13px">${fmt(ne)}</div></div>
-      <div class="pi"><div class="lb">Efectividad usada</div><div class="vl" style="font-size:13px">${pct(EF*100)}</div></div>
     </div>
-    <div style="margin-top:12px;font-size:11px;color:rgba(255,107,53,0.7)">Fuente: ${fuente}</div>
+    <div style="margin-top:12px;font-size:11px;color:rgba(255,107,53,0.7)">EF: ${fuente} · Pedidos con más de ${UMBRAL_DIAS} días desde su creación (respecto a hoy) se proyectan directo como devolución</div>
   `;
 
   const kpiProy=$('kpi-proy');
@@ -961,7 +960,7 @@ function renderProy(d){
     </tr>`;
   }).join('')||'<tr><td colspan="8" class="empty">Sin pedidos en movimiento</td></tr>';
 
-  gP={br,ne,numMov:d.numMov,entProy,EF};
+  gP={br,ne,numMov:d.numMov,entProy,EF,devProyTotal};
   return gP;
 }
 
@@ -1074,7 +1073,7 @@ function renderRes(d,s,m,w){
   const _dev=d?.dev||0;
   const _total=d?.total||0;
   const _proyEnt=gP?.entProy||0;
-  const _devProy=Math.round(_numMov*(1-_EF));
+  const _devProy=gP?.devProyTotal!==undefined?gP.devProyTotal:Math.round(_numMov*(1-_EF));
   const _devTotal=_dev+_devProy;
   const _efProyPct=_total>0?((_ent+_proyEnt)/_total*100):0;
   const _devTotalPct=_total>0?(_devTotal/_total*100):0;
@@ -1107,7 +1106,7 @@ function renderRes(d,s,m,w){
     <div class="cr"><div class="cl2">Pedidos WA/orgánicos</div><div class="cv" style="color:var(--purple)">${w?.totWP||0} · ${pct(w?.pWP||0)} de Dropi</div></div>
   `;
   $('res-pub').innerHTML=`
-    <div class="cr"><div class="cl2">Gasto Meta</div><div class="cv">${fmt(m?.tG||0)}</div></div>
+    <div class="cr"><div class="cl2">Gasto Meta${m?.desdeArchivos?' <span style="font-size:9px;color:var(--green)">(auto)</span>':''}</div><div class="cv">${fmt(m?.tG||0)}</div></div>
     <div class="cr"><div class="cl2">Gasto TikTok</div><div class="cv">${fmt(m?.tt||0)}</div></div>
     <div class="cr"><div class="cl2">Total publicidad</div><div class="cv" style="color:var(--orange)">${fmt(tot)}</div></div>
     <div class="cr"><div class="cl2">CPA / pedido generado</div><div class="cv">${fmt(tot>0&&d?.total>0?tot/d.total:0)}</div></div>
@@ -1289,15 +1288,17 @@ function sortProductos(lista){
     const maxD=Math.max(...lista.map(x=>x.utilBruta||0),1);
     const maxT=Math.max(...lista.map(x=>x.total),1);
     if(prodSort==='best'){
-      // Score = wallet neta por entrega (si hay pauta) o bruta normalizada × efectividad
-      const maxWE=Math.max(...lista.map(x=>x.ent>0?((x.utilNeta||x.utilBruta)||0)/x.ent:0),1);
-      const waA=a.ent>0?((a.utilNeta||a.utilBruta)||0)/a.ent:0;
-      const waB=b.ent>0?((b.utilNeta||b.utilBruta)||0)/b.ent:0;
+      // Score = wallet neta por entrega (si hay pauta asignada) o bruta normalizada × efectividad
+      const valA=x=>x.utilNeta!==null?x.utilNeta:x.utilBruta;
+      const maxWE=Math.max(...lista.map(x=>x.ent>0?valA(x)/x.ent:0),1);
+      const waA=a.ent>0?valA(a)/a.ent:0;
+      const waB=b.ent>0?valA(b)/b.ent:0;
       const sa=(waA/maxWE*0.5)+(a.efDesp*0.5);
       const sb=(waB/maxWE*0.5)+(b.efDesp*0.5);
       v=sa-sb;
     } else if(prodSort==='neta'){
-      v=(a.utilNeta||a.utilBruta||0)-(b.utilNeta||b.utilBruta||0);
+      const valA=x=>x.utilNeta!==null?x.utilNeta:x.utilBruta;
+      v=valA(a)-valA(b);
     } else if(prodSort==='dinero'){
       v=(a.utilBruta||0)-(b.utilBruta||0);
     } else if(prodSort==='cpa'){
@@ -1344,8 +1345,8 @@ function renderProductos(productos){
         ${posHTML}
         <div class="rank-name">${p.nombre}</div>
         <div class="rank-stats">
-          <div class="rank-stat"><span class="lbl">Util. neta</span><span style="color:${p.utilNeta>0?'var(--green)':p.utilBruta>0?'var(--amber)':'var(--hint)'};font-size:10px">${p.utilNeta>0?fmt(p.utilNeta):p.utilBruta>0?fmt(p.utilBruta)+'*':'—'}</span></div>
-          <div class="rank-stat"><span class="lbl">Neta/entrega</span><span style="color:${(p.utilNetaPorEntrega||p.utilPorEntrega)>0?'var(--green)':'var(--hint)'};font-size:10px">${p.utilNetaPorEntrega>0?fmt(Math.round(p.utilNetaPorEntrega)):p.utilPorEntrega>0?fmt(Math.round(p.utilPorEntrega))+'*':'—'}</span></div>
+          <div class="rank-stat"><span class="lbl">Util. neta</span><span style="color:${p.utilNeta===null?'var(--hint)':p.utilNeta>0?'var(--green)':'var(--red)'};font-size:10px">${p.utilNeta===null?(p.utilBruta>0?fmt(p.utilBruta)+'*':'—'):fmt(p.utilNeta)}</span></div>
+          <div class="rank-stat"><span class="lbl">Neta/entrega</span><span style="color:${p.utilNetaPorEntrega===null?'var(--hint)':p.utilNetaPorEntrega>0?'var(--green)':'var(--red)'};font-size:10px">${p.utilNetaPorEntrega===null?(p.utilPorEntrega>0?fmt(Math.round(p.utilPorEntrega))+'*':'—'):fmt(Math.round(p.utilNetaPorEntrega))}</span></div>
           <div class="rank-stat"><span class="lbl">CPA/entregado</span><span style="color:${p.cpaEntregado>0?'var(--amber)':'var(--hint)'};font-size:10px">${p.cpaEntregado>0?fmt(p.cpaEntregado):'—'}</span></div>
           <div class="rank-stat"><span class="lbl">Entrega s/desp.</span><span style="color:${vD}">${efDespPct}%</span></div>
           <div class="rank-stat"><span class="lbl">Dev.</span><span style="color:var(--red)">${(p.pctDev*100).toFixed(1)}%</span></div>
@@ -1356,7 +1357,7 @@ function renderProductos(productos){
         <div class="rank-bar-row"><div class="rank-bar-label">Entrega sobre despachados</div><div class="rank-bar-track"><div class="rank-bar-fill" style="width:${barDesp}%;background:${cD}"></div></div><div class="rank-bar-val" style="color:${vD}">${efDespPct}%</div></div>
         <div class="rank-bar-row"><div class="rank-bar-label">Entrega general</div><div class="rank-bar-track"><div class="rank-bar-fill" style="width:${barTotal}%;background:${cT}"></div></div><div class="rank-bar-val" style="color:${vT}">${efTotalPct}%</div></div>
         <div class="rank-bar-row"><div class="rank-bar-label">Wallet bruta</div><div class="rank-bar-track"><div class="rank-bar-fill" style="width:${Math.min(((p.utilBruta||0)/Math.max(...gProductos.map(x=>x.utilBruta||0),1)*100),100).toFixed(1)}%;background:#22c55e"></div></div><div class="rank-bar-val" style="color:var(--green);font-size:10px">${p.utilBruta>0?fmt(p.utilBruta):'—'}</div></div>
-        ${p.utilNeta>0?`<div class="rank-bar-row"><div class="rank-bar-label">Util. neta (−pauta)</div><div class="rank-bar-track"><div class="rank-bar-fill" style="width:${Math.min(((p.utilNeta||0)/Math.max(...gProductos.map(x=>x.utilBruta||0),1)*100),100).toFixed(1)}%;background:#a855f7"></div></div><div class="rank-bar-val" style="color:var(--purple);font-size:10px">${fmt(p.utilNeta)}</div></div>`:''}
+        ${p.utilNeta!==null?`<div class="rank-bar-row"><div class="rank-bar-label">Util. neta (−pauta)</div><div class="rank-bar-track"><div class="rank-bar-fill" style="width:${Math.min((Math.max(p.utilNeta,0)/Math.max(...gProductos.map(x=>x.utilBruta||0),1)*100),100).toFixed(1)}%;background:${p.utilNeta>0?'#a855f7':'#ef4444'}"></div></div><div class="rank-bar-val" style="color:${p.utilNeta>0?'var(--purple)':'var(--red)'};font-size:10px">${fmt(p.utilNeta)}</div></div>`:''}
         ${p.pauta>0?`<div class="rank-bar-row"><div class="rank-bar-label">Pauta asignada</div><div class="rank-bar-track"><div class="rank-bar-fill" style="width:${Math.min(((p.pauta||0)/Math.max(...gProductos.map(x=>x.utilBruta||0),1)*100),100).toFixed(1)}%;background:#3b82f6"></div></div><div class="rank-bar-val" style="color:var(--blue);font-size:10px">${fmt(p.pauta)}</div></div>`:''}
       </div>
       <div style="font-size:10px;color:var(--hint);margin-top:4px">Clic para ver desglose completo →</div>
@@ -1444,13 +1445,16 @@ function abrirModal(nombre){
   const {EF,fuente}=calcEfectividad({desp,ent});
   const proyEnt=Math.round(mov*EF);
 
-  // Financiero real — flete efectivo (sin doble cobro en devoluciones)
+  // Financiero real — misma fórmula que calcProductosFinanciero (fletes de TODO pedido despachado)
   const ordsEnt=ords.filter(o=>EST_ENT.includes(o.estatus));
   const ordsDev=ords.filter(o=>o.estatus==='DEVOLUCION');
+  const ordsMovFin=ords.filter(o=>EST_MOV.includes(o.estatus));
   const ingresosBrutos=ordsEnt.reduce((s,o)=>s+o.valor,0);
   const fletesEnt=ordsEnt.reduce((s,o)=>s+fleteEfectivo(o),0);
+  const fletesDevReal=ordsDev.reduce((s,o)=>s+fleteEfectivo(o),0);
+  const fletesMovReal=ordsMovFin.reduce((s,o)=>s+o.flete,0);
   const costoProvEnt=ordsEnt.reduce((s,o)=>s+o.costoProv,0);
-  const walletBruta=ingresosBrutos-fletesEnt-costoProvEnt;
+  const walletBruta=ingresosBrutos-fletesEnt-fletesDevReal-fletesMovReal-costoProvEnt;
   const ticketPromedio=ent>0?ingresosBrutos/ent:0;
   const walletPorEntrega=ent>0?walletBruta/ent:0;
   const fleteProm=ent>0?fletesEnt/ent:0;
@@ -1537,7 +1541,7 @@ function abrirModal(nombre){
           <div class="mc"><div class="lb">Flete promedio</div><div class="vl" style="font-size:13px">${fmt(fleteProm)}</div><div class="sb">${(ratioFleteTicket*100).toFixed(1)}% del ticket</div></div>
         </div>
         <div style="margin-top:10px;margin-bottom:10px">
-          <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">CPA Promedio Meta Ads real (por pedido generado)</label>
+          <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">CPA Promedio Meta Ads real (por pedido generado) ${gastoPorNombreProducto(nombre)>0?`<span style="color:var(--green);font-size:9px">● Pauta asignada: ${fmt(gastoPorNombreProducto(nombre))}</span>`:''}</label>
           <input type="number" id="cpa-real" value="0" min="0" step="1000" oninput="actualizarFinReal('${nombre.replace(/'/g,"\\'")}',${walletBruta},${total},${desp},${ent})" style="width:100%;max-width:220px">
         </div>
         <div id="fin-real-detalle" style="margin-top:8px">
@@ -1644,6 +1648,14 @@ function abrirModal(nombre){
 }
 
 function actualizarFinReal(nombre,walletBruta,totalPedidos,desp,ent){
+  // Auto-completar CPA desde el paquete de pauta asignado a este producto (solo si el campo está vacío/0)
+  const pautaAuto=gastoPorNombreProducto(nombre);
+  const cpaRealInput=$('cpa-real');
+  if(pautaAuto>0&&cpaRealInput&&parseFloat(cpaRealInput.value||0)===0){
+    cpaRealInput.value=totalPedidos>0?Math.round(pautaAuto/totalPedidos):0;
+    cpaRealInput.style.borderColor='var(--green)';
+    cpaRealInput.title=`Auto: ${fmt(pautaAuto)} pauta asignada / ${totalPedidos} pedidos`;
+  }
   const cpaReal=parseFloat($('cpa-real')?.value||0);
   const elNeta=$('fin-real-neta');
   const elCpas=$('fin-real-cpas');
@@ -2131,8 +2143,10 @@ async function fetchAll(){
     renderTodoAnalisis(dropiData);
   }
 
-  // Meta Ads — solo gasto manual
-  const metaData={tG:ms||0,tot:(ms||0)+tt,tt,tI:0,tC:0,ctr:0,cpc:0};
+  // Meta Ads — suma automática de informes subidos; el campo manual queda como fallback
+  const gastoMetaArchivos=todasLasCampanas().reduce((s,c)=>s+c.gasto,0);
+  const gastoMetaFinal=gastoMetaArchivos>0?gastoMetaArchivos:(ms||0);
+  const metaData={tG:gastoMetaFinal,tot:gastoMetaFinal+tt,tt,tI:0,tC:0,ctr:0,cpc:0,desdeArchivos:gastoMetaArchivos>0};
 
   renderRes(dropiData,shopData,metaData,wpData);
 
@@ -2552,7 +2566,7 @@ function calcProductosFinanciero(allValidas){
     const total=p.total.size,ent=p.ent.size,dev=p.dev.size,can=p.can.size,desp=p.desp.size;
     const utilBruta=p.ingresosBrutos-p.fletesEnt-p.fletesDev-p.fletesMov-p.costoProvEnt;
     const pauta=gastoPorNombreProducto(nombre)||0;
-    const utilNeta=Math.max(utilBruta-pauta,0);
+    const utilNeta=pauta>0?(utilBruta-pauta):null; // null = sin pauta asignada; puede ser negativa si la pauta supera la wallet
     const cpaEntregado=ent>0&&pauta>0?pauta/ent:0;
     const cpaGenerado=total>0&&pauta>0?pauta/total:0;
     const cpaDesp=desp>0&&pauta>0?pauta/desp:0;
@@ -2565,7 +2579,7 @@ function calcProductosFinanciero(allValidas){
       utilBruta:Math.max(utilBruta,0),
       utilPorEntrega:ent>0?Math.max(utilBruta,0)/ent:0,
       pauta,utilNeta,
-      utilNetaPorEntrega:ent>0&&utilNeta>0?utilNeta/ent:0,
+      utilNetaPorEntrega:(ent>0&&utilNeta!==null)?utilNeta/ent:null,
       cpaEntregado,cpaGenerado,cpaDesp
     };
   });
@@ -2690,30 +2704,7 @@ function renderControlDiario(){
     $('control-notif').innerHTML='<div class="al ai">Sube también el CSV de Shopify para comparar pedidos generados vs confirmados en Dropi</div>';
   }
 
-  // ---- BLOQUE 1: CONFIRMACION DE PEDIDOS ----
-  // "Confirmado/gestionado" = cualquier pedido creado en el periodo cuyo estado actual
-  // NO sea Pendiente confirmacion, Cancelado o Rechazado (sin importar si esta en movimiento,
-  // entregado, en novedad, etc. -- solo importa que YA salio del limbo de "pendiente").
-  const ordsDropiPeriodo=allOrds.filter(o=>!o.dup&&enRango(o.fecha));
-  const noGestionados=['PENDIENTE CONFIRMACION','CANCELADO','RECHAZADO'];
-  const gestionados=ordsDropiPeriodo.filter(o=>!noGestionados.includes(o.estatus));
-  const pendConfirm=ordsDropiPeriodo.filter(o=>EST_PEND.includes(o.estatus));
-  const totalPeriodo=ordsDropiPeriodo.length;
-  const pctGestion=totalPeriodo>0?(gestionados.length/totalPeriodo*100):0;
-  const shopifyPeriodo=dShopi.length?procesarShopifyCompleto(dShopi).ords.filter(o=>enRango(o.fecha)&&!o.cancelado).length:null;
-
-  $('m-confirm').innerHTML=`
-    ${shopifyPeriodo!==null?`<div class="mc p"><div class="lb">Pedidos Shopify</div><div class="vl">${shopifyPeriodo}</div></div>`:''}
-    <div class="mc b"><div class="lb">Pedidos Dropi</div><div class="vl">${totalPeriodo}</div></div>
-    <div class="mc g"><div class="lb">Gestionados</div><div class="vl">${gestionados.length}</div><div class="sb">${pctGestion.toFixed(1)}% del período</div></div>
-    <div class="mc a"><div class="lb">Pendiente confirmación</div><div class="vl">${pendConfirm.length}</div></div>
-  `;
-
-  $('tb-confirm').innerHTML=pendConfirm.map(o=>{
-    return`<tr><td>${o.cliente}</td><td style="font-family:'JetBrains Mono',monospace">${o.tel}</td><td style="color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.productos}</td><td><span class="pill pa">Pend. confirmación</span></td></tr>`;
-  }).join('')||'<tr><td colspan="4" class="empty">Todos los pedidos del período están gestionados ✓</td></tr>';
-
-  // ---- BLOQUE 2: NOVEDADES PENDIENTES (sin resolver, fecha de novedad dentro o antes del rango) ----
+  // ---- BLOQUE 1: NOVEDADES PENDIENTES (sin resolver, fecha de novedad dentro o antes del rango) ----
   const fechaNovByID={},novTextByID={},transpByID={},guiaByID={},clienteByID={};
   dOrd.forEach(r=>{
     const id=String(r['ID']||'');
@@ -2761,19 +2752,29 @@ function renderControlDiario(){
     }
   }
 
-  // ---- BLOQUE 3: NOVEDADES SOLUCIONADAS EN EL RANGO ----
-  const fechaSolByID={},horaSolByID={},solTextByID={},usuarioSolByID={};
+  // ---- BLOQUE 2: EFECTIVIDAD DE SOLUCION DE NOVEDADES ----
+  const fechaSolByID={},horaSolByID={},solTextByID={},usuarioSolByID={},fueSolByID={};
   dOrd.forEach(r=>{
     const id=String(r['ID']||'');
     fechaSolByID[id]=r['FECHA DE SOLUCIÓN']||'';
     horaSolByID[id]=r['HORA DE SOLUCIÓN']||'';
     solTextByID[id]=r['SOLUCIÓN']||'';
     usuarioSolByID[id]=String(r['USUARIO QUE SOLUCIONA LA NOVEDAD']||'').split(' ').pop()||'—';
+    fueSolByID[id]=String(r['FUE SOLUCIONADA LA NOVEDAD']||'').trim().toUpperCase();
   });
 
-  const novedadesSolRango=allOrds.filter(o=>!o.dup).filter(o=>{
-    const fechaSol=parseFechaControl(fechaSolByID[o.id]||'');
-    return enRango(fechaSol);
+  // Soluciones que en realidad son devolucion directa (no una gestion real, ya estaban perdidas)
+  const SOLUCIONES_DEVOLUCION_DIRECTA=['DEVOLVER AL REMITENTE','DEVOLUCION TOTAL DEL DESPACHO','DEVOLUCIÓN TOTAL DEL DESPACHO'];
+  const esDevolucionDirecta=txt=>{
+    const t=String(txt||'').trim().toUpperCase();
+    return SOLUCIONES_DEVOLUCION_DIRECTA.some(s=>t===s||t.includes(s));
+  };
+
+  // Universo: todas las ordenes con campo NOVEDAD lleno cuya FECHA DE NOVEDAD cae en el periodo
+  const todasNovedades=allOrds.filter(o=>!o.dup).filter(o=>{
+    const nov=novTextByID[o.id]||'';
+    const fechaNov=parseFechaControl(fechaNovByID[o.id]||'');
+    return nov&&enRango(fechaNov);
   }).map(o=>({
     ...o,
     fechaSol:parseFechaControl(fechaSolByID[o.id]||''),
@@ -2781,36 +2782,45 @@ function renderControlDiario(){
     solTexto:solTextByID[o.id]||'',
     novTexto:novTextByID[o.id]||'',
     usuarioSol:usuarioSolByID[o.id]||'',
+    fueSolucionada:fueSolByID[o.id]==='SI'||fueSolByID[o.id]==='SÍ',
     guia:guiaByID[o.id]||o.guia,
     transp:transpByID[o.id]||o.transp,
     fechaNov:parseFechaControl(fechaNovByID[o.id]||'')
-  })).sort((a,b)=>(b.fechaSol+b.horaSol).localeCompare(a.fechaSol+a.horaSol));
+  }));
 
-  window._novSolData=novedadesSolRango;
+  const noSolucionadas=todasNovedades.filter(o=>!o.fueSolucionada);
+  const solucionadas=todasNovedades.filter(o=>o.fueSolucionada);
+  const devolucionDirecta=solucionadas.filter(o=>esDevolucionDirecta(o.solTexto));
+  const evaluables=solucionadas.filter(o=>!esDevolucionDirecta(o.solTexto));
+  const evalEntregados=evaluables.filter(o=>EST_ENT.includes(o.estatus));
+  const evalDevueltos=evaluables.filter(o=>o.estatus==='DEVOLUCION'||o.estatus==='RECHAZADO');
+  const pctEfectividad=evaluables.length>0?(evalEntregados.length/evaluables.length*100):0;
+
+  window._novSolData=solucionadas.sort((a,b)=>(b.fechaSol+b.horaSol).localeCompare(a.fechaSol+a.horaSol));
 
   $('m-novsol').innerHTML=`
-    <div class="mc g"><div class="lb">Novedades solucionadas en el período</div><div class="vl">${novedadesSolRango.length}</div></div>
+    <div class="mc b"><div class="lb">Total novedades del período</div><div class="vl">${todasNovedades.length}</div></div>
+    <div class="mc r"><div class="lb">Sin solucionar</div><div class="vl">${noSolucionadas.length}</div><div class="sb">${todasNovedades.length>0?(noSolucionadas.length/todasNovedades.length*100).toFixed(1):0}% del total</div></div>
+    <div class="mc o"><div class="lb">Solucionadas — devolución directa</div><div class="vl">${devolucionDirecta.length}</div><div class="sb">no cuenta como gestión real</div></div>
+    <div class="mc g" style="border:1px solid rgba(34,197,94,0.25)"><div class="lb">Efectividad de gestión</div><div class="vl">${pctEfectividad.toFixed(1)}%</div><div class="sb">${evalEntregados.length} entregados / ${evaluables.length} evaluables</div></div>
   `;
 
-  $('tb-novsol').innerHTML=novedadesSolRango.map((o,i)=>{
+  $('tb-novsol').innerHTML=window._novSolData.map((o,i)=>{
+    const esDD=esDevolucionDirecta(o.solTexto);
+    const resultado=esDD?'<span class="pill po">Dev. directa</span>':EST_ENT.includes(o.estatus)?'<span class="pill pg">Entregado</span>':(o.estatus==='DEVOLUCION'||o.estatus==='RECHAZADO')?'<span class="pill pr">Devuelto</span>':`<span class="pill pgr">${o.estatus}</span>`;
     return`<tr style="cursor:pointer" onclick="abrirDetalleNovedad(${i})">
       <td>${o.cliente}</td>
       <td style="font-family:'JetBrains Mono',monospace;font-size:11px">${o.guia||'—'}</td>
       <td style="color:var(--muted)">${o.fechaSol} ${o.horaSol||''}</td>
-      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)" title="${o.novTexto.replace(/"/g,'&quot;')}">${o.novTexto||'—'}</td>
-      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)">${o.solTexto}</td>
+      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)" title="${o.novTexto.replace(/"/g,'&quot;')}">${o.novTexto||'—'}</td>
+      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)">${o.solTexto}</td>
+      <td>${resultado}</td>
       <td style="color:var(--muted);font-size:11px">${o.usuarioSol}</td>
     </tr>`;
-  }).join('')||'<tr><td colspan="6" class="empty">Sin novedades solucionadas en este período</td></tr>';
+  }).join('')||'<tr><td colspan="7" class="empty">Sin novedades solucionadas en este período</td></tr>';
 }
 
-function toggleConfirmDetalle(){
-  const det=$('confirm-detalle');
-  const btn=$('btn-confirm-toggle');
-  const visible=det.style.display!=='none';
-  det.style.display=visible?'none':'block';
-  btn.textContent=visible?'Ver pedidos pendientes por confirmar':'Ocultar detalle';
-}
+// toggleConfirmDetalle eliminado — bloque de confirmación removido de Control Diario
 
 
 
@@ -3057,8 +3067,6 @@ function renderPauta(){
 
   // Render paquetes
   renderPaquetes();
-  // Render fusiones
-  renderFusiones();
 }
 
 function filtrarCampanas(){
@@ -3132,6 +3140,8 @@ function crearPaquete(){
 
   guardarPautaLS();
   renderPauta();
+  // Recalcular el ranking de Productos con la nueva pauta asignada
+  if(allOrds.length&&dProd.length) renderTodoAnalisis({allV:allOrds.filter(o=>!o.dup)});
   setS('ok', `Paquete "${nombre}" creado — ${fmt(gasto)}`);
 }
 
@@ -3139,6 +3149,7 @@ function eliminarPaquete(id){
   paquetes = paquetes.filter(p=>p.id!==id);
   guardarPautaLS();
   renderPauta();
+  if(allOrds.length&&dProd.length) renderTodoAnalisis({allV:allOrds.filter(o=>!o.dup)});
 }
 
 function renderPaquetes(){
