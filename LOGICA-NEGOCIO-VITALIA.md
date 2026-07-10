@@ -182,6 +182,24 @@ uno solo en todo el dashboard.
   aparece en ninguna orden de Shopify del período — se cuentan como canal adicional, y quedan
   incluidos en todos los KPIs generales del dashboard.
 
+### 10.1 Fecha real del pedido (función `shopifyFechaPorTelefono`)
+
+Un pedido siempre llega primero a Shopify y migra a Dropi después; a veces esa migración se
+demora (bug, proceso manual) y el `FECHA` que trae Dropi termina siendo de días después. Sin
+esto, un pedido real del 30 de un mes que migró a Dropi el 1 del mes siguiente se perdía del
+cierre del mes correcto.
+
+- Si se sube el CSV de Shopify, se construye un mapa **teléfono → fecha de creación en Shopify**
+  (`Created at`), usando **todas** las órdenes de Shopify sin filtrar por rango. Si un mismo
+  teléfono tiene varias órdenes, se toma la **más antigua**.
+- Al procesar Dropi (`procesarDropi`), si el teléfono del pedido tiene fecha en ese mapa, **esa
+  fecha reemplaza a `FECHA` de Dropi** para decidir si el pedido cae dentro del rango
+  seleccionado, y pasa a ser la fecha (`_iso`/`o.fecha`) que usa el resto del dashboard
+  (efectividad madura, proyección por días transcurridos, etc.) — o sea que corrige la fecha en
+  **todos** los cálculos, no solo el filtro de entrada.
+- Si no se sube Shopify, o el teléfono del pedido no tiene ninguna orden de Shopify, se usa
+  `FECHA` de Dropi tal cual, como siempre.
+
 ---
 
 ## 11. Duplicados y clasificación de pedidos

@@ -828,14 +828,36 @@ function recalc(){const f=filtOrd(allOrds.filter(o=>!o.dup));const d=calcM(f);d.
 
 function parseFecha(f){const s=String(f||'').slice(0,10);const p=s.split('-');if(p.length===3&&p[0].length===2)return`${p[2]}-${p[1]}-${p[0]}`;return s;}
 
+// Fecha real de creación por teléfono, tomada del CSV de Shopify (si se subió), sin filtrar por
+// rango — un pedido siempre llega primero a Shopify y migra a Dropi después (a veces con
+// retraso por bug o demora), así que la fecha de Shopify es la más confiable para decidir a
+// qué período pertenece el pedido. Si el mismo teléfono tiene varias órdenes en Shopify se toma
+// la más antigua, para no dejar por fuera un pedido real de un cierre de mes por una migración
+// tardía a Dropi.
+function shopifyFechaPorTelefono(){
+  if(!dShopi.length)return{};
+  const completo=procesarShopifyCompleto(dShopi);
+  const porTel={};
+  (completo?.ords||[]).forEach(o=>{
+    if(!o.tel||!o.fecha)return;
+    if(!porTel[o.tel]||o.fecha<porTel[o.tel])porTel[o.tel]=o.fecha;
+  });
+  return porTel;
+}
+
 function procesarDropi(df,dt){
   if(!dOrd.length)return null;
   const pById={};
   dProd.forEach(r=>{const id=String(r['ID']||'');if(!pById[id])pById[id]=[];pById[id].push(r);});
   const prio=e=>{if(EST_ENT.includes(e))return 7;if(EST_MOV.includes(e))return 6;if(EST_DEV.includes(e))return 5;if(EST_CAN.includes(e))return 4;if(EST_PEND.includes(e))return 3;return 1;};
+  const fechaShopifyPorTel=shopifyFechaPorTelefono();
   const byId={};
   dOrd.forEach(r=>{
-    const id=String(r['ID']||''),iso=parseFecha(r['FECHA']);
+    const id=String(r['ID']||'');
+    const isoDropi=parseFecha(r['FECHA']);
+    const telNorm=normTel(r['TELÉFONO']||'');
+    const isoShop=telNorm?fechaShopifyPorTel[telNorm]:undefined;
+    const iso=isoShop||isoDropi; // si Shopify trae fecha de creación para este teléfono, esa manda sobre la de Dropi
     if(df&&dt&&(iso<df||iso>dt))return;
     const dup=String(r['TAGS']||'').toLowerCase().includes('pedido duplicado');
     const est=String(r['ESTATUS']||'').toUpperCase().trim();
