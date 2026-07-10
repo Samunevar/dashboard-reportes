@@ -1272,12 +1272,27 @@ function diasHabiles(fechaStr){
 
 let guiasSinMov=[];
 
+// Fecha de referencia para "sin movimiento": si hay FECHA DE SOLUCIÓN de la novedad, esa es la
+// que manda (es la más confiable). Si no, se toma la más reciente entre FECHA DE ÚLTIMO
+// MOVIMIENTO y FECHA DE NOVEDAD (la novedad también cuenta como un movimiento real del pedido).
+function fechaRefSinMov(r){
+  const um=r['FECHA DE ÚLTIMO MOVIMIENTO']||r['FECHA']||'';
+  const nov=r['FECHA DE NOVEDAD']||'';
+  const sol=r['FECHA DE SOLUCIÓN']||'';
+  if(sol)return sol;
+  if(nov){
+    if(!um)return nov;
+    return parseFecha(nov)>=parseFecha(um)?nov:um;
+  }
+  return um;
+}
+
 function calcSinMovimiento(dropiData){
   if(!dropiData)return;
   const fechaByID={},guiaByID={};
   dOrd.forEach(r=>{
     const id=String(r['ID']||'');
-    fechaByID[id]=r['FECHA DE ÚLTIMO MOVIMIENTO']||r['FECHA']||'';
+    fechaByID[id]=fechaRefSinMov(r);
     guiaByID[id]=String(r['NÚMERO GUIA']||'');
   });
   const pendientes=dropiData.allV
