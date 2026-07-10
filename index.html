@@ -257,11 +257,6 @@ tr:hover td{background:rgba(255,255,255,.035);}
       <label><span class="tag tt">TikTok</span> Gasto TikTok del período</label>
       <input type="number" id="tiktok-spend" placeholder="0 COP" min="0" step="1000">
     </div>
-    <div class="fl">
-      <label><span class="tag tc">Claude IA</span> API Key <span class="tag to">Opcional</span></label>
-      <div class="ir"><input type="password" id="claude-key" placeholder="sk-ant-..." autocomplete="off"><button class="vb" onclick="tv('claude-key')">ver</button></div>
-      <div class="bnr">Sin Claude funciona todo excepto el análisis narrativo. <a href="https://console.anthropic.com" target="_blank">Obtener →</a></div>
-    </div>
   </div>
   <div class="dr">
     <div><label>Desde</label><input type="date" id="date-from"></div>
@@ -689,7 +684,6 @@ DEPT_CITIES.forEach(d=>{d.ciudades.forEach(c=>{const k=normDept(c);if(!(k in CIT
 const DEPT_DISPLAY={'Bogota':'Bogotá D.C.'};
 function deptDisplayName(n){return DEPT_DISPLAY[n]||n;}
 
-function tv(id){const e=$(id);e.type=e.type==='password'?'text':'password';}
 function setS(s,m){$('sdot').className='dot '+(s||'');$('stxt').textContent=m;}
 function st(i){document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',i===j));document.querySelectorAll('.tp').forEach((p,j)=>p.classList.toggle('active',i===j));}
 
@@ -739,9 +733,9 @@ function observarScrollReveal(){
 }
 function observarLogistica(){observarScrollReveal();}
 
-function saveKeys(){localStorage.setItem(LS,JSON.stringify({ck:$('claude-key').value,tt:$('tiktok-spend').value,ms:$('meta-spend').value}));setS('ok','Valores guardados');}
+function saveKeys(){localStorage.setItem(LS,JSON.stringify({tt:$('tiktok-spend').value,ms:$('meta-spend').value}));setS('ok','Valores guardados');}
 function loadKeys(){
-  cargarFusionesLS();const d=JSON.parse(localStorage.getItem(LS)||'{}');if(d.ck)$('claude-key').value=d.ck;if(d.tt)$('tiktok-spend').value=d.tt;if(d.ms)$('meta-spend').value=d.ms;cargarPautaLS();}
+  cargarFusionesLS();const d=JSON.parse(localStorage.getItem(LS)||'{}');if(d.tt)$('tiktok-spend').value=d.tt;if(d.ms)$('meta-spend').value=d.ms;cargarPautaLS();}
 function setDates(){const t=new Date(),f=new Date(t.getFullYear(),t.getMonth(),1);$('date-to').value=t.toISOString().slice(0,10);$('date-from').value=f.toISOString().slice(0,10);}
 
 function df(e,t){e.preventDefault();e.currentTarget.classList.remove('drag');hf(e.dataTransfer.files[0],t);}
@@ -1245,43 +1239,6 @@ function renderRes(d,s,m,w){
   setTimeout(()=>dibujarTortaFin(fin.utilBruta,m?.tG||0,m?.tt||0),200);
   $('hbadge').textContent=`${d?.total||0} guías · ${pct(d?.pE||0)} entrega`;
   $('hdate').textContent=`${$('date-from').value} → ${$('date-to').value}`;
-}
-
-// fetchMipler eliminado — usar CSV de Shopify
-
-async function genIA(ck,d,s,m,w,p,df,dt){
-  const el=$('ia-c');
-  if(!ck){el.innerHTML=`<div class="al aw">Sin API Key de Claude no se genera el análisis. <a href="https://console.anthropic.com" target="_blank" style="color:inherit">Obtener →</a></div>`;return;}
-  el.innerHTML='<div class="iabox" style="color:var(--hint);font-style:italic">Analizando datos...</div>';
-  const tot=m?.tot||0,totP=(s?.tot||0)+(w?.totWP||0);
-  const prompt=`Eres analista experto en e-commerce colombiano dropshipping contra entrega.
-Período: ${df} al ${dt}
-
-SHOPIFY — Pedidos: ${s?.tot||0} | Ingresos: ${fmt(s?.ing||0)}
-
-DROPI — Total guías: ${d?.total||0} | Despachados: ${d?.desp||0} | Entregados: ${d?.ent||0} (${pct(d?.pE||0)} sobre despachados) | En movimiento: ${d?.numMov||0} | Devoluciones: ${d?.dev||0} (${pct(d?.pD||0)} sobre despachados — LOGÍSTICA) | Cancelados: ${d?.can||0} (${pct(d?.pC||0)} del total) | Pendientes conf.: ${d?.pend||0} | Tasa despacho: ${pct(d?.tD||0)} | Duplicados excluidos: ${d?.dups||0}
-
-META ADS — Meta: ${fmt(m?.tG||0)} | TikTok: ${fmt(m?.tt||0)} | Total pub.: ${fmt(tot)} | CTR: ${pct(m?.ctr||0)} | CPC: ${fmt(m?.cpc||0)}
-
-WHATSAPP/ORGÁNICO — ${w?.totWP||0} pedidos (${pct(w?.pWP||0)} de Dropi)
-
-PROYECCIÓN — ${p?.numMov||0} en movimiento | Ingreso neto est.: ${fmt(p?.ne||0)} | Entregas est.: ${Math.round((p?.numMov||0)*0.85)}
-
-CPA/total: ${fmt(tot/Math.max(totP,1))} | CPA/guía: ${fmt(tot/Math.max(d?.desp||1,1))} | CPA/entregado: ${fmt(tot/Math.max(d?.ent||1,1))}
-
-Redacta reporte ejecutivo:
-📊 RESUMEN EJECUTIVO
-✅ PUNTOS POSITIVOS
-🚨 ALERTAS (logística vs cancelación — separados)
-🎯 3 ACCIONES CONCRETAS para mañana
-💬 CONCLUSIÓN en una frase`;
-  try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':ck,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
-    const data=await r.json();if(data.error)throw new Error(data.error.message);
-    const txt=data.content[0].text;
-    el.innerHTML=`<div class="iabox">${txt}</div>`;
-    $('ia-ar').style.display='flex';window._rpt=txt;
-  }catch(e){el.innerHTML=`<div class="al aw">Error Claude: ${e.message}</div>`;}
 }
 
 const FESTIVOS_CO = new Set([
@@ -2446,11 +2403,7 @@ function renderTodoAnalisis(dropiData){
   setupMapaInteraccion();
 }
 
-function expTxt(){if(!window._rpt)return;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([window._rpt],{type:'text/plain;charset=utf-8'}));a.download='reporte-'+$('date-to').value+'.txt';a.click();}
-function copIA(){if(!window._rpt)return;navigator.clipboard.writeText(window._rpt).then(()=>setS('ok','Copiado'));}
-
 async function fetchAll(){
-  const ck=$('claude-key').value.trim();
   const tt=parseFloat($('tiktok-spend').value||0),ms=parseFloat($('meta-spend').value||0),df=$('date-from').value,dt=$('date-to').value;
   if(!df||!dt){setS('err','Selecciona el rango de fechas');return;}
   $('btn-run').disabled=true;$('spin').style.display='block';
@@ -2495,8 +2448,6 @@ async function fetchAll(){
     // Sin Shopify — calcular adicionales como los que no tienen tel en Shopify vacío
     calcPedidosAdicionales(dropiData,[]);
   }
-
-  // await genIA(ck,dropiData,shopData,metaData,wpData,gP,df,dt);
 
   // Control diario
   renderControlDiario();
