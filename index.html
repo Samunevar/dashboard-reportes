@@ -726,10 +726,16 @@ function animarKPIs(selector,valor,duracion=800){
 
 const scrollObserver=new IntersectionObserver((entries)=>{
   entries.forEach((e,i)=>{if(e.isIntersecting){e.target.style.transitionDelay=(i%4*0.06)+'s';e.target.classList.add('visible');scrollObserver.unobserve(e.target);}});
-},{threshold:0.12});
+},{threshold:0,rootMargin:'0px 0px -40px 0px'});
 
 function observarScrollReveal(){
   document.querySelectorAll('.card:not(.scroll-reveal)').forEach(card=>{card.classList.add('scroll-reveal');scrollObserver.observe(card);});
+  // Salvaguarda: si por lo que sea el observer no revela alguna card (contenido muy largo,
+  // reflow raro, etc.) se fuerza a visible para que nunca quede data oculta.
+  clearTimeout(window._revealFailsafe);
+  window._revealFailsafe=setTimeout(()=>{
+    document.querySelectorAll('.scroll-reveal:not(.visible)').forEach(c=>{c.classList.add('visible');scrollObserver.unobserve(c);});
+  },2000);
 }
 function observarLogistica(){observarScrollReveal();}
 
