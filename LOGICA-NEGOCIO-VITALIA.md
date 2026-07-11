@@ -119,13 +119,14 @@ a partir de +2 días, usando el calendario especial de arriba.
   3. Si no, y `ESTATUS` es `DEVOLUCION`/`RECHAZADO` → **Devolución**.
   4. Cualquier otro caso (sigue en movimiento, novedad sin resolver, etc.) → **Tránsito**.
 
-### 6.4 Devueltos de Coordinadora sin ninguna novedad (auditoría)
-Guías cuya `TRANSPORTADORA` contiene el texto "COORDINADORA" (cualquier variante del nombre,
-comparación insensible a mayúsculas — cubre "COORDINADORA", "COORDINADORA M", etc.), con
-`ESTATUS = DEVOLUCION`, cuyo campo `NOVEDAD` **nunca tuvo ningún dato**, y cuya `FECHA` cae en
-el rango de Control Diario. Solo aplica a Coordinadora porque Interrápisimo no reporta
-novedades en el archivo de Dropi — no se audita ninguna otra transportadora con esta regla.
-Incluye botón para copiar las guías al portapapeles (mismo patrón que "Sin movimiento").
+### 6.4 Devueltos de Coordinadora/Envía sin ninguna novedad (auditoría)
+Guías cuya `TRANSPORTADORA` contiene el texto "COORDINADORA" o "ENVIA"/"ENVÍA" (cualquier
+variante del nombre, comparación insensible a mayúsculas — cubre "COORDINADORA",
+"COORDINADORA M", "ENVIA", etc.), con `ESTATUS = DEVOLUCION`, cuyo campo `NOVEDAD` **nunca
+tuvo ningún dato**, y cuya `FECHA` cae en el rango de Control Diario. Solo aplica a estas dos
+transportadoras porque Interrápisimo no reporta novedades en el archivo de Dropi — no se
+audita ninguna otra transportadora con esta regla. Incluye botón para copiar las guías al
+portapapeles (mismo patrón que "Sin movimiento").
 
 ---
 

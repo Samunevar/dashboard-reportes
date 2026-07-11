@@ -621,8 +621,8 @@ tr:hover td{background:rgba(255,255,255,.035);}
     </div>
 
     <div class="card">
-      <div class="ct">Devueltos de Coordinadora sin haber tenido novedad</div>
-      <div class="al aw" style="margin-bottom:12px">Guías de Coordinadora (cualquier variante del nombre) que terminaron en DEVOLUCIÓN sin que el campo NOVEDAD tuviera nunca ningún dato — se devolvieron sin que la transportadora reportara ninguna incidencia. Solo aplica a Coordinadora porque Interrápisimo no reporta novedades en el archivo.</div>
+      <div class="ct">Devueltos de Coordinadora / Envía sin haber tenido novedad</div>
+      <div class="al aw" style="margin-bottom:12px">Guías de Coordinadora o Envía (cualquier variante del nombre) que terminaron en DEVOLUCIÓN sin que el campo NOVEDAD tuviera nunca ningún dato — se devolvieron sin que la transportadora reportara ninguna incidencia. Solo aplica a estas dos porque Interrápisimo no reporta novedades en el archivo.</div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
         <span id="coord-sinnov-count" style="font-size:12px;color:var(--muted)"></span>
         <button class="bp" style="font-size:12px;padding:7px 16px;margin-left:auto" onclick="copiarGuiasCoordSinNovedad()">📋 Copiar guías</button>
@@ -3252,12 +3252,12 @@ function renderControlDiario(){
     return`<tr><td>${k==='DEVOLUCION'?'DEVOLUCIÓN':k}</td><td style="text-align:right">${n}</td><td style="text-align:right">${pct}%</td></tr>`;
   }).join('');
 
-  // ---- BLOQUE 4: DEVUELTOS DE COORDINADORA SIN NINGUNA NOVEDAD (auditoría) ----
-  // Cualquier variante del nombre que contenga "COORDINADORA" — Interrápisimo no reporta
-  // novedades en el archivo, así que no aplica para esta auditoría.
+  // ---- BLOQUE 4: DEVUELTOS DE COORDINADORA/ENVÍA SIN NINGUNA NOVEDAD (auditoría) ----
+  // Cualquier variante del nombre que contenga "COORDINADORA" o "ENVIA" — Interrápisimo no
+  // reporta novedades en el archivo, así que no aplica para esta auditoría.
   guiasCoordSinNovedad=allOrds.filter(o=>!o.dup
     &&o.estatus==='DEVOLUCION'
-    &&String(o.transp||'').toUpperCase().includes('COORDINADORA')
+    &&(t=>t.includes('COORDINADORA')||t.includes('ENVIA')||t.includes('ENVÍA'))(String(o.transp||'').toUpperCase())
     &&!(novTextByID[o.id]||'').trim()
     &&enRango(o.fecha)
   ).map(o=>({...o,guia:guiaByID[o.id]||o.guia}));
