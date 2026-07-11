@@ -607,6 +607,34 @@ tr:hover td{background:rgba(255,255,255,.035);}
         </table>
       </div>
     </div>
+
+    <div class="card">
+      <div class="ct">Estado final de las guías con novedad</div>
+      <div class="al ai" style="margin-bottom:12px">Solo el universo de guías que tuvieron novedad en el período de control — no el total general. Si la novedad ya quedó solucionada como "devolver al remitente" o "devolución total del despacho", se cuenta como Devolución aquí, aunque el estatus de Dropi todavía no lo refleje.</div>
+      <div class="mg" id="m-novestado"></div>
+      <div class="tw2" style="margin-top:10px">
+        <table>
+          <thead><tr><th>Estado final</th><th>Guías</th><th>%</th></tr></thead>
+          <tbody id="tb-novestado"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ct">Devueltos de Coordinadora sin haber tenido novedad</div>
+      <div class="al aw" style="margin-bottom:12px">Guías de Coordinadora (cualquier variante del nombre) que terminaron en DEVOLUCIÓN sin que el campo NOVEDAD tuviera nunca ningún dato — se devolvieron sin que la transportadora reportara ninguna incidencia. Solo aplica a Coordinadora porque Interrápisimo no reporta novedades en el archivo.</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+        <span id="coord-sinnov-count" style="font-size:12px;color:var(--muted)"></span>
+        <button class="bp" style="font-size:12px;padding:7px 16px;margin-left:auto" onclick="copiarGuiasCoordSinNovedad()">📋 Copiar guías</button>
+      </div>
+      <div id="coord-sinnov-copiadas" style="display:none;margin-bottom:10px" class="al ao">✓ Guías copiadas al portapapeles</div>
+      <div class="tw2">
+        <table>
+          <thead><tr><th>Cliente</th><th>Guía</th><th>Transportadora</th><th>Ciudad</th><th>Fecha</th></tr></thead>
+          <tbody id="tb-coord-sinnov"></tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
   <!-- TAB 8: PUBLICIDAD -->
@@ -2991,6 +3019,13 @@ function parseFechaControl(s){
 
 // ---- SELECTOR DE RANGO PARA CONTROL DIARIO ----
 let controlDesde='',controlHasta='';
+let guiasCoordSinNovedad=[];
+
+function copiarGuiasCoordSinNovedad(){
+  if(!guiasCoordSinNovedad.length)return;
+  const texto=guiasCoordSinNovedad.map(o=>o.guia).filter(Boolean).join('\n');
+  navigator.clipboard.writeText(texto).then(()=>{const el=$('coord-sinnov-copiadas');el.style.display='block';setTimeout(()=>el.style.display='none',3000);});
+}
 
 function fmtISO(d){return d.toISOString().slice(0,10);}
 
@@ -3185,6 +3220,58 @@ function renderControlDiario(){
       <td style="color:var(--muted);font-size:11px">${o.usuarioSol}</td>
     </tr>`;
   }).join('')||'<tr><td colspan="7" class="empty">Sin novedades solucionadas en este período</td></tr>';
+
+  // ---- BLOQUE 3: ESTADO FINAL DE LAS GUÍAS CON NOVEDAD (del período de control) ----
+  // Denominador = todas las guías despachadas del período (por FECHA de creación). Numerador =
+  // todasNovedades (BLOQUE 2, universo con NOVEDAD llena y FECHA DE NOVEDAD en el rango).
+  const despachadasPeriodo=allOrds.filter(o=>!o.dup
+    &&(EST_ENT.includes(o.estatus)||EST_DEV.includes(o.estatus)||EST_MOV.includes(o.estatus))
+    &&enRango(o.fecha)
+  ).length;
+
+  const catNovedad=o=>{
+    if(esDevolucionDirecta(o.solTexto))return'DEVOLUCION'; // ya solucionada como devolucion aunque el estatus de Dropi no lo refleje aun
+    if(EST_ENT.includes(o.estatus))return'ENTREGADO';
+    if(o.estatus==='DEVOLUCION'||o.estatus==='RECHAZADO')return'DEVOLUCION';
+    return'TRANSITO';
+  };
+  const conteoEstadoNov={ENTREGADO:0,DEVOLUCION:0,TRANSITO:0};
+  todasNovedades.forEach(o=>{conteoEstadoNov[catNovedad(o)]++;});
+  const pctEntraronNovedad=despachadasPeriodo>0?(todasNovedades.length/despachadasPeriodo*100):0;
+
+  $('m-novestado').innerHTML=`
+    <div class="mc g"><div class="lb">Guías despachadas</div><div class="vl">${despachadasPeriodo}</div></div>
+    <div class="mc a"><div class="lb">Guías en novedad</div><div class="vl">${todasNovedades.length}</div></div>
+    <div class="mc o"><div class="lb">% que entraron en novedad</div><div class="vl">${pctEntraronNovedad.toFixed(1)}%</div></div>
+  `;
+
+  const totalConNov=todasNovedades.length||1;
+  $('tb-novestado').innerHTML=['ENTREGADO','DEVOLUCION','TRANSITO'].map(k=>{
+    const n=conteoEstadoNov[k];
+    const pct=(n/totalConNov*100).toFixed(1);
+    return`<tr><td>${k==='DEVOLUCION'?'DEVOLUCIÓN':k}</td><td style="text-align:right">${n}</td><td style="text-align:right">${pct}%</td></tr>`;
+  }).join('');
+
+  // ---- BLOQUE 4: DEVUELTOS DE COORDINADORA SIN NINGUNA NOVEDAD (auditoría) ----
+  // Cualquier variante del nombre que contenga "COORDINADORA" — Interrápisimo no reporta
+  // novedades en el archivo, así que no aplica para esta auditoría.
+  guiasCoordSinNovedad=allOrds.filter(o=>!o.dup
+    &&o.estatus==='DEVOLUCION'
+    &&String(o.transp||'').toUpperCase().includes('COORDINADORA')
+    &&!(novTextByID[o.id]||'').trim()
+    &&enRango(o.fecha)
+  ).map(o=>({...o,guia:guiaByID[o.id]||o.guia}));
+
+  $('coord-sinnov-count').textContent=`${guiasCoordSinNovedad.length} guía${guiasCoordSinNovedad.length===1?'':'s'} devuelta${guiasCoordSinNovedad.length===1?'':'s'} sin novedad en el período`;
+  $('tb-coord-sinnov').innerHTML=guiasCoordSinNovedad.map(o=>`
+    <tr>
+      <td>${o.cliente}</td>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:11px">${o.guia||'—'}</td>
+      <td style="color:var(--muted)">${o.transp}</td>
+      <td style="color:var(--muted)">${o.ciudad}</td>
+      <td style="color:var(--muted)">${o.fecha}</td>
+    </tr>
+  `).join('')||'<tr><td colspan="5" class="empty">Sin guías devueltas sin novedad en este período ✓</td></tr>';
 }
 
 // toggleConfirmDetalle eliminado — bloque de confirmación removido de Control Diario

@@ -104,6 +104,29 @@ a partir de +2 días, usando el calendario especial de arriba.
   - **Evaluables** = solucionadas − devolución directa.
   - **% de efectividad de gestión** = `entregados (ESTATUS=ENTREGADO) / evaluables`.
 
+### 6.3 Estado final de las guías con novedad
+- **Guías despachadas** = pedidos entregados+devueltos+en movimiento (`EST_ENT`+`EST_DEV`+
+  `EST_MOV`) cuya `FECHA` (creación) cae en el rango de Control Diario. Es el denominador del
+  `% que entraron en novedad`.
+- **Guías en novedad** = el mismo universo del bloque 6.2 (`NOVEDAD` no vacío, `FECHA DE
+  NOVEDAD` en el rango) — los KPIs de este bloque son **solo sobre ese universo, no sobre el
+  total general**.
+- **Estado final** de cada guía en novedad (función `catNovedad`):
+  1. Si el campo `SOLUCIÓN` ya es una devolución directa (mismo criterio del bloque 6.2:
+     "DEVOLVER AL REMITENTE" / "Devolución total del despacho") → cuenta como **Devolución**,
+     así el `ESTATUS` de Dropi todavía no se haya actualizado.
+  2. Si no, y `ESTATUS = ENTREGADO` → **Entregado**.
+  3. Si no, y `ESTATUS` es `DEVOLUCION`/`RECHAZADO` → **Devolución**.
+  4. Cualquier otro caso (sigue en movimiento, novedad sin resolver, etc.) → **Tránsito**.
+
+### 6.4 Devueltos de Coordinadora sin ninguna novedad (auditoría)
+Guías cuya `TRANSPORTADORA` contiene el texto "COORDINADORA" (cualquier variante del nombre,
+comparación insensible a mayúsculas — cubre "COORDINADORA", "COORDINADORA M", etc.), con
+`ESTATUS = DEVOLUCION`, cuyo campo `NOVEDAD` **nunca tuvo ningún dato**, y cuya `FECHA` cae en
+el rango de Control Diario. Solo aplica a Coordinadora porque Interrápisimo no reporta
+novedades en el archivo de Dropi — no se audita ninguna otra transportadora con esta regla.
+Incluye botón para copiar las guías al portapapeles (mismo patrón que "Sin movimiento").
+
 ---
 
 ## 7. Productos — ranking, score y fusión
