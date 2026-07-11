@@ -1415,11 +1415,12 @@ function sortProductos(lista){
     const maxD=Math.max(...lista.map(x=>x.utilBruta||0),1);
     const maxT=Math.max(...lista.map(x=>x.total),1);
     if(prodSort==='best'){
-      // Score = wallet neta por entrega (si hay pauta asignada) o bruta normalizada × efectividad
-      const valA=x=>x.utilNeta!==null?x.utilNeta:x.utilBruta;
-      const maxWE=Math.max(...lista.map(x=>x.ent>0?valA(x)/x.ent:0),1);
-      const waA=a.ent>0?valA(a)/a.ent:0;
-      const waB=b.ent>0?valA(b)/b.ent:0;
+      // Score = utilidad neta por entrega (rentabilidad real por venta, no por volumen) × 50%
+      // + efectividad sobre despachados × 50%. Esta lista ya llega filtrada a productos CON
+      // pauta asignada (utilNeta!==null) — sin pauta no se puede saber la rentabilidad real.
+      const maxWE=Math.max(...lista.map(x=>x.ent>0?x.utilNeta/x.ent:0),1);
+      const waA=a.ent>0?a.utilNeta/a.ent:0;
+      const waB=b.ent>0?b.utilNeta/b.ent:0;
       const sa=(waA/maxWE*0.5)+(a.efDesp*0.5);
       const sb=(waB/maxWE*0.5)+(b.efDesp*0.5);
       v=sa-sb;
@@ -1449,24 +1450,34 @@ let gProductos=[];
 function renderProductos(productos){
   gProductos=productos;
   const minPedidos=30;
-  const productosFiltrados=productos.filter(p=>p.total>=minPedidos);
+  let productosFiltrados=productos.filter(p=>p.total>=minPedidos);
   const productosPocos=productos.filter(p=>p.total<minPedidos).sort((a,b)=>b.total-a.total);
   if(!productos.length){$('prod-ranking').innerHTML='<div class="empty">Sube el archivo de órdenes con productos para ver este apartado</div>';return;}
-  // Top 3: solo productos con 30+ pedidos ordenados por el criterio activo
-  // Del 4 en adelante: los demás de mayor a menor pedidos
+
+  // "Mejor producto" = más rentabilidad por venta, no más volumen. Sin pauta asignada no se
+  // puede calcular la utilidad neta real (utilNeta=null), así que esos productos se ignoran
+  // para este criterio en particular y se muestran aparte, priorizando los que sí tienen pauta.
+  let productosSinPauta=[];
+  if(prodSort==='best'){
+    productosSinPauta=productosFiltrados.filter(p=>p.utilNeta===null).sort((a,b)=>b.total-a.total);
+    productosFiltrados=productosFiltrados.filter(p=>p.utilNeta!==null);
+  }
+
+  // Top 3: solo productos con 30+ pedidos (y, si el criterio es "Mejor producto", con pauta
+  // asignada) ordenados por el criterio activo. Del 4 en adelante: los demás de mayor a menor
+  // cantidad de pedidos.
   const top3=sortProductos(productosFiltrados).slice(0,3);
-  const resto=prodSort==='best'
-    ? [...sortProductos(productosFiltrados).slice(3),...productosPocos]
-    : [...sortProductos(productosFiltrados).slice(3),...productosPocos];
+  const resto=[...sortProductos(productosFiltrados).slice(3),...productosSinPauta,...productosPocos];
   const sorted=[...top3,...resto];
   const mostrandoFiltrados=productosFiltrados.length>0;
   const medals=['🥇','🥈','🥉'];
   const notaPocos=mostrandoFiltrados&&productosPocos.length>0?`<div class="al ai" style="margin-top:12px;font-size:11px">📊 ${productosPocos.length} producto${productosPocos.length>1?'s':''} con menos de ${minPedidos} pedidos no aparece${productosPocos.length>1?'n':''} en el ranking (datos insuficientes para comparar): ${productosPocos.map(p=>p.nombre).join(', ')}</div>`:'';
+  const notaSinPauta=prodSort==='best'&&productosSinPauta.length>0?`<div class="al aw" style="margin-top:8px;font-size:11px">💸 ${productosSinPauta.length} producto${productosSinPauta.length>1?'s':''} sin pauta asignada no entra${productosSinPauta.length>1?'n':''} en "Mejor producto" — no se puede calcular su utilidad neta real, así que no compite${productosSinPauta.length>1?'n':''} con los que sí la tienen: ${productosSinPauta.map(p=>p.nombre).join(', ')}</div>`:'';
   $('prod-ranking').innerHTML=sorted.map((p,i)=>{
     const efDespPct=(p.efDesp*100).toFixed(1),efTotalPct=(p.efTotal*100).toFixed(1);
     const barDesp=Math.min(p.efDesp/0.85*100,100).toFixed(1),barTotal=Math.min(p.efTotal/0.85*100,100).toFixed(1);
     const cD=colorBar(p.efDesp),cT=colorBar(p.efTotal),vD=colorVal(p.efDesp),vT=colorVal(p.efTotal);
-    const posHTML=i<3?`<span class="rank-medal">${medals[i]}</span>`:`<span class="rank-pos">${i+1}</span>`;
+    const posHTML=i<top3.length?`<span class="rank-medal">${medals[i]}</span>`:`<span class="rank-pos">${i+1}</span>`;
     return`<div class="rank-item" style="cursor:pointer" onclick="abrirModal('${p.nombre.replace(/'/g,"\\'")}')">
       <div class="rank-header">
         ${posHTML}
@@ -1489,7 +1500,7 @@ function renderProductos(productos){
       </div>
       <div style="font-size:10px;color:var(--hint);margin-top:4px">Clic para ver desglose completo →</div>
     </div>`;
-  }).join('');;
+  }).join('')+notaSinPauta+notaPocos;
 }
 
 // ---- MODAL PRODUCTO (CON PROYECCIÓN MEJORADA + SIMULADOR) ----

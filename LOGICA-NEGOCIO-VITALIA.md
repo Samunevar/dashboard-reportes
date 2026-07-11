@@ -121,14 +121,23 @@ a partir de +2 días, usando el calendario especial de arriba.
     bruta con un asterisco como referencia, nunca se confunde con "cero").
 
 ### 7.1 Filtros del ranking
-`⭐ Mejor producto` (score = 50% utilidad neta-o-bruta por entrega, normalizada, + 50%
-efectividad sobre despachados), `🏆 Mayor utilidad neta`, `💰 Más wallet bruta`,
-`💸 Mejor CPA` (menor `cpaEntregado`), `📊 Mejor entrega`, `📉 Menor devolución`,
-`📦 Más pedidos`.
+`⭐ Mejor producto` (score = 50% utilidad neta por entrega, normalizada, + 50% efectividad sobre
+despachados — **rentabilidad real por venta, no por volumen**: un producto con pocas ventas pero
+muy rentable por entrega le gana a uno con muchas ventas pero poco rentable por entrega),
+`🏆 Mayor utilidad neta`, `💰 Más wallet bruta`, `💸 Mejor CPA` (menor `cpaEntregado`),
+`📊 Mejor entrega`, `📉 Menor devolución`, `📦 Más pedidos`.
 
 **Regla del podio:** solo productos con **≥30 pedidos** pueden entrar al top 3. Del puesto 4
 en adelante se listan TODOS los productos (incluidos los de menos de 30 pedidos), ordenados
 de mayor a menor cantidad de pedidos.
+
+**Exclusivo de `⭐ Mejor producto`:** los productos **sin pauta asignada** (`utilNeta === null`)
+quedan **fuera de la competencia** de este criterio en particular — como no se puede calcular su
+utilidad neta real, no se puede saber si de verdad son rentables, así que no compiten por el
+podio ni entran en el ordenamiento por score. Se listan aparte, después de los que sí tienen
+pauta, con una nota explicando por qué no entraron. (En los demás filtros —`🏆 Mayor utilidad
+neta`, etc.— estos productos sí se incluyen usando la utilidad bruta como referencia con
+asterisco, como antes.)
 
 ### 7.2 Fusión de productos
 Se guarda en `localStorage` bajo la clave `vitalia_fusiones_v1`, como una lista de
