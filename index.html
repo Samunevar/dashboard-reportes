@@ -2902,21 +2902,30 @@ function calcProductosFinanciero(allValidas){
     const p=byProd[prod];
     p.total.add(id);
 
+    // Dropi trae una fila de dProd por producto dentro del pedido — si el mismo pedido tiene
+    // este producto repetido en más de una fila (línea duplicada), los valores de ord (que son
+    // del PEDIDO completo, no de la línea) no se deben sumar dos veces. Se suman solo la
+    // primera vez que este pedido aporta a este producto.
     if(EST_ENT.includes(ord.estatus)){
+      const yaContado=p.ent.has(id);
       p.ent.add(id);p.desp.add(id);
-      p.ingresosBrutos+=ord.valor;
-      p.fletesEnt+=fleteEfectivo(ord);
-      p.costoProvEnt+=ord.costoProv;
+      if(!yaContado){
+        p.ingresosBrutos+=ord.valor;
+        p.fletesEnt+=fleteEfectivo(ord);
+        p.costoProvEnt+=ord.costoProv;
+      }
     } else if(EST_DEV.includes(ord.estatus)){
+      const yaContado=p.dev.has(id);
       p.dev.add(id);p.desp.add(id);
-      if(ord.estatus==='DEVOLUCION')p.fletesDev+=fleteEfectivo(ord); // flete real de devolución
+      if(!yaContado&&ord.estatus==='DEVOLUCION')p.fletesDev+=fleteEfectivo(ord); // flete real de devolución
     } else if(EST_CAN.includes(ord.estatus)){
       p.can.add(id);
     } else if(EST_PEND.includes(ord.estatus)){
       p.pend.add(id);
     } else if(EST_MOV.includes(ord.estatus)){
+      const yaContado=p.mov.has(id);
       p.mov.add(id);p.desp.add(id);
-      p.fletesMov+=ord.flete; // flete comprometido en movimiento
+      if(!yaContado)p.fletesMov+=ord.flete; // flete comprometido en movimiento
     }
   });
 

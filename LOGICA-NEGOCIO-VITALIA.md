@@ -111,6 +111,14 @@ a partir de +2 días, usando el calendario especial de arriba.
 `calcProductosFinanciero` agrupa las órdenes por nombre de producto (usando el nombre ya
 **resuelto** por fusión si aplica, ver 7.2).
 
+- **Deduplicación por pedido:** `dProd` trae una fila por producto dentro del pedido. Si el
+  mismo pedido tiene el mismo producto repetido en más de una fila (línea duplicada), los
+  valores del pedido (`ord.valor`, flete, costo proveedor — que son del pedido completo, no de
+  la línea) se suman **solo la primera vez** que ese pedido aporta a ese producto, para no
+  inflar `ingresosBrutos`/`fletesEnt`/`costoProvEnt`/`fletesDev`/`fletesMov`. El modal de
+  detalle de producto (`abrirModal`) ya hacía esto correctamente al iterar por pedido en vez de
+  por fila de `dProd`; el ranking no lo hacía y por eso podía mostrar una wallet bruta distinta
+  (más alta) para el mismo producto que el modal.
 - `utilBruta` = fórmula de la sección 2, aplicada por producto.
 - `pauta` = `gastoPorNombreProducto(nombre)` → suma del gasto de todos los paquetes de
   campañas de Meta Ads asignados exactamente a ese nombre de producto.
