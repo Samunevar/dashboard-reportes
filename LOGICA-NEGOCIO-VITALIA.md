@@ -154,19 +154,26 @@ uno solo en todo el dashboard.
 
 ---
 
-## 9. Publicidad (Meta Ads) — antes llamado "Pauta Meta"
+## 9. Publicidad (Meta Ads + TikTok Ads) — antes llamado "Pauta Meta"
 
-- Se suben uno o más informes `.xlsx` exportados de Meta Ads. El parser (`parsearInformeMeta`)
-  extrae únicamente filas de campaña individuales, **ignorando** las filas de subtotal `All`
-  y los totales de cuenta.
-- **Paquetes**: el usuario selecciona campañas (de uno o varios informes) y las asigna a UN
-  producto (por su nombre ya resuelto/fusionado). El gasto total del paquete es la suma del
-  gasto real de esas campañas.
+- Se suben uno o más informes `.xlsx` de **Meta Ads** (parser `parsearInformeMeta`) y/o de
+  **TikTok Ads** (parser `parsearInformeTiktok`), cada uno en su propia zona de carga y su
+  propia card de "Campañas cargadas" (`dMetaFiles` / `dTiktokFiles`). Ambos parsers ignoran
+  las filas de subtotal (`All`/`Total`) y los totales de cuenta; el de TikTok además prueba
+  varias frases de encabezado posibles (español/inglés) porque el export de TikTok Ads Manager
+  no usa el mismo texto que el de Meta.
+- **Paquetes**: el usuario selecciona campañas — de Meta, de TikTok, o de **ambas mezcladas**
+  (`todasLasCampanas()` combina los dos pools) — y las asigna a UN producto (por su nombre ya
+  resuelto/fusionado). El gasto total del paquete es la suma del gasto real de esas campañas,
+  sin importar la plataforma de origen.
 - `gastoPorNombreProducto(nombre)` = suma del gasto de todos los paquetes cuyo `prodId`
-  coincide exactamente con ese nombre de producto.
-- El gasto total de todos los informes subidos sube automáticamente al campo "Gasto Meta" del
-  resumen general (`gastoMetaArchivos`), **reemplazando** el campo manual cuando hay archivos
-  cargados (el campo manual queda como fallback si no se sube ningún informe).
+  coincide exactamente con ese nombre de producto (ya incluye Meta + TikTok si el paquete los
+  mezcla).
+- El gasto total de los informes de Meta sube automáticamente al campo "Gasto Meta" del resumen
+  general (`gastoMetaArchivos`/`todasLasCampanasMeta`), y el de TikTok al campo "Gasto TikTok"
+  (`todasLasCampanasTiktok`) — cada uno **reemplaza** su propio campo manual cuando hay archivos
+  cargados de esa plataforma (el campo manual queda como fallback si no se sube ningún informe
+  de esa plataforma en particular).
 - Persistencia: `localStorage` bajo `vitalia_pauta_v1` (paquetes) — más exportar/importar como
   archivo `.json` para respaldo o mover entre dispositivos.
 

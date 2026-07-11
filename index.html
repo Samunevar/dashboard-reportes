@@ -299,6 +299,18 @@ tr:hover td{background:rgba(255,255,255,.035);}
       <div id="ok-meta-files" style="margin-top:6px"></div>
       <div id="meta-files-count" style="font-size:11px;color:var(--muted);margin-top:4px"></div>
     </div>
+    <div>
+      <span class="sl">TikTok Ads — Informes de campañas <span class="tag tt" style="margin-left:4px">XLSX</span> <span class="tag to" style="margin-left:2px">Múltiples</span></span>
+      <div id="ua-tiktok-files">
+        <div class="uz" onclick="document.getElementById('uf-tiktok').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="df(event,'tiktok')">
+          <p style="font-size:20px;margin-bottom:5px">📊</p>
+          <p><strong>Clic o arrastra</strong> — informe de campañas xxx.xlsx</p>
+          <input type="file" id="uf-tiktok" accept=".xlsx,.xls" multiple onchange="hfTiktok(this.files)">
+        </div>
+      </div>
+      <div id="ok-tiktok-files" style="margin-top:6px"></div>
+      <div id="tiktok-files-count" style="font-size:11px;color:var(--muted);margin-top:4px"></div>
+    </div>
   </div>
 </div>
 
@@ -600,7 +612,7 @@ tr:hover td{background:rgba(255,255,255,.035);}
   <!-- TAB 8: PUBLICIDAD -->
   <div class="tp" id="tp8">
     <div class="card">
-      <div class="ct">Campañas cargadas</div>
+      <div class="ct">Campañas cargadas <span class="tag tm" style="margin-left:4px">Meta Ads</span></div>
       <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
         <span id="meta-camp-count" style="font-size:12px;color:var(--muted)">Sin campañas cargadas</span>
         <span id="meta-gasto-total" style="font-size:12px;font-weight:700;color:var(--amber)"></span>
@@ -614,8 +626,17 @@ tr:hover td{background:rgba(255,255,255,.035);}
     </div>
 
     <div class="card">
+      <div class="ct">Campañas cargadas <span class="tag tt" style="margin-left:4px">TikTok Ads</span></div>
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+        <span id="tiktok-camp-count" style="font-size:12px;color:var(--muted)">Sin campañas cargadas</span>
+        <span id="tiktok-gasto-total" style="font-size:12px;font-weight:700;color:var(--amber)"></span>
+      </div>
+      <div id="tiktok-campanas-lista" style="max-height:300px;overflow-y:auto;margin-bottom:16px"></div>
+    </div>
+
+    <div class="card">
       <div class="ct">Paquetes de campañas → Producto</div>
-      <div class="al ai" style="margin-bottom:14px">Agrupa campañas de distintos informes bajo un mismo producto. El gasto total del paquete se usará para calcular CPA real y utilidad neta por producto.</div>
+      <div class="al ai" style="margin-bottom:14px">Agrupa campañas de Meta Ads y/o TikTok Ads bajo un mismo producto — un paquete puede mezclar campañas de ambas plataformas. El gasto total del paquete se usará para calcular CPA real y utilidad neta por producto.</div>
 
       <!-- Buscador de campañas para paquetizar -->
       <div style="margin-bottom:14px">
@@ -1235,7 +1256,7 @@ function renderRes(d,s,m,w){
   `;
   $('res-pub').innerHTML=`
     <div class="cr"><div class="cl2">Gasto Meta${m?.desdeArchivos?' <span style="font-size:9px;color:var(--green)">(auto)</span>':''}</div><div class="cv">${fmt(m?.tG||0)}</div></div>
-    <div class="cr"><div class="cl2">Gasto TikTok</div><div class="cv">${fmt(m?.tt||0)}</div></div>
+    <div class="cr"><div class="cl2">Gasto TikTok${m?.ttDesdeArchivos?' <span style="font-size:9px;color:var(--green)">(auto)</span>':''}</div><div class="cv">${fmt(m?.tt||0)}</div></div>
     <div class="cr"><div class="cl2">Total publicidad</div><div class="cv" style="color:var(--orange)">${fmt(tot)}</div></div>
     <div class="cr"><div class="cl2">CPA / pedido generado</div><div class="cv">${fmt(tot>0&&d?.total>0?tot/d.total:0)}</div></div>
     <div class="cr"><div class="cl2">CPA / guía despachada</div><div class="cv">${fmt(cpaG)}</div></div>
@@ -2469,10 +2490,12 @@ async function fetchAll(){
     renderTodoAnalisis(dropiData);
   }
 
-  // Meta Ads — suma automática de informes subidos; el campo manual queda como fallback
-  const gastoMetaArchivos=todasLasCampanas().reduce((s,c)=>s+c.gasto,0);
+  // Meta Ads y TikTok Ads — suma automática de informes subidos; el campo manual queda como fallback
+  const gastoMetaArchivos=todasLasCampanasMeta().reduce((s,c)=>s+c.gasto,0);
   const gastoMetaFinal=gastoMetaArchivos>0?gastoMetaArchivos:(ms||0);
-  const metaData={tG:gastoMetaFinal,tot:gastoMetaFinal+tt,tt,tI:0,tC:0,ctr:0,cpc:0,desdeArchivos:gastoMetaArchivos>0};
+  const gastoTiktokArchivos=todasLasCampanasTiktok().reduce((s,c)=>s+c.gasto,0);
+  const gastoTiktokFinal=gastoTiktokArchivos>0?gastoTiktokArchivos:(tt||0);
+  const metaData={tG:gastoMetaFinal,tot:gastoMetaFinal+gastoTiktokFinal,tt:gastoTiktokFinal,tI:0,tC:0,ctr:0,cpc:0,desdeArchivos:gastoMetaArchivos>0,ttDesdeArchivos:gastoTiktokArchivos>0};
 
   renderRes(dropiData,shopData,metaData,wpData);
 
@@ -2489,8 +2512,8 @@ async function fetchAll(){
   // Control diario
   renderControlDiario();
 
-  // Pauta Meta — actualizar selector de productos y paquetes con los datos cargados
-  if(dMetaFiles.length>0||paquetes.length>0) renderPauta();
+  // Pauta Meta/TikTok — actualizar selector de productos y paquetes con los datos cargados
+  if(dMetaFiles.length>0||dTiktokFiles.length>0||paquetes.length>0) renderPauta();
 
   $('results').style.display='block';
   $('btn-run').disabled=false;$('spin').style.display='none';
@@ -3186,7 +3209,8 @@ function cerrarDetalleNovedad(){$('novedad-modal').style.display='none';}
 // Persistencia en localStorage con clave dedicada
 const LS_PAUTA = 'vitalia_pauta_v1';
 
-let dMetaFiles = [];      // array de {filename, campanas:[{nombre, gasto, cuenta}]}
+let dMetaFiles = [];      // array de {filename, campanas:[{nombre, gasto, cuenta, plataforma}]}
+let dTiktokFiles = [];    // igual que dMetaFiles, pero para informes de TikTok Ads
 let campSeleccion = new Set(); // campañas seleccionadas para paquetizar
 let paquetes = [];        // [{id, nombre, prodId, campanas:[nombre], gasto}]
 let campanasFiltradas = []; // resultado del buscador
@@ -3249,7 +3273,7 @@ function hfMeta(files){
         if(procesados===pendientes.length){
           renderArchivosMeta();
           renderPauta();
-          setS('ok', `${dMetaFiles.length} informe(s) Meta cargados — ${todasLasCampanas().length} campañas`);
+          setS('ok', `${dMetaFiles.length} informe(s) Meta cargados — ${todasLasCampanasMeta().length} campañas`);
         }
       } catch(err){ setS('err','Error al leer '+file.name+': '+err.message); }
     };
@@ -3301,22 +3325,109 @@ function parsearInformeMeta(rows, filename){
     if(cuenta) cuentaActual = cuenta;
 
     if(campana && gasto>0){
-      campanas.push({nombre:campana, gasto, cuenta:cuentaActual, archivo:filename});
+      campanas.push({nombre:campana, gasto, cuenta:cuentaActual, archivo:filename, plataforma:'meta'});
     }
   }
   return campanas;
 }
 
-function todasLasCampanas(){
+// ---- CARGA DE ARCHIVOS TIKTOK ----
+function hfTiktok(files){
+  if(!files||!files.length) return;
+  const pendientes = Array.from(files);
+  let procesados = 0;
+  pendientes.forEach(file => {
+    const r = new FileReader();
+    r.onload = function(e){
+      try {
+        const wb = XLSX.read(e.target.result, {type:'binary'});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+        const campanas = parsearInformeTiktok(rows, file.name);
+        const idx = dTiktokFiles.findIndex(f=>f.filename===file.name);
+        if(idx>=0) dTiktokFiles[idx] = {filename:file.name, campanas};
+        else dTiktokFiles.push({filename:file.name, campanas});
+        procesados++;
+        if(procesados===pendientes.length){
+          renderArchivosTiktok();
+          renderPauta();
+          setS('ok', `${dTiktokFiles.length} informe(s) TikTok cargados — ${todasLasCampanasTiktok().length} campañas`);
+        }
+      } catch(err){ setS('err','Error al leer '+file.name+': '+err.message); }
+    };
+    r.readAsBinaryString(file);
+  });
+}
+
+// Igual de tolerante que el parser de Meta, pero probando varias frases posibles de
+// encabezado porque el export de TikTok Ads Manager no usa exactamente el mismo texto que Meta.
+function parsearInformeTiktok(rows, filename){
+  const posiblesCuenta=['nombre de la cuenta','nombre del anunciante','account name','advertiser name'];
+  const posiblesCampana=['nombre de la campa','campaign name'];
+  const posiblesGasto=['costo total','costo (cop)','costo','cost','gasto','total cost'];
+  let headerRow=-1, cuentaCol=-1, campanaCol=-1, gastoCol=-1;
+  for(let i=0;i<rows.length;i++){
+    const r = rows[i].map(c=>String(c||'').trim().toLowerCase());
+    const cai = r.findIndex(c=>posiblesCampana.some(p=>c.includes(p)));
+    const gi = r.findIndex(c=>posiblesGasto.some(p=>c.includes(p)));
+    if(cai>=0 && gi>=0){
+      const ci = r.findIndex(c=>posiblesCuenta.some(p=>c.includes(p)));
+      headerRow=i; cuentaCol=ci; campanaCol=cai; gastoCol=gi;
+      break;
+    }
+  }
+  if(headerRow<0) return [];
+
+  const campanas = [];
+  let cuentaActual = '';
+  for(let i=headerRow+1; i<rows.length; i++){
+    const r = rows[i];
+    const cuenta = cuentaCol>=0 ? String(r[cuentaCol]||'').trim() : '';
+    const campana = String(r[campanaCol]||'').trim();
+    const gastoRaw = String(r[gastoCol]||'').replace(/[^0-9.]/g,'');
+    const gasto = parseFloat(gastoRaw)||0;
+
+    if(!campana && !cuenta) continue;
+
+    if(campana==='' && cuenta){
+      cuentaActual = cuenta;
+      continue;
+    }
+    if(/^(all|total)$/i.test(campana)){
+      if(cuenta) cuentaActual = cuenta;
+      continue;
+    }
+
+    if(!cuenta && !campana) continue;
+    if(cuenta) cuentaActual = cuenta;
+
+    if(campana && gasto>0){
+      campanas.push({nombre:campana, gasto, cuenta:cuentaActual, archivo:filename, plataforma:'tiktok'});
+    }
+  }
+  return campanas;
+}
+
+function todasLasCampanasMeta(){
   const todas = [];
   dMetaFiles.forEach(f => f.campanas.forEach(c => todas.push(c)));
   return todas;
 }
+function todasLasCampanasTiktok(){
+  const todas = [];
+  dTiktokFiles.forEach(f => f.campanas.forEach(c => todas.push(c)));
+  return todas;
+}
+// Combinado — lo usa el buscador de campañas y los paquetes, que pueden mezclar plataformas
+function todasLasCampanas(){
+  return [...todasLasCampanasMeta(), ...todasLasCampanasTiktok()];
+}
 
 function gastoTotalMeta(){
-  // Suma de campañas no asignadas a ningún paquete + paquetes
-  // En realidad sumamos todas las campañas únicas
-  return todasLasCampanas().reduce((s,c)=>s+c.gasto,0);
+  return todasLasCampanasMeta().reduce((s,c)=>s+c.gasto,0);
+}
+function gastoTotalTiktok(){
+  return todasLasCampanasTiktok().reduce((s,c)=>s+c.gasto,0);
 }
 
 function renderArchivosMeta(){
@@ -3329,7 +3440,7 @@ function renderArchivosMeta(){
       <button onclick="eliminarArchivoMeta('${f.filename.replace(/'/g,"\\'")}')" style="margin-left:auto;background:none;border:none;cursor:pointer;color:var(--muted);font-size:13px">×</button>
     </div>
   `).join('');
-  count.textContent = dMetaFiles.length>0 ? `${dMetaFiles.length} archivo(s) · ${todasLasCampanas().length} campañas · Total: ${fmt(gastoTotalMeta())}` : '';
+  count.textContent = dMetaFiles.length>0 ? `${dMetaFiles.length} archivo(s) · ${todasLasCampanasMeta().length} campañas · Total: ${fmt(gastoTotalMeta())}` : '';
 }
 
 function eliminarArchivoMeta(filename){
@@ -3338,42 +3449,68 @@ function eliminarArchivoMeta(filename){
   renderPauta();
 }
 
+function renderArchivosTiktok(){
+  const cont = $('ok-tiktok-files');
+  const count = $('tiktok-files-count');
+  if(!cont||!count) return;
+  cont.innerHTML = dTiktokFiles.map(f=>`
+    <div class="fok" style="margin-bottom:4px">
+      📊 <strong>${f.filename}</strong> — ${f.campanas.length} campañas · ${fmt(f.campanas.reduce((s,c)=>s+c.gasto,0))}
+      <button onclick="eliminarArchivoTiktok('${f.filename.replace(/'/g,"\\'")}')" style="margin-left:auto;background:none;border:none;cursor:pointer;color:var(--muted);font-size:13px">×</button>
+    </div>
+  `).join('');
+  count.textContent = dTiktokFiles.length>0 ? `${dTiktokFiles.length} archivo(s) · ${todasLasCampanasTiktok().length} campañas · Total: ${fmt(gastoTotalTiktok())}` : '';
+}
+
+function eliminarArchivoTiktok(filename){
+  dTiktokFiles = dTiktokFiles.filter(f=>f.filename!==filename);
+  renderArchivosTiktok();
+  renderPauta();
+}
+
 // ---- RENDER PRINCIPAL DE PAUTA ----
+function renderListaCampanasPorCuenta(elId,campanas,vacioMsg){
+  const listEl = $(elId);
+  if(!listEl)return;
+  if(!campanas.length){
+    listEl.innerHTML=`<div class="empty">${vacioMsg}</div>`;
+    return;
+  }
+  const porCuenta = {};
+  campanas.forEach(c=>{ if(!porCuenta[c.cuenta])porCuenta[c.cuenta]=[]; porCuenta[c.cuenta].push(c); });
+  listEl.innerHTML = Object.entries(porCuenta).map(([cuenta,camps])=>`
+    <div style="margin-bottom:10px">
+      <div style="font-size:10px;font-weight:700;color:var(--orange);letter-spacing:.07em;text-transform:uppercase;margin-bottom:4px">${cuenta||'Sin cuenta'} — ${fmt(camps.reduce((s,c)=>s+c.gasto,0))}</div>
+      ${camps.map(c=>{
+        const enPaquete=paquetes.find(p=>p.campanas.includes(c.nombre));
+        return`<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--border);font-size:12px">
+          <div style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.nombre}</div>
+          <div style="color:var(--amber);font-family:'JetBrains Mono',monospace;flex-shrink:0">${fmt(c.gasto)}</div>
+          ${enPaquete?`<span style="font-size:10px;padding:2px 6px;border-radius:4px;background:var(--gd);color:var(--green)">${enPaquete.nombre}</span>`:'<span style="font-size:10px;color:var(--hint)">sin asignar</span>'}
+        </div>`;
+      }).join('')}
+    </div>
+  `).join('');
+}
+
 function renderPauta(){
-  const todas = todasLasCampanas();
-  const totalGasto = todas.reduce((s,c)=>s+c.gasto,0);
+  const todasMeta = todasLasCampanasMeta();
+  const todasTiktok = todasLasCampanasTiktok();
 
   const countEl = $('meta-camp-count');
   const gastoEl = $('meta-gasto-total');
-  if(countEl) countEl.textContent = `${todas.length} campañas cargadas`;
-  if(gastoEl) gastoEl.textContent = todas.length>0 ? `Total: ${fmt(totalGasto)}` : '';
+  if(countEl) countEl.textContent = `${todasMeta.length} campañas cargadas`;
+  if(gastoEl) gastoEl.textContent = todasMeta.length>0 ? `Total: ${fmt(gastoTotalMeta())}` : '';
+  renderListaCampanasPorCuenta('meta-campanas-lista',todasMeta,'Sube informes de Meta Ads para ver las campañas');
 
-  // Lista de campañas en el tab
-  const listEl = $('meta-campanas-lista');
-  if(listEl){
-    if(!todas.length){
-      listEl.innerHTML='<div class="empty">Sube informes de Meta Ads para ver las campañas</div>';
-    } else {
-      const porCuenta = {};
-      todas.forEach(c=>{ if(!porCuenta[c.cuenta])porCuenta[c.cuenta]=[]; porCuenta[c.cuenta].push(c); });
-      listEl.innerHTML = Object.entries(porCuenta).map(([cuenta,camps])=>`
-        <div style="margin-bottom:10px">
-          <div style="font-size:10px;font-weight:700;color:var(--orange);letter-spacing:.07em;text-transform:uppercase;margin-bottom:4px">${cuenta||'Sin cuenta'} — ${fmt(camps.reduce((s,c)=>s+c.gasto,0))}</div>
-          ${camps.map(c=>{
-            const enPaquete=paquetes.find(p=>p.campanas.includes(c.nombre));
-            return`<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--border);font-size:12px">
-              <div style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.nombre}</div>
-              <div style="color:var(--amber);font-family:'JetBrains Mono',monospace;flex-shrink:0">${fmt(c.gasto)}</div>
-              ${enPaquete?`<span style="font-size:10px;padding:2px 6px;border-radius:4px;background:var(--gd);color:var(--green)">${enPaquete.nombre}</span>`:'<span style="font-size:10px;color:var(--hint)">sin asignar</span>'}
-            </div>`;
-          }).join('')}
-        </div>
-      `).join('');
-    }
-  }
+  const countElT = $('tiktok-camp-count');
+  const gastoElT = $('tiktok-gasto-total');
+  if(countElT) countElT.textContent = `${todasTiktok.length} campañas cargadas`;
+  if(gastoElT) gastoElT.textContent = todasTiktok.length>0 ? `Total: ${fmt(gastoTotalTiktok())}` : '';
+  renderListaCampanasPorCuenta('tiktok-campanas-lista',todasTiktok,'Sube informes de TikTok Ads para ver las campañas');
 
-  // Buscador de campañas
-  campanasFiltradas = todas;
+  // Buscador de campañas — combinado, un paquete puede mezclar Meta y TikTok
+  campanasFiltradas = todasLasCampanas();
   renderBuscadorCampanas();
 
   // Poblar selector de productos en el paquete
@@ -3404,15 +3541,17 @@ function renderBuscadorCampanas(){
   const cont = $('campanas-buscador');
   if(!cont) return;
   if(!campanasFiltradas.length){
-    cont.innerHTML='<div class="empty" style="padding:10px">Sin campañas — sube informes de Meta Ads</div>';
+    cont.innerHTML='<div class="empty" style="padding:10px">Sin campañas — sube informes de Meta Ads y/o TikTok Ads</div>';
     $('seleccion-count').textContent='0 campañas seleccionadas';
     return;
   }
   cont.innerHTML = campanasFiltradas.map(c=>{
     const sel = campSeleccion.has(c.nombre);
     const enPaquete = paquetes.find(p=>p.campanas.includes(c.nombre));
+    const plat = c.plataforma==='tiktok'?`<span class="tag tt" style="font-size:9px;flex-shrink:0">TikTok</span>`:`<span class="tag tm" style="font-size:9px;flex-shrink:0">Meta</span>`;
     return`<label style="display:flex;align-items:center;gap:8px;padding:5px 4px;border-bottom:1px solid var(--border);cursor:pointer;font-size:12px${enPaquete?';opacity:.6':''}">
       <input type="checkbox" ${sel?'checked':''} ${enPaquete?'disabled title="Ya está en un paquete"':''} onchange="toggleCampSel('${c.nombre.replace(/'/g,"\\'").replace(/"/g,'&quot;')}')" style="accent-color:var(--orange)">
+      ${plat}
       <div style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${c.nombre}">${c.nombre}</div>
       <div style="font-size:10px;color:var(--muted);flex-shrink:0">${c.cuenta||''}</div>
       <div style="color:var(--amber);font-family:'JetBrains Mono',monospace;flex-shrink:0;font-size:11px">${fmt(c.gasto)}</div>
