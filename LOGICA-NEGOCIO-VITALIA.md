@@ -159,9 +159,12 @@ uno solo en todo el dashboard.
 - Se suben uno o más informes `.xlsx` de **Meta Ads** (parser `parsearInformeMeta`) y/o de
   **TikTok Ads** (parser `parsearInformeTiktok`), cada uno en su propia zona de carga y su
   propia card de "Campañas cargadas" (`dMetaFiles` / `dTiktokFiles`). Ambos parsers ignoran
-  las filas de subtotal (`All`/`Total`) y los totales de cuenta; el de TikTok además prueba
-  varias frases de encabezado posibles (español/inglés) porque el export de TikTok Ads Manager
-  no usa el mismo texto que el de Meta.
+  las filas de subtotal de cuenta; el de TikTok además prueba varias frases de encabezado
+  posibles (español/inglés) porque el export de TikTok Ads Manager no usa el mismo texto que
+  el de Meta, y reconoce su propia fila de gran total (`"Total: N resultados"` en la columna
+  de cuenta con `"-"` en la de campaña — formato distinto al `All`/`Total` que usa Meta).
+  Verificado contra un informe real de TikTok Ads Manager (KAIROS TECH GROUP): extrae
+  correctamente las campañas con gasto > 0 y el total coincide exacto con el del archivo.
 - **Paquetes**: el usuario selecciona campañas — de Meta, de TikTok, o de **ambas mezcladas**
   (`todasLasCampanas()` combina los dos pools) — y las asigna a UN producto (por su nombre ya
   resuelto/fusionado). El gasto total del paquete es la suma del gasto real de esas campañas,

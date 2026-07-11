@@ -3397,6 +3397,9 @@ function parsearInformeTiktok(rows, filename){
       if(cuenta) cuentaActual = cuenta;
       continue;
     }
+    // Fila de gran total: TikTok Ads Manager la exporta como "Total: N resultados" en la
+    // columna de cuenta y "-" en la de campaña, en vez de repetir "All"/"Total" como Meta.
+    if(/total/i.test(cuenta) || campana==='-') continue;
 
     if(!cuenta && !campana) continue;
     if(cuenta) cuentaActual = cuenta;
