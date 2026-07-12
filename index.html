@@ -315,6 +315,35 @@ body.app-ready #landing{opacity:0;visibility:hidden;transform:scale(1.05);pointe
 .workbar b{color:var(--text);font-weight:600;}
 .workbar .wbback{margin-left:auto;font-size:12px;color:var(--muted);background:rgba(255,255,255,.05);border:1px solid var(--border2);border-radius:999px;padding:7px 15px;cursor:pointer;transition:all .15s;white-space:nowrap;}
 .workbar .wbback:hover{color:var(--text);background:rgba(255,255,255,.1);}
+
+/* ===== KPIs de porcentaje → medidor circular (gauge) ===== */
+.mc.gauge{display:flex;flex-direction:column;align-items:center;text-align:center;padding:20px 12px 16px;background:radial-gradient(130% 85% at 50% -10%,rgba(255,255,255,.06),rgba(255,255,255,.01));}
+.mc.gauge::before,.mc.gauge::after{display:none;}
+.mc.gauge:hover{transform:translateY(-3px);}
+.gauge-ring{position:relative;width:112px;height:112px;margin:0 auto 12px;}
+.gauge-ring svg{width:112px;height:112px;transform:rotate(-90deg);display:block;overflow:visible;}
+.gauge-ring .gtrack{fill:none;stroke:rgba(255,255,255,.07);stroke-width:9;}
+.gauge-ring .garc{fill:none;stroke-width:9;stroke-linecap:round;transition:stroke-dashoffset 1.15s cubic-bezier(.16,1,.3,1);}
+.gauge-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-weight:700;font-size:24px;letter-spacing:-.8px;line-height:1;}
+.gauge-num small{font-size:12px;font-weight:600;opacity:.7;margin-left:1px;}
+.mc.gauge .lb{margin:0;font-size:10px;}
+.mc.gauge .sb{margin-top:6px;}
+
+/* ===== KPIs de valor (dinero/conteo) — más protagonistas ===== */
+.mc:not(.gauge) .vl{font-size:26px;}
+.mc:not(.gauge){padding-top:19px;}
+.mc:not(.gauge) .lb{position:relative;padding-left:0;}
+
+/* ===== Medidores de barra con brillo (estados, ciudades, transportadoras, productos) ===== */
+.sb2,.ciudad-bar-wrap,.ciudad-bar-track,.transp-bar-track,.prod-bar-wrap,.rank-bar-track,.mapa-top5-bar-track{height:9px;background:rgba(255,255,255,.06);box-shadow:inset 0 1px 2px rgba(0,0,0,.28);}
+.transp-bar-track{height:10px;}
+.sf,.ciudad-bar-fill,.transp-bar-fill,.prod-bar-fill,.rank-bar-fill,.mapa-top5-bar-fill{position:relative;overflow:hidden;filter:saturate(1.12) brightness(1.05);box-shadow:0 1px 8px -2px rgba(0,0,0,.5);}
+.sf::after,.ciudad-bar-fill::after,.transp-bar-fill::after,.prod-bar-fill::after,.rank-bar-fill::after,.mapa-top5-bar-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.4),transparent 55%);border-radius:inherit;pointer-events:none;}
+.sf::before,.transp-bar-fill::before{content:'';position:absolute;top:0;left:0;bottom:0;width:26px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);transform:translateX(-30px);animation:meterShine 2.6s ease-in-out infinite;border-radius:inherit;}
+@keyframes meterShine{0%{transform:translateX(-30px)}55%,100%{transform:translateX(360px)}}
+
+/* número grande dentro de las filas de estado/lista */
+.snn{font-size:12.5px;}
 </style>
 </head>
 <body class="landing-lock">
@@ -898,6 +927,71 @@ function volverInicio(){
   const l=document.getElementById('landing');if(l)l.style.display='';
   requestAnimationFrame(()=>{document.body.classList.add('landing-lock');document.body.classList.remove('app-ready');window.scrollTo({top:0,behavior:'smooth'});});
 }
+
+// ===== KPIs de % → medidor circular animado (gauge) =====
+// Toma CUALQUIER tarjeta KPI (.mc) cuyo valor sea un porcentaje (termina en %) y la
+// vuelve a pintar como un anillo circular con el número al centro y un barrido animado.
+// NO recalcula nada: lee el valor que ya dejó la función de render y solo cambia su forma.
+const _GAUGE_COL={g:'--green',r:'--red',b:'--blue',o:'--orange',a:'--amber',p:'--purple'};
+function _cssVar(v){return (getComputedStyle(document.documentElement).getPropertyValue(v)||'').trim();}
+function enhanceGauges(scope){
+  const root=scope||document;
+  root.querySelectorAll('.mc:not(.gauge-done)').forEach(mc=>{
+    const vlEl=mc.querySelector('.vl');
+    if(!vlEl){mc.classList.add('gauge-done');return;}
+    const raw=vlEl.textContent.trim();
+    const m=raw.match(/^([+-]?\d+(?:[.,]\d+)?)\s*%$/);
+    if(!m){mc.classList.add('gauge-done');return;}
+    const val=parseFloat(m[1].replace(',','.'));
+    const pct=Math.max(0,Math.min(100,Math.abs(val)));
+    const num=m[1];
+    const lb=mc.querySelector('.lb')?mc.querySelector('.lb').innerHTML:'';
+    const sb=mc.querySelector('.sb')?mc.querySelector('.sb').innerHTML:'';
+    let cvar='--orange';
+    for(const k in _GAUGE_COL){if(mc.classList.contains(k)){cvar=_GAUGE_COL[k];break;}}
+    const col=_cssVar(cvar)||'#ff6b35';
+    const R=48,C=2*Math.PI*R;
+    mc.classList.add('gauge-done','gauge');
+    mc.innerHTML=
+      '<div class="gauge-ring"><svg viewBox="0 0 112 112">'
+      +'<circle class="gtrack" cx="56" cy="56" r="'+R+'"></circle>'
+      +'<circle class="garc" cx="56" cy="56" r="'+R+'" stroke="'+col+'" style="stroke-dasharray:'+C+';stroke-dashoffset:'+C+'"></circle>'
+      +'</svg><div class="gauge-num" style="color:'+col+'">'+num+'<small>%</small></div></div>'
+      +'<div class="lb">'+lb+'</div>'
+      +(sb?'<div class="sb">'+sb+'</div>':'');
+    const arc=mc.querySelector('.garc');
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{if(arc)arc.style.strokeDashoffset=C*(1-pct/100);}));
+  });
+}
+// ===== KPIs de valor (dinero/conteo) → conteo animado desde 0 =====
+// Los números "suben" hasta su valor real en menos de un segundo. Solo cambia cómo se
+// muestra el número ya calculado; al terminar se fija el texto EXACTO que dejó el render.
+function _parseNumCO(raw){
+  let s=(raw||'').trim(),pre='';
+  if(s[0]==='$'){pre='$';s=s.slice(1).trim();}
+  if(/^\d{1,3}(\.\d{3})+$/.test(s)||/^\d+$/.test(s)){return {num:parseInt(s.replace(/\./g,''),10),pre};}
+  return null;
+}
+function enhanceNumbers(scope){
+  (scope||document).querySelectorAll('.mc:not(.gauge) .vl:not(.count-done)').forEach(vl=>{
+    const orig=vl.textContent;
+    const p=_parseNumCO(orig);
+    vl.classList.add('count-done');
+    if(!p||p.num<2)return;
+    const target=p.num,dur=850,t0=performance.now();
+    function step(now){
+      const k=Math.min((now-t0)/dur,1),e=1-Math.pow(1-k,3);
+      if(k<1){vl.textContent=p.pre+Math.round(target*e).toLocaleString('es-CO');requestAnimationFrame(step);}
+      else vl.textContent=orig;
+    }
+    requestAnimationFrame(step);
+  });
+}
+function enhanceAll(scope){enhanceGauges(scope);enhanceNumbers(scope);}
+// Observador: cada vez que una función de render mete nuevas tarjetas KPI, las embellece.
+let _gaugeT=null;
+const _gaugeObs=new MutationObserver(()=>{clearTimeout(_gaugeT);_gaugeT=setTimeout(()=>enhanceAll(),50);});
+function iniciarGauges(){try{_gaugeObs.observe(document.body,{childList:true,subtree:true});enhanceAll();}catch(e){}}
 
 // ===== Animación "radar" para las tortas =====
 // Pinta el MISMO gráfico de torta pero revelándolo con un barrido tipo radar:
@@ -4135,7 +4229,7 @@ function resolverNombreProducto(nombreOriginal){
 }
 
 
-loadKeys();setDates();setupMapaInteraccion();observarScrollReveal();
+loadKeys();setDates();setupMapaInteraccion();observarScrollReveal();iniciarGauges();
 </script>
 </body>
 </html>
