@@ -290,8 +290,20 @@ reordenan los bloques `<div class="tp" id="tpX">`, el índice de cada tab en el 
 debe seguir coincidiendo con la posición física real de su panel correspondiente, o los tabs
 mostrarán el contenido equivocado (bug ya ocurrido una vez en este proyecto).
 
-Orden actual: 0-Resumen, 1-Logística, 2-Proyección, 3-Sin movimiento, 4-Productos,
-5-Transportadoras, 6-Trazabilidad, 7-Control Diario, 8-Publicidad, 9-Por día.
+Orden actual (desde el rediseño 2026-07-12, **9 tabs**): 0-Resumen, 1-Logística,
+2-Proyección, 3-Sin movimiento, 4-Productos, 5-Trazabilidad, 6-Control diario,
+7-Publicidad, 8-Por día.
+
+**El tab "Transportadoras" ya no existe como pestaña propia:** su contenido (mapa de
+Colombia, semáforos por ciudad/departamento/transportadora y lista de ciudades) se
+movió **dentro del tab Logística** (panel `tp1`). Los `id` de los paneles conservan su
+numeración vieja con un hueco (`tp0,tp1,tp2,tp3,tp4,tp6,tp7,tp8,tp9` — no hay `tp5`),
+pero eso **no importa** porque `st()` va por posición física. Al mover el bloque se
+respetaron todos los `id` internos (`mapa-dept-svg-wrap`, `transp-list`,
+`ciudades-list`, etc.), por lo que las funciones de render siguen apuntando a ellos.
+
+Llamada directa corregida: el botón "Revisar en Trazabilidad →" del Control diario
+ahora llama `st(5)` (antes `st(7)`, que con el nuevo orden habría abierto Publicidad).
 
 ---
 
@@ -383,3 +395,38 @@ pauta_día         = gastoTotalPauta × share(día)
 gastosFijos_día   = (nómina + gastosExtras) × share(día)
 utilidadNeta_día  = utilidadBruta_día − pauta_día − gastosFijos_día
 ```
+
+---
+
+## 16. Rediseño visual y de experiencia (2026-07-12)
+
+Rediseño completo de la **capa visual** del dashboard. **No se tocó ninguna fórmula ni
+función de cálculo** — solo CSS, estructura HTML de presentación, textos de títulos y la
+forma en que se dibujan (no lo que dibujan) los gráficos. Puntos clave:
+
+- **Homepage / landing (`#landing`)**: pantalla de entrada a pantalla completa con un
+  botón "Iniciar control logístico" que llama `entrarApp()` (añade `body.app-ready`, oculta
+  el landing con transición y quita `landing-lock`). `volverInicio()` hace lo inverso y está
+  colgado del logo del header. El landing es un overlay `position:fixed`; el área de trabajo
+  (`.shell`) siempre existe debajo, así que no se ocultó ningún contenido ni lógica.
+- **Sistema de diseño**: se añadió la tipografía **Sora** para títulos (Inter para UI,
+  JetBrains Mono para cifras), tokens nuevos (`--font-*`, `--shadow-card`, `--ease`,
+  `--rxl`), aurora de fondo animada (`auroraDrift`), tarjetas con más aire y hover, KPIs
+  (`.mc`) rediseñados, y la barra de tabs ahora es **sticky** con iconos por pestaña.
+  Se respetaron TODOS los nombres de clase que la JS togglea (`.tab`, `.tp`, `.active`,
+  `.visible`, `.scroll-reveal`, `.drag`, `.mc`, `.al/.aw/.ai/.ao/.ar`, etc.).
+- **Animación "radar" de las tortas**: nuevo helper `_radarPie(canvasId, datos, opt)` que
+  pinta el mismo gráfico revelándolo con un barrido tipo radar (línea de escaneo que gira +
+  estela). `dibujarTorta`, `dibujarTortaFin` y `dibujarTortaModalFin` ahora arman sus datos
+  igual que antes (mismos valores, mismos colores, misma leyenda) y delegan el dibujo a
+  `_radarPie`. Un token por canvas (`canvas._radarTok`) cancela animaciones anteriores.
+- **Explicadores por apartado**: cada uno de los 9 tabs tiene un `<details class="how">`
+  plegable ("¿Cómo funciona este apartado?") con una descripción **en lenguaje sencillo y
+  sin fórmulas**, pensada para cualquier persona. No sustituye a los banners `.al ai` que ya
+  explicaban criterios puntuales.
+- **Títulos menos repetitivos**: p.ej. la tarjeta interna del tab Logística pasó de
+  "Logística" a "Salud de la operación"; "KPIs principales" → "Vista rápida del período".
+  Son solo textos de presentación.
+
+Regla que se mantiene: si en el futuro se reordenan o agregan tabs, hay que volver a alinear
+los índices `st(i)` con la posición física de los paneles (ver sección 13).
