@@ -135,6 +135,7 @@ tr:hover td{background:rgba(255,255,255,.035);}
 .aw{background:rgba(245,158,11,.1);color:#fbbf24;border-color:rgba(245,158,11,.25);}.aw::before{background:var(--amber);}
 .ai{background:rgba(59,130,246,.1);color:#7fb0ff;border-color:rgba(59,130,246,.25);}.ai::before{background:var(--blue);}
 .ao{background:rgba(34,197,94,.1);color:#4ade80;border-color:rgba(34,197,94,.25);}.ao::before{background:var(--green);}
+.ar{background:rgba(239,68,68,.12);color:#f87171;border-color:rgba(239,68,68,.3);}.ar::before{background:var(--red);}
 .iabox{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:18px;font-size:13px;line-height:1.85;color:var(--text);white-space:pre-wrap;}
 .empty{text-align:center;padding:32px;color:var(--hint);font-size:12.5px;}
 .cr{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);}
@@ -257,6 +258,22 @@ tr:hover td{background:rgba(255,255,255,.035);}
       <label><span class="tag tt">TikTok</span> Gasto TikTok del período</label>
       <input type="number" id="tiktok-spend" placeholder="0 COP" min="0" step="1000">
     </div>
+    <div class="fl">
+      <label><span class="tag to">P&L</span> Nómina del período</label>
+      <input type="number" id="pl-nomina" placeholder="0 COP" min="0" step="1000">
+    </div>
+    <div class="fl">
+      <label><span class="tag to">P&L</span> Gastos extras del período</label>
+      <input type="number" id="pl-gastos" placeholder="0 COP" min="0" step="1000">
+    </div>
+    <div class="fl">
+      <label><span class="tag to">P&L</span> % Impuestos sobre ingresos</label>
+      <input type="number" id="pl-impuestos" placeholder="0" min="0" max="100" step="0.1">
+    </div>
+    <div class="fl">
+      <label><span class="tag to">P&L</span> Anticipos adicionales recibidos</label>
+      <input type="number" id="pl-anticipos" placeholder="0 COP" min="0" step="1000">
+    </div>
   </div>
   <div class="dr">
     <div><label>Desde</label><input type="date" id="date-from"></div>
@@ -326,10 +343,12 @@ tr:hover td{background:rgba(255,255,255,.035);}
     <div class="tab" onclick="st(6)" id="tab-traz">Trazabilidad</div>
     <div class="tab" onclick="st(7)" id="tab-control">Control Diario</div>
     <div class="tab" onclick="st(8)" id="tab-pauta">Publicidad</div>
+    <div class="tab" onclick="st(9)">Por día</div>
   </div>
 
   <!-- TAB 0: RESUMEN -->
   <div class="tp active" id="tp0">
+    <div id="alertas-resumen"></div>
     <div class="card"><div class="ct">KPIs principales</div><div class="mg" id="m-res"></div><hr class="sdv"><div class="tw"><div><span class="sl">Logística (Dropi)</span><div id="res-log"></div></div><div><span class="sl">Publicidad</span><div id="res-pub"></div></div></div></div>
     <div class="card">
       <div class="ct">Resultados financieros</div>
@@ -344,6 +363,13 @@ tr:hover td{background:rgba(255,255,255,.035);}
           <div id="torta-fin-leg" style="margin-top:10px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center"></div>
         </div>
       </div>
+    </div>
+
+    <div class="card">
+      <div class="ct">Estado de cuenta — utilidad neta real del negocio</div>
+      <div class="al ai" style="margin-bottom:12px">La "Utilidad neta" de arriba solo resta la pauta publicitaria. Esta la utilidad neta <strong>real del negocio completo</strong>: también resta nómina, gastos fijos e impuestos, y suma los anticipos que hayas recibido por fuera del recaudo normal. Llena los campos de nómina/gastos/impuestos/anticipos en Credenciales para verla.</div>
+      <div class="mg" id="m-pl"></div>
+      <div id="res-pl"></div>
     </div>
   </div>
 
@@ -701,6 +727,20 @@ tr:hover td{background:rgba(255,255,255,.035);}
 
   </div>
 
+  <!-- TAB 9: POR DÍA -->
+  <div class="tp" id="tp9">
+    <div class="card">
+      <div class="ct">Análisis por día</div>
+      <div class="al ai" style="margin-bottom:12px">Ventas, costos y utilidad de cada día del rango del reporte. La pauta publicitaria y los gastos fijos (nómina + gastos extras, de Credenciales) se reparten proporcionalmente según qué % de las ventas totales del período generó cada día — un día sin ventas no recibe nada de ese reparto.</div>
+      <div class="tw2">
+        <table>
+          <thead><tr><th>Fecha</th><th>Entregados</th><th>Despachados</th><th>Ventas</th><th>Costo producto</th><th>Costo flete</th><th>Pauta (prop.)</th><th>Gastos fijos (prop.)</th><th>Utilidad neta</th><th>Margen</th></tr></thead>
+          <tbody id="tb-pordia"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
 </div>
 </div>
 
@@ -714,10 +754,13 @@ const mono=n=>Math.round(n||0).toLocaleString('es-CO');
 let dOrd=[],dProd=[],dShopi=[],selProds=new Set(),allOrds=[];
 let gD={},gS={},gM={},gW={},gP={};
 
-const EST_ENT=['ENTREGADO'];
-const EST_DEV=['DEVOLUCION','RECHAZADO'];
-const EST_CAN=['CANCELADO'];
-const EST_PEND=['PENDIENTE CONFIRMACION'];
+// Cada lista incluye el nombre exacto ya validado + variantes de redacción que Dropi puede
+// traer según la versión/configuración del export (mismo grupo de negocio, solo tolerancia de
+// texto — no cambia ninguna regla de cálculo existente).
+const EST_ENT=['ENTREGADO','ENTREGADA','ENTREGADO PARCIAL'];
+const EST_DEV=['DEVOLUCION','RECHAZADO','DEVUELTO','DEVUELTA','DEVOLUCION EN PROCESO','RECHAZADA'];
+const EST_CAN=['CANCELADO','CANCELADA','ANULADA','ANULADO','GUIA ANULADA','ORDEN ANULADA'];
+const EST_PEND=['PENDIENTE CONFIRMACION','PENDIENTE DE CONFIRMACION','PENDIENTE POR CONFIRMACION'];
 const EST_MOV=['DESPACHADA','EN REPARTO','EN BODEGA DESTINO','EN BODEGA TRANSPORTADORA','INTENTO DE ENTREGA','NOVEDAD SOLUCIONADA','GUIA_GENERADA','EN PROCESAMIENTO','PREPARADO PARA TRANSPORTADORA','RECLAME EN OFICINA','NOVEDAD'];
 const EST_SIN_MOV_48=['DESPACHADA','EN REPARTO','EN BODEGA DESTINO','EN BODEGA TRANSPORTADORA','INTENTO DE ENTREGA','NOVEDAD SOLUCIONADA','GUIA_GENERADA','EN PROCESAMIENTO','PREPARADO PARA TRANSPORTADORA'];
 
@@ -782,9 +825,9 @@ function observarScrollReveal(){
 }
 function observarLogistica(){observarScrollReveal();}
 
-function saveKeys(){localStorage.setItem(LS,JSON.stringify({tt:$('tiktok-spend').value,ms:$('meta-spend').value}));setS('ok','Valores guardados');}
+function saveKeys(){localStorage.setItem(LS,JSON.stringify({tt:$('tiktok-spend').value,ms:$('meta-spend').value,plNom:$('pl-nomina').value,plGas:$('pl-gastos').value,plImp:$('pl-impuestos').value,plAnt:$('pl-anticipos').value}));setS('ok','Valores guardados');}
 function loadKeys(){
-  cargarFusionesLS();const d=JSON.parse(localStorage.getItem(LS)||'{}');if(d.tt)$('tiktok-spend').value=d.tt;if(d.ms)$('meta-spend').value=d.ms;cargarPautaLS();}
+  cargarFusionesLS();const d=JSON.parse(localStorage.getItem(LS)||'{}');if(d.tt)$('tiktok-spend').value=d.tt;if(d.ms)$('meta-spend').value=d.ms;if(d.plNom)$('pl-nomina').value=d.plNom;if(d.plGas)$('pl-gastos').value=d.plGas;if(d.plImp)$('pl-impuestos').value=d.plImp;if(d.plAnt)$('pl-anticipos').value=d.plAnt;cargarPautaLS();}
 function setDates(){const t=new Date(),f=new Date(t.getFullYear(),t.getMonth(),1);$('date-to').value=t.toISOString().slice(0,10);$('date-from').value=f.toISOString().slice(0,10);}
 
 function df(e,t){e.preventDefault();e.currentTarget.classList.remove('drag');hf(e.dataTransfer.files[0],t);}
@@ -1243,6 +1286,67 @@ function renderRes(d,s,m,w){
   const utilNeta=Math.max(fin.utilBruta-tot,0);
   const margenNeto=fin.utilBruta>0?(utilNeta/fin.utilBruta*100):0;
 
+  // ---- ROAS (Return on Ad Spend) ----
+  // valor_venta = todo lo que generaron los canales de venta (Shopify + WA/orgánico), sin
+  // importar si Dropi ya lo confirmó — mide qué tan bien la pauta está generando ventas.
+  const ticketProm=d?.ent>0?fin.totalOrdenEnt/d.ent:0;
+  const valorVenta=(s?.ingresos||0)+(w?.valorGenWP||0);
+  const roasVenta=tot>0?valorVenta/tot:0;
+  const roasDesp=tot>0?((d?.desp||0)*ticketProm)/tot:0;
+  const roasEnt=tot>0?fin.totalOrdenEnt/tot:0;
+  const colorROAS=(v,limRojo,limVerde)=>v<limRojo?'var(--red)':v<limVerde?'var(--amber)':'var(--green)';
+
+  // ---- ALERTAS AUTOMÁTICAS (logística + financiero) ----
+  const pctGuiaGen=d?.desp>0?((d?.ec?.['GUIA_GENERADA']||0)/d.desp*100):0;
+  const pctOficina=d?.desp>0?((d?.ec?.['RECLAME EN OFICINA']||0)/d.desp*100):0;
+  const pctDevAlerta=d?.pD||0;
+  const ratioPub=fin.utilBruta>0?(tot/fin.utilBruta*100):0;
+  // margen neto SIN el piso de 0 que tiene el KPI mostrado — solo para detectar la alerta,
+  // no cambia el número que se muestra en pantalla (esa regla ya validada queda intacta)
+  const margenNetoReal=fin.utilBruta>0?((fin.utilBruta-tot)/fin.utilBruta*100):0;
+  const alertas=[];
+  if(pctGuiaGen>5)alertas.push({sev:'aw',msg:`⚠️ ${pct(pctGuiaGen)} de las guías despachadas siguen en "Guía generada" sin moverse.`});
+  if(pctOficina>5)alertas.push({sev:'aw',msg:`⚠️ ${pct(pctOficina)} de las guías despachadas están retenidas en oficina de la transportadora.`});
+  if(pctDevAlerta>=30)alertas.push({sev:'ar',msg:`🔴 Devoluciones en ${pct(pctDevAlerta)} sobre despachados — riesgo de pérdida operacional.`});
+  else if(pctDevAlerta>=20)alertas.push({sev:'aw',msg:`⚠️ Nivel de devoluciones elevado: ${pct(pctDevAlerta)} sobre despachados.`});
+  if(fin.utilBruta>0){
+    if(margenNetoReal<0)alertas.push({sev:'ar',msg:`🔴 Margen neto negativo (${pct(margenNetoReal)}) — la pauta está superando la utilidad bruta.`});
+    else if(margenNetoReal<10)alertas.push({sev:'aw',msg:`⚠️ Margen neto bajo: ${pct(margenNetoReal)}.`});
+    if(ratioPub>40)alertas.push({sev:'aw',msg:`⚠️ La pauta representa ${pct(ratioPub)} de la utilidad bruta (umbral sano: 40%).`});
+  }
+  const elAlertas=$('alertas-resumen');
+  if(elAlertas)elAlertas.innerHTML=alertas.map(a=>`<div class="al ${a.sev}" style="margin-bottom:8px">${a.msg}</div>`).join('');
+
+  // ---- ESTADO DE CUENTA — utilidad neta real del negocio ----
+  // Nómina, gastos extras, % impuestos y anticipos son manuales (Credenciales), aplican al
+  // período del reporte igual que el gasto de Meta/TikTok. Esto es ADICIONAL a la "Utilidad
+  // neta" de arriba (que solo resta pauta) — no la reemplaza ni cambia su fórmula.
+  const plNomina=parseFloat($('pl-nomina')?.value||0);
+  const plGastos=parseFloat($('pl-gastos')?.value||0);
+  const plPctImpuestos=parseFloat($('pl-impuestos')?.value||0);
+  const plAnticipos=parseFloat($('pl-anticipos')?.value||0);
+  const ingresosTotalesReales=fin.totalOrdenEnt+plAnticipos;
+  const impuestos=ingresosTotalesReales*(plPctImpuestos/100);
+  const gastosAdicionales=plNomina+plGastos+impuestos;
+  const utilBrutaReal=fin.utilBruta+plAnticipos-tot;
+  const utilNetaReal=utilBrutaReal-gastosAdicionales;
+  const margenNetoRealPL=ingresosTotalesReales>0?(utilNetaReal/ingresosTotalesReales*100):0;
+  $('m-pl').innerHTML=`
+    <div class="mc b"><div class="lb">Ingresos totales reales</div><div class="vl" style="font-size:12px">${fmt(ingresosTotalesReales)}</div><div class="sb">ventas entregadas + anticipos</div></div>
+    <div class="mc r"><div class="lb">Gastos adicionales</div><div class="vl" style="font-size:12px">−${fmt(gastosAdicionales)}</div><div class="sb">nómina + gastos + impuestos</div></div>
+    <div class="mc" style="border:1px solid ${utilNetaReal>=0?'rgba(34,197,94,0.3)':'rgba(239,68,68,0.3)'}"><div class="lb">Utilidad neta real</div><div class="vl" style="font-size:12px;color:${utilNetaReal>=0?'var(--green)':'var(--red)'}">${fmt(utilNetaReal)}</div><div class="sb">${pct(margenNetoRealPL)} margen real</div></div>
+  `;
+  $('res-pl').innerHTML=`
+    <div class="cr"><div class="cl2">Ventas entregadas</div><div class="cv">${fmt(fin.totalOrdenEnt)}</div></div>
+    <div class="cr"><div class="cl2">Anticipos adicionales</div><div class="cv" style="color:var(--green)">+${fmt(plAnticipos)}</div></div>
+    <div class="cr" style="border-top:1px solid var(--border2);margin-top:4px;padding-top:8px"><div class="cl2" style="font-weight:600;color:var(--text)">Ingresos totales reales</div><div class="cv" style="font-weight:700">${fmt(ingresosTotalesReales)}</div></div>
+    <div class="cr"><div class="cl2">Después de pauta (+ anticipos)</div><div class="cv">${fmt(utilBrutaReal)}</div></div>
+    <div class="cr"><div class="cl2">Nómina</div><div class="cv" style="color:var(--red)">−${fmt(plNomina)}</div></div>
+    <div class="cr"><div class="cl2">Gastos extras</div><div class="cv" style="color:var(--red)">−${fmt(plGastos)}</div></div>
+    <div class="cr"><div class="cl2">Impuestos (${pct(plPctImpuestos)} de ingresos)</div><div class="cv" style="color:var(--red)">−${fmt(impuestos)}</div></div>
+    <div class="cr" style="border-top:1px solid var(--border2);margin-top:4px;padding-top:8px"><div class="cl2" style="font-weight:600;color:var(--text)">Utilidad neta real</div><div class="cv" style="color:${utilNetaReal>=0?'var(--green)':'var(--red)'};font-weight:700">${fmt(utilNetaReal)}</div></div>
+  `;
+
   // Métricas de proyección general
   const _EF=gP?.EF||0.80;
   const _numMov=d?.numMov||0;
@@ -1296,6 +1400,9 @@ function renderRes(d,s,m,w){
     <div class="mc g"><div class="lb">Utilidad bruta</div><div class="vl" style="font-size:12px">${fmt(fin.utilBruta)}</div><div class="sb">lo que entra a la wallet</div></div>
     <div class="mc" style="border:1px solid rgba(34,197,94,0.3)"><div class="lb">Utilidad neta</div><div class="vl" style="font-size:12px;color:${utilNeta>0?'var(--green)':'var(--red)'}">${fmt(utilNeta)}</div><div class="sb">después de pauta · ${pct(margenNeto)} margen</div></div>
     <div class="mc o"><div class="lb">Total publicidad</div><div class="vl" style="font-size:12px">${fmt(tot)}</div><div class="sb">${fin.utilBruta>0?pct(tot/fin.utilBruta*100):0} de la utilidad</div></div>
+    <div class="mc" style="border:1px solid ${colorROAS(roasVenta,5,7)}"><div class="lb">ROAS por venta</div><div class="vl" style="font-size:12px;color:${colorROAS(roasVenta,5,7)}">${roasVenta.toFixed(2)}x</div><div class="sb">valor vendido / pauta</div></div>
+    <div class="mc" style="border:1px solid ${colorROAS(roasDesp,4,5.5)}"><div class="lb">ROAS por despacho</div><div class="vl" style="font-size:12px;color:${colorROAS(roasDesp,4,5.5)}">${roasDesp.toFixed(2)}x</div><div class="sb">despachados × ticket prom. / pauta</div></div>
+    <div class="mc" style="border:1px solid ${colorROAS(roasEnt,3.3,4)}"><div class="lb">ROAS por entrega</div><div class="vl" style="font-size:12px;color:${colorROAS(roasEnt,3.3,4)}">${roasEnt.toFixed(2)}x</div><div class="sb">ingresos reales / pauta</div></div>
   `;
   $('res-fin').innerHTML=`
     <div class="cr"><div class="cl2">Total órdenes entregadas</div><div class="cv">${fmt(fin.totalOrdenEnt)}</div></div>
@@ -2521,24 +2628,14 @@ async function fetchAll(){
     shopData=procesarShopify(dShopi,df,dt);
   }
 
-  let wpData=null;
-
   if(dropiData){
     setS('loading','Analizando guías sin movimiento...');
     calcSinMovimiento(dropiData);
     renderTodoAnalisis(dropiData);
   }
 
-  // Meta Ads y TikTok Ads — suma automática de informes subidos; el campo manual queda como fallback
-  const gastoMetaArchivos=todasLasCampanasMeta().reduce((s,c)=>s+c.gasto,0);
-  const gastoMetaFinal=gastoMetaArchivos>0?gastoMetaArchivos:(ms||0);
-  const gastoTiktokArchivos=todasLasCampanasTiktok().reduce((s,c)=>s+c.gasto,0);
-  const gastoTiktokFinal=gastoTiktokArchivos>0?gastoTiktokArchivos:(tt||0);
-  const metaData={tG:gastoMetaFinal,tot:gastoMetaFinal+gastoTiktokFinal,tt:gastoTiktokFinal,tI:0,tC:0,ctr:0,cpc:0,desdeArchivos:gastoMetaArchivos>0,ttDesdeArchivos:gastoTiktokArchivos>0};
-
-  renderRes(dropiData,shopData,metaData,wpData);
-
-  // Trazabilidad
+  // Pedidos adicionales (WhatsApp/orgánicos) y trazabilidad — antes de renderRes para que el
+  // Resumen ya tenga el dato real de gW en vez de mostrar siempre 0
   if(dropiData&&dShopi.length){
     setS('loading','Calculando trazabilidad...');
     calcTrazabilidad(dShopi,dropiData,df,dt);
@@ -2548,8 +2645,20 @@ async function fetchAll(){
     calcPedidosAdicionales(dropiData,[]);
   }
 
+  // Meta Ads y TikTok Ads — suma automática de informes subidos; el campo manual queda como fallback
+  const gastoMetaArchivos=todasLasCampanasMeta().reduce((s,c)=>s+c.gasto,0);
+  const gastoMetaFinal=gastoMetaArchivos>0?gastoMetaArchivos:(ms||0);
+  const gastoTiktokArchivos=todasLasCampanasTiktok().reduce((s,c)=>s+c.gasto,0);
+  const gastoTiktokFinal=gastoTiktokArchivos>0?gastoTiktokArchivos:(tt||0);
+  const metaData={tG:gastoMetaFinal,tot:gastoMetaFinal+gastoTiktokFinal,tt:gastoTiktokFinal,tI:0,tC:0,ctr:0,cpc:0,desdeArchivos:gastoMetaArchivos>0,ttDesdeArchivos:gastoTiktokArchivos>0};
+
+  renderRes(dropiData,shopData,metaData,gW);
+
   // Control diario
   renderControlDiario();
+
+  // Análisis por día
+  renderAnalisisPorDia();
 
   // Pauta Meta/TikTok — actualizar selector de productos y paquetes con los datos cargados
   if(dMetaFiles.length>0||dTiktokFiles.length>0||paquetes.length>0) renderPauta();
@@ -2830,11 +2939,18 @@ function calcPedidosAdicionales(dropiData,shopiRows){
   const desp=ent+dev+mov;
   const efDesp=desp>0?(ent/desp*100):0;
   const valorTotal=adicionales.filter(o=>EST_ENT.includes(o.estatus)).reduce((s,o)=>s+o.valor,0);
+  const valorGenerado=adicionales.reduce((s,o)=>s+o.valor,0); // todos, sin importar estatus — para ROAS por venta
   const utilBruta=adicionales.filter(o=>EST_ENT.includes(o.estatus)).reduce((s,o)=>s+o.valor-o.flete-o.costoProv,0)
     -adicionales.filter(o=>o.estatus==='DEVOLUCION').reduce((s,o)=>s+o.flete,0);
 
   // Porcentaje sobre el total general de Dropi
   const pctTotal=dropiData.total>0?(total/dropiData.total*100).toFixed(1):0;
+
+  // Guardar en el global gW para que renderRes (tab Resumen) pueda mostrar el dato real —
+  // antes se calculaba aquí pero nunca se conectaba de vuelta, así que el Resumen siempre
+  // mostraba 0 pedidos WA/orgánicos.
+  gW={totWP:total,entWP:ent,devWP:dev,movWP:mov,canWP:can,despWP:desp,efDespWP:efDesp,
+    pWP:dropiData.total>0?(total/dropiData.total*100):0,valorWP:valorTotal,valorGenWP:valorGenerado,utilBrutaWP:utilBruta};
 
   $('m-adic').innerHTML=`
     <div class="mc g"><div class="lb">Total adicionales</div><div class="vl">${total}</div><div class="sb">${pctTotal}% del total Dropi</div></div>
@@ -3071,6 +3187,62 @@ function actualizarRangoTxt(){
   }
 }
 
+// ---- ANÁLISIS POR DÍA ----
+// Reparte la pauta total del reporte y los gastos fijos (nómina+gastos extras, de Credenciales)
+// proporcionalmente entre los días según qué % de las ventas totales generó cada uno — mismo
+// criterio que el resto del dashboard usa para la pauta general (no hay pauta diaria en Vitalia,
+// solo el monto total del período).
+function renderAnalisisPorDia(){
+  const tb=$('tb-pordia');if(!tb)return;
+  if(!allOrds.length){tb.innerHTML='<tr><td colspan="10" class="empty">Sube el archivo de órdenes de Dropi para ver este apartado</td></tr>';return;}
+
+  const porDia={};
+  allOrds.filter(o=>!o.dup).forEach(o=>{
+    const f=o.fecha;if(!f)return;
+    if(!porDia[f])porDia[f]={ent:0,desp:0,ventas:0,costoProd:0,costoFlete:0};
+    const b=porDia[f];
+    if(EST_ENT.includes(o.estatus)){
+      b.ent++;b.desp++;b.ventas+=o.valor;b.costoProd+=o.costoProv;b.costoFlete+=fleteEfectivo(o);
+    } else if(EST_DEV.includes(o.estatus)){
+      b.desp++;if(o.estatus==='DEVOLUCION')b.costoFlete+=fleteEfectivo(o);
+    } else if(EST_MOV.includes(o.estatus)){
+      b.desp++;b.costoFlete+=o.flete;
+    }
+  });
+
+  const dias=Object.keys(porDia).sort();
+  if(!dias.length){tb.innerHTML='<tr><td colspan="10" class="empty">Sin pedidos en el rango</td></tr>';return;}
+
+  const totalVentasPeriodo=dias.reduce((s,f)=>s+porDia[f].ventas,0);
+  const gastoMetaArchivos=todasLasCampanasMeta().reduce((s,c)=>s+c.gasto,0);
+  const gastoMetaFinal=gastoMetaArchivos>0?gastoMetaArchivos:parseFloat($('meta-spend')?.value||0);
+  const gastoTiktokArchivos=todasLasCampanasTiktok().reduce((s,c)=>s+c.gasto,0);
+  const gastoTiktokFinal=gastoTiktokArchivos>0?gastoTiktokArchivos:parseFloat($('tiktok-spend')?.value||0);
+  const totPauta=gastoMetaFinal+gastoTiktokFinal;
+  const fixedMensual=parseFloat($('pl-nomina')?.value||0)+parseFloat($('pl-gastos')?.value||0);
+
+  tb.innerHTML=dias.map(f=>{
+    const b=porDia[f];
+    const share=totalVentasPeriodo>0?(b.ventas/totalVentasPeriodo):0;
+    const pautaDia=totPauta*share;
+    const gastosDia=fixedMensual*share;
+    const utilBrutaDia=b.ventas-b.costoProd-b.costoFlete;
+    const utilNetaDia=utilBrutaDia-pautaDia-gastosDia;
+    const margenDia=b.ventas>0?(utilNetaDia/b.ventas*100):0;
+    return`<tr>
+      <td style="color:var(--muted)">${f}</td>
+      <td>${b.ent}</td>
+      <td>${b.desp}</td>
+      <td style="font-family:'JetBrains Mono',monospace">${fmt(b.ventas)}</td>
+      <td style="color:var(--red)">−${fmt(b.costoProd)}</td>
+      <td style="color:var(--red)">−${fmt(b.costoFlete)}</td>
+      <td style="color:var(--red)">−${fmt(pautaDia)}</td>
+      <td style="color:var(--red)">−${fmt(gastosDia)}</td>
+      <td style="color:${utilNetaDia>=0?'var(--green)':'var(--red)'};font-weight:700">${fmt(utilNetaDia)}</td>
+      <td style="color:${margenDia>=0?'var(--green)':'var(--red)'}">${margenDia.toFixed(1)}%</td>
+    </tr>`;
+  }).join('');
+}
 
 function renderControlDiario(){
   if(!dOrd.length){

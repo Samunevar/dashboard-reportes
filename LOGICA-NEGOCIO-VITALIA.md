@@ -265,11 +265,15 @@ cierre del mes correcto.
 
 ## 12. Grupos de estados (constantes globales)
 
+Cada lista trae el nombre exacto ya validado **más variantes de redacción** que Dropi puede
+traer según versión/configuración del export (pura tolerancia de texto — no cambia ninguna
+regla de cálculo ni el comportamiento para los estados que ya se reconocían).
+
 ```js
-EST_ENT = ['ENTREGADO']
-EST_DEV = ['DEVOLUCION','RECHAZADO']
-EST_CAN = ['CANCELADO']
-EST_PEND = ['PENDIENTE CONFIRMACION']
+EST_ENT = ['ENTREGADO','ENTREGADA','ENTREGADO PARCIAL']
+EST_DEV = ['DEVOLUCION','RECHAZADO','DEVUELTO','DEVUELTA','DEVOLUCION EN PROCESO','RECHAZADA']
+EST_CAN = ['CANCELADO','CANCELADA','ANULADA','ANULADO','GUIA ANULADA','ORDEN ANULADA']
+EST_PEND = ['PENDIENTE CONFIRMACION','PENDIENTE DE CONFIRMACION','PENDIENTE POR CONFIRMACION']
 EST_MOV = ['DESPACHADA','EN REPARTO','EN BODEGA DESTINO','EN BODEGA TRANSPORTADORA',
            'INTENTO DE ENTREGA','NOVEDAD SOLUCIONADA','GUIA_GENERADA','EN PROCESAMIENTO',
            'PREPARADO PARA TRANSPORTADORA','RECLAME EN OFICINA','NOVEDAD']
@@ -287,7 +291,7 @@ debe seguir coincidiendo con la posición física real de su panel correspondien
 mostrarán el contenido equivocado (bug ya ocurrido una vez en este proyecto).
 
 Orden actual: 0-Resumen, 1-Logística, 2-Proyección, 3-Sin movimiento, 4-Productos,
-5-Transportadoras, 6-Trazabilidad, 7-Control Diario, 8-Publicidad.
+5-Transportadoras, 6-Trazabilidad, 7-Control Diario, 8-Publicidad, 9-Por día.
 
 ---
 
@@ -299,3 +303,83 @@ Orden actual: 0-Resumen, 1-Logística, 2-Proyección, 3-Sin movimiento, 4-Produc
 3. **Shopify — Pedidos exportados**: CSV
 4. **Meta Ads — Informes de campañas**: uno o varios `.xlsx` (formato "Tabla de datos sin
    procesar")
+
+---
+
+## 15. Mejoras traídas de "Level Up Analytics" (2026-07-11)
+
+El usuario compartió la documentación de otro sistema de logística/P&L y pidió traer lo que
+aplicara a Vitalia sin tocar lo que ya funciona bien. Quedó explícitamente **fuera de alcance**
+la detección de "producto propio" (costo ficticio ≤ 2 en Dropi) porque no aplica a este negocio.
+
+### 15.1 Fix: `gW` (pedidos WA/orgánicos) nunca llegaba al Resumen
+`calcPedidosAdicionales` ya calculaba todo correctamente pero nunca lo guardaba en ningún lado
+que `renderRes` pudiera leer — el KPI "Pedidos WhatsApp/Orgánicos" del Resumen mostraba **0**
+siempre. Ahora `calcPedidosAdicionales` guarda el resultado en el global `gW` (`totWP`, `entWP`,
+`devWP`, `movWP`, `canWP`, `despWP`, `efDespWP`, `pWP`, `valorWP` —solo entregados—, `valorGenWP`
+—todos, sin importar estatus, usado para ROAS—, `utilBrutaWP`), y `fetchAll` llama
+`calcPedidosAdicionales` **antes** de `renderRes` (antes iba después y con un `wpData` local que
+quedaba siempre en `null`).
+
+### 15.2 ROAS con semáforos (Resumen → Resultados financieros)
+```
+ticketProm  = totalOrdenEnt / entregados
+valorVenta  = ingresos Shopify + valorGenWP (WA/orgánico, todos los estatus)
+
+ROAS venta    = valorVenta / gastoTotalPauta
+ROAS despacho = (despachados × ticketProm) / gastoTotalPauta
+ROAS entrega  = totalOrdenEnt / gastoTotalPauta
+```
+Semáforos (`colorROAS(valor, límiteRojo, límiteVerde)`): rojo si < límiteRojo, ámbar si <
+límiteVerde, verde si ≥ límiteVerde.
+- Venta: rojo <5, ámbar 5–6.9, verde ≥7.
+- Despacho: rojo <4, ámbar 4–5.4, verde ≥5.5.
+- Entrega: rojo <3.3, ámbar 3.3–3.9, verde ≥4.
+
+### 15.3 Alertas automáticas (Resumen, arriba de todo — `#alertas-resumen`)
+Se recalculan en cada `renderRes`. % guía generada y % oficina son **sobre despachados**
+(`d.ec['GUIA_GENERADA']`/`d.ec['RECLAME EN OFICINA']` ÷ `d.desp`).
+
+| Condición | Severidad |
+|---|---|
+| % guía generada > 5% | ⚠️ warning |
+| % oficina > 5% | ⚠️ warning |
+| % devolución ≥ 30% | 🔴 danger |
+| % devolución ≥ 20% (y <30%) | ⚠️ warning |
+| Margen neto real < 0% | 🔴 danger |
+| Margen neto real < 10% (y ≥0%) | ⚠️ warning |
+| Pauta / utilidad bruta > 40% | ⚠️ warning |
+
+**Ojo:** el margen usado para la alerta es `(utilBruta − pauta) / utilBruta`, **sin el piso en
+0** que sí tiene el KPI "Utilidad neta" mostrado en pantalla (ese piso es una regla ya validada
+y no se tocó) — si no fuera así la alerta de margen negativo nunca podría dispararse.
+
+### 15.4 Estado de cuenta — utilidad neta real (Resumen, card nueva al final)
+Nuevos campos manuales en Credenciales, persistidos en localStorage junto con Meta/TikTok
+(`saveKeys`/`loadKeys`): **Nómina del período**, **Gastos extras del período**, **% Impuestos
+sobre ingresos**, **Anticipos adicionales recibidos**. Aplican al rango del reporte actual
+(igual que Gasto Meta/TikTok, no hay un sistema de períodos YYYY-MM separado).
+
+```
+ingresosTotalesReales = totalOrdenEnt + anticipos
+impuestos             = ingresosTotalesReales × (%impuestos / 100)
+gastosAdicionales     = nómina + gastosExtras + impuestos
+utilBrutaReal         = utilBruta + anticipos − gastoTotalPauta   (sin piso en 0)
+utilidadNetaReal      = utilBrutaReal − gastosAdicionales
+margenNetoReal        = utilidadNetaReal / ingresosTotalesReales × 100
+```
+Esta es **adicional** a la "Utilidad neta" existente (que solo resta pauta) — no la reemplaza.
+
+### 15.5 Tab "Por día" (nueva, índice 9 — ver sección 13)
+Agrupa `allOrds` por `fecha` y calcula, por cada día: entregados, despachados, ventas, costo
+producto, costo flete (con `fleteEfectivo`, igual que el resto del dashboard), utilidad bruta.
+Como Vitalia no tiene pauta ni gastos fijos cargados día por día (solo el monto total del
+período), la pauta total y los gastos fijos (nómina+gastos extras) se **reparten
+proporcionalmente** según qué % de las ventas totales del período generó cada día — un día sin
+ventas no recibe nada de ese reparto:
+```
+share(día)        = ventas_día / ventas_totales_período
+pauta_día         = gastoTotalPauta × share(día)
+gastosFijos_día   = (nómina + gastosExtras) × share(día)
+utilidadNeta_día  = utilidadBruta_día − pauta_día − gastosFijos_día
+```
