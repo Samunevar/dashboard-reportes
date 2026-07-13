@@ -430,3 +430,50 @@ forma en que se dibujan (no lo que dibujan) los gráficos. Puntos clave:
 
 Regla que se mantiene: si en el futuro se reordenan o agregan tabs, hay que volver a alinear
 los índices `st(i)` con la posición física de los paneles (ver sección 13).
+
+---
+
+## 17. Simulador escalonado — utilidad según % entregado de lo que ya está en movimiento (2026-07-13)
+
+Nueva tarjeta en el tab **Proyección** (`renderEscalonado()`, tabla `calcEscalonado(scope)`).
+**No es una proyección adicional ni cambia la proyección existente (85%)** — es un simulador
+aparte que responde: *"si mi operación de ventas parara hoy y solo fuera entregando lo que
+ya tengo en movimiento, ¿cuánta utilidad me deja según qué % logre entregar?"*.
+
+**Universo de datos:** únicamente los pedidos `EST_MOV` (en movimiento) que existen HOY —
+no inventa pedidos nuevos ni usa ninguna proyección de ventas futuras.
+
+**Promedio real por entrega:** se calcula con los pedidos que **ya se entregaron de verdad**
+en el período (no con los en movimiento, que todavía no se sabe si entregan bien):
+```
+utilPorEntrega (global) = max((totalOrdenEnt − fleteEnt − costoProvEnt) / entregados, 0)
+utilPorEntrega (producto) = p.utilPorEntrega  (ya existía en calcProductosFinanciero)
+```
+Nota: NO se resta de nuevo el flete/costoProv de los pedidos en movimiento o devueltos —
+esos ya están descontados una sola vez en la utilidad bruta base (`fin.utilBruta` /
+`p.utilBruta`), que es el punto de partida ("Hoy real") de cada escalón.
+
+**Por cada paso de % (25, 35, 45, 55, 65, 75, 85, 95 — sobre el total en movimiento):**
+```
+entregasExtra   = round(numMov × pctStep / 100)
+utilBruta(step) = utilBrutaHoy + entregasExtra × utilPorEntrega
+utilNeta(step)  = utilBruta(step) − pauta        (solo si hay pauta asignada; si no, null)
+```
+
+**La pauta es constante en todos los pasos** — ya se gastó, no depende de cuánto termines
+entregando, por eso no se recalcula ni se prorratea entre escalones.
+
+**Alcance (`scope`) seleccionable:**
+- `__global__` = todo el negocio, usa `gPautaTotal` (el mismo `tot` de Meta+TikTok que ya
+  usa el Resumen) y `gDropiData.numMov`.
+- Por producto = usa `gProdsFin` (el resultado de `calcProductosFinanciero`, solo disponible
+  si se subió el archivo de "Órdenes con productos"). `numMov` del producto se deriva como
+  `desp − ent − dev` porque `calcProductosFinanciero` no expone el Set de movimiento
+  directamente. Si el producto no tiene pauta asignada (`gastoPorNombreProducto`), la fila de
+  "Utilidad neta" muestra "Sin pauta asignada" en vez de un número — nunca se inventa un
+  costo de pauta.
+
+Variables globales nuevas para sostener este cálculo fuera de `fetchAll()`:
+`gDropiData` (resultado de `procesarDropi`), `gPautaTotal` (pauta total del período, mismo
+valor que `metaData.tot`), `gProdsFin` (array de `calcProductosFinanciero`, vacío si no hay
+`dProd`). Se guardan al final de `fetchAll()`, después de `renderRes`.

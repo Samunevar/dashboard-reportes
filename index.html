@@ -341,12 +341,26 @@ body.app-ready #landing{opacity:0;visibility:hidden;transform:scale(1.05);pointe
 .mc.gauge .sb{margin-top:7px;}
 
 /* ===== Medidores de barra con brillo (estados, ciudades, transportadoras, productos) ===== */
-.sb2,.ciudad-bar-wrap,.ciudad-bar-track,.transp-bar-track,.prod-bar-wrap,.rank-bar-track,.mapa-top5-bar-track{height:9px;background:rgba(255,255,255,.06);box-shadow:inset 0 1px 2px rgba(0,0,0,.28);}
+.sb2,.ciudad-bar-wrap,.ciudad-bar-track,.transp-bar-track,.prod-bar-wrap,.rank-bar-track,.mapa-top5-bar-track,.stair-bar-track{height:9px;background:rgba(255,255,255,.06);box-shadow:inset 0 1px 2px rgba(0,0,0,.28);}
 .transp-bar-track{height:10px;}
-.sf,.ciudad-bar-fill,.transp-bar-fill,.prod-bar-fill,.rank-bar-fill,.mapa-top5-bar-fill{position:relative;overflow:hidden;filter:saturate(1.12) brightness(1.05);box-shadow:0 1px 8px -2px rgba(0,0,0,.5);}
-.sf::after,.ciudad-bar-fill::after,.transp-bar-fill::after,.prod-bar-fill::after,.rank-bar-fill::after,.mapa-top5-bar-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.4),transparent 55%);border-radius:inherit;pointer-events:none;}
+.sf,.ciudad-bar-fill,.transp-bar-fill,.prod-bar-fill,.rank-bar-fill,.mapa-top5-bar-fill,.stair-bar-fill{position:relative;overflow:hidden;filter:saturate(1.12) brightness(1.05);box-shadow:0 1px 8px -2px rgba(0,0,0,.5);}
+.sf::after,.ciudad-bar-fill::after,.transp-bar-fill::after,.prod-bar-fill::after,.rank-bar-fill::after,.mapa-top5-bar-fill::after,.stair-bar-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.4),transparent 55%);border-radius:inherit;pointer-events:none;}
 .sf::before,.transp-bar-fill::before{content:'';position:absolute;top:0;left:0;bottom:0;width:26px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);transform:translateX(-30px);animation:meterShine 2.6s ease-in-out infinite;border-radius:inherit;}
 @keyframes meterShine{0%{transform:translateX(-30px)}55%,100%{transform:translateX(360px)}}
+
+/* ===== Simulador escalonado (Proyección → utilidad por % entregado) ===== */
+.stair-list{display:flex;flex-direction:column;gap:3px;}
+.stair-step{display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:center;padding:11px 14px;border-radius:12px;transition:background .18s var(--ease);}
+.stair-step:hover{background:rgba(255,255,255,.03);}
+.stair-step.stair-real{background:linear-gradient(135deg,rgba(255,107,53,.1),rgba(255,107,53,.02));border:1px solid var(--ob);}
+.stair-pct{font-family:var(--font-mono);font-weight:700;font-size:17px;color:var(--text);line-height:1.15;}
+.stair-pct small{display:block;font-family:var(--font);font-weight:500;font-size:9.5px;color:var(--hint);text-transform:uppercase;letter-spacing:.05em;margin-top:2px;}
+.stair-bars{display:flex;flex-direction:column;gap:7px;}
+.stair-bar-row{display:flex;align-items:center;gap:10px;}
+.stair-bar-label{font-size:10.5px;color:var(--hint);width:88px;flex-shrink:0;}
+.stair-bar-track{flex:1;border-radius:999px;overflow:hidden;position:relative;min-width:60px;}
+.stair-bar-fill{height:100%;border-radius:999px;transition:width .6s var(--ease);}
+.stair-bar-val{font-size:12px;font-weight:700;font-family:var(--font-mono);width:118px;text-align:right;flex-shrink:0;}
 
 /* número grande dentro de las filas de estado/lista */
 .snn{font-size:12.5px;}
@@ -359,8 +373,8 @@ body.app-ready #landing{opacity:0;visibility:hidden;transform:scale(1.05);pointe
   <div class="lg-orb o1"></div>
   <div class="lg-orb o2"></div>
   <div class="lg-inner">
-    <div class="lg-logo lg-anim">🌿</div>
-    <div class="lg-eyebrow lg-anim">Tienda Vitalia</div>
+    <div class="lg-logo lg-anim">📦</div>
+    <div class="lg-eyebrow lg-anim">Panel de control</div>
     <h1 class="lg-anim">Tu operación,<br>bajo control total.</h1>
     <p class="lg-sub lg-anim">Sube tus reportes de Dropi, Shopify y tu pauta, y en segundos tienes <b>entregas, devoluciones, utilidad real y logística por ciudad</b> — claritos y en un solo lugar.</p>
     <button class="lg-cta lg-anim" onclick="entrarApp()">Iniciar control logístico <span class="arw">→</span></button>
@@ -378,8 +392,8 @@ body.app-ready #landing{opacity:0;visibility:hidden;transform:scale(1.05);pointe
 
 <div class="hdr">
   <div class="hbrand">
-    <div class="hlogo" onclick="volverInicio()" title="Volver al inicio" style="cursor:pointer">🌿</div>
-    <div><h1>Centro de control Vitalia</h1><p id="hdate">Dropi · Shopify · Colombia</p></div>
+    <div class="hlogo" onclick="volverInicio()" title="Volver al inicio" style="cursor:pointer">📦</div>
+    <div><h1>Centro de control</h1><p id="hdate">Dropi · Shopify · Colombia</p></div>
   </div>
   <div class="hbadge" id="hbadge">Sin datos</div>
 </div>
@@ -580,6 +594,18 @@ body.app-ready #landing{opacity:0;visibility:hidden;transform:scale(1.05);pointe
   <div class="tp" id="tp2">
     <details class="how"><summary><span class="qm">?</span> ¿Cómo funciona este apartado?<span class="chev">▶</span></summary><div class="howbody">Toma tus pedidos que <b>todavía están en movimiento</b> (ni entregados ni devueltos) y estima cuánto dinero podrían dejarte si terminan bien, con un criterio <b>conservador</b>. Sirve para anticipar cuánto está por entrar antes de que se cierre el ciclo.</div></details>
     <div class="card"><div class="ct">Proyección de ingresos</div><div class="pbox" id="pbox"></div><div class="al ai" style="margin-bottom:12px">Proyección = 85% × pedidos en movimiento. Ingreso neto = (Valor − Flete − Costo proveedor) × 0.85</div><div class="tw2"><table><thead><tr><th>ID</th><th>Cliente</th><th>Producto</th><th>Estado</th><th>Valor</th><th>Costo prov.</th><th>Flete</th><th>Ingreso neto estimado</th></tr></thead><tbody id="tb-proy"></tbody></table></div></div>
+
+    <div class="card">
+      <div class="ct">Utilidad según cuánto entregues de lo que ya tienes en movimiento</div>
+      <div class="al ai" style="margin-bottom:14px">Esto <b>no es una proyección adicional</b> — es un simulador con lo que YA existe hoy: tus pedidos <b>en movimiento</b> (ni entregados ni devueltos todavía). Si tu operación de ventas parara ahora mismo y solo fueras entregando ese inventario en camino, así se vería tu utilidad bruta y neta según el % que logres entregar. La pauta se mantiene <b>constante</b> — ya se gastó, no cambia con el resultado.</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+        <span class="sl" style="margin:0">Ver</span>
+        <select id="stair-scope" onchange="renderEscalonado()" style="max-width:280px;padding:8px 12px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-size:12.5px;font-family:'Inter',sans-serif">
+          <option value="__global__">Todo el negocio</option>
+        </select>
+      </div>
+      <div id="stair-chart"></div>
+    </div>
   </div>
 
   <!-- TAB 5: SIN MOVIMIENTO -->
@@ -2537,6 +2563,7 @@ function setCiudadSort(tipo,el){ciudadSort=tipo;document.querySelectorAll('#cf-p
 function toggleCiudadDir(el){ciudadDir=ciudadDir==='desc'?'asc':'desc';el.textContent=ciudadDir==='desc'?'↓ Desc':'↑ Asc';renderCiudadesFiltradas();}
 
 let gCiudades=[],ciudadSort='ped',ciudadDir='desc',deptFiltroActivo=null,gTranspBase=[];
+let gDropiData=null,gPautaTotal=0,gProdsFin=[];
 
 function renderTransportadorasFiltradas(){
   let lista=gTranspBase;
@@ -2841,6 +2868,7 @@ function renderTodoAnalisis(dropiData){
   // Usar financiero si hay dProd, sino básico
   const prods=dProd.length?calcProductosFinanciero(dropiData.allV):calcProductos(dropiData.allV);
   renderProductos(prods);
+  gProdsFin=dProd.length?prods:[];
   gTranspBase=dropiData.allV;
   renderTransportadorasFiltradas();
   gCiudades=calcCiudades(dropiData.allV);
@@ -2895,6 +2923,10 @@ async function fetchAll(){
   const metaData={tG:gastoMetaFinal,tot:gastoMetaFinal+gastoTiktokFinal,tt:gastoTiktokFinal,tI:0,tC:0,ctr:0,cpc:0,desdeArchivos:gastoMetaArchivos>0,ttDesdeArchivos:gastoTiktokArchivos>0};
 
   renderRes(dropiData,shopData,metaData,gW);
+
+  // Guardar referencias globales para el simulador escalonado de utilidad (tab Proyección)
+  gDropiData=dropiData;gPautaTotal=metaData.tot;
+  renderEscalonado();
 
   // Control diario
   renderControlDiario();
@@ -3338,6 +3370,76 @@ function calcProductosFinanciero(allValidas){
   });
 }
 
+// ---- SIMULADOR ESCALONADO: utilidad según % de lo YA en movimiento que se entregue ----
+// No es una proyección — usa el promedio REAL de utilidad por entrega (calculado con los
+// pedidos que ya se entregaron) y lo aplica a distintos % de conversión del inventario que
+// ya está en movimiento hoy. La pauta es una constante: no depende de este resultado.
+const STAIR_STEPS=[25,35,45,55,65,75,85,95];
+function calcEscalonado(scope){
+  if(!gDropiData)return null;
+  const fin=calcFinanciero(gDropiData.allV);
+  if(scope==='__global__'){
+    const numMov=gDropiData.numMov||0,ent=gDropiData.ent||0;
+    const utilPorEntrega=ent>0?Math.max((fin.totalOrdenEnt-fin.fleteEnt-fin.costoProvEnt)/ent,0):0;
+    const pauta=gPautaTotal||0;
+    return{
+      nombre:'Todo el negocio',numMov,utilBase:Math.max(fin.utilBruta,0),utilPorEntrega,pauta,tienePauta:pauta>0,
+      steps:STAIR_STEPS.map(pctStep=>{
+        const extra=Math.round(numMov*pctStep/100);
+        const utilBruta=Math.max(fin.utilBruta,0)+extra*utilPorEntrega;
+        return{pctStep,extra,utilBruta,utilNeta:pauta>0?utilBruta-pauta:null};
+      })
+    };
+  }
+  const p=gProdsFin.find(x=>x.nombre===scope);
+  if(!p)return null;
+  const numMov=Math.max(p.desp-p.ent-p.dev,0);
+  const pauta=p.pauta||0;
+  return{
+    nombre:p.nombre,numMov,utilBase:p.utilBruta,utilPorEntrega:p.utilPorEntrega,pauta,tienePauta:pauta>0,
+    steps:STAIR_STEPS.map(pctStep=>{
+      const extra=Math.round(numMov*pctStep/100);
+      const utilBruta=p.utilBruta+extra*p.utilPorEntrega;
+      return{pctStep,extra,utilBruta,utilNeta:pauta>0?utilBruta-pauta:null};
+    })
+  };
+}
+function renderEscalonado(){
+  const sel=$('stair-scope');
+  if(sel&&sel.dataset.built!=='1'){
+    const opts=['<option value="__global__">Todo el negocio</option>']
+      .concat(gProdsFin.filter(p=>p.desp>0).sort((a,b)=>b.desp-a.desp).map(p=>`<option value="${p.nombre.replace(/"/g,'&quot;')}">${p.nombre}</option>`));
+    sel.innerHTML=opts.join('');
+    sel.dataset.built='1';
+  }
+  const scope=sel?sel.value:'__global__';
+  const data=calcEscalonado(scope);
+  const cont=$('stair-chart');
+  if(!cont)return;
+  if(!data||data.numMov===0){
+    cont.innerHTML='<div class="empty">No hay pedidos en movimiento para simular en esta selección.</div>';
+    return;
+  }
+  const maxBruta=Math.max(...data.steps.map(s=>s.utilBruta),1);
+  cont.innerHTML=`<div class="stair-list">`
+    +`<div class="stair-step stair-real">
+        <div class="stair-pct">Hoy<small>real</small></div>
+        <div class="stair-bars">
+          <div class="stair-bar-row"><span class="stair-bar-label">Utilidad bruta</span><div class="stair-bar-track"><div class="stair-bar-fill" style="width:${(data.utilBase/maxBruta*100).toFixed(1)}%;background:var(--orange)"></div></div><span class="stair-bar-val" style="color:var(--orange)">${fmt(data.utilBase)}</span></div>
+          ${data.tienePauta?`<div class="stair-bar-row"><span class="stair-bar-label">Utilidad neta</span><div class="stair-bar-track"><div class="stair-bar-fill" style="width:${(Math.max(data.utilBase-data.pauta,0)/maxBruta*100).toFixed(1)}%;background:${data.utilBase-data.pauta>=0?'var(--green)':'var(--red)'}"></div></div><span class="stair-bar-val" style="color:${data.utilBase-data.pauta>=0?'var(--green)':'var(--red)'}">${fmt(data.utilBase-data.pauta)}</span></div>`:''}
+        </div>
+      </div>`
+    +data.steps.map(s=>`
+      <div class="stair-step">
+        <div class="stair-pct">${s.pctStep}%<small>+${s.extra} entregas</small></div>
+        <div class="stair-bars">
+          <div class="stair-bar-row"><span class="stair-bar-label">Utilidad bruta</span><div class="stair-bar-track"><div class="stair-bar-fill" style="width:${(s.utilBruta/maxBruta*100).toFixed(1)}%;background:var(--green)"></div></div><span class="stair-bar-val" style="color:var(--green)">${fmt(s.utilBruta)}</span></div>
+          ${data.tienePauta?`<div class="stair-bar-row"><span class="stair-bar-label">Utilidad neta</span><div class="stair-bar-track"><div class="stair-bar-fill" style="width:${(Math.max(s.utilNeta,0)/maxBruta*100).toFixed(1)}%;background:${s.utilNeta>=0?'var(--blue)':'var(--red)'}"></div></div><span class="stair-bar-val" style="color:${s.utilNeta>=0?'var(--blue)':'var(--red)'}">${fmt(s.utilNeta)}</span></div>`:'<div class="stair-bar-row"><span class="stair-bar-label">Utilidad neta</span><span style="font-size:11px;color:var(--hint)">Sin pauta asignada</span></div>'}
+        </div>
+      </div>`).join('')
+    +`</div>
+    <div style="font-size:10.5px;color:var(--hint);margin-top:10px">De ${data.numMov} pedido${data.numMov===1?'':'s'} en movimiento en esta selección · pauta ${data.tienePauta?fmt(data.pauta)+' (constante)':'no asignada'}</div>`;
+}
 
 // ---- CONTROL DIARIO ----
 // Calendario especial SOLO para este apartado: excluye domingos y festivos (sabados SI cuentan,
@@ -3432,7 +3534,7 @@ function actualizarRangoTxt(){
 // ---- ANÁLISIS POR DÍA ----
 // Reparte la pauta total del reporte y los gastos fijos (nómina+gastos extras, de Credenciales)
 // proporcionalmente entre los días según qué % de las ventas totales generó cada uno — mismo
-// criterio que el resto del dashboard usa para la pauta general (no hay pauta diaria en Vitalia,
+// criterio que el resto del dashboard usa para la pauta general (no hay pauta diaria cargada,
 // solo el monto total del período).
 function renderAnalisisPorDia(){
   const tb=$('tb-pordia');if(!tb)return;
@@ -3728,7 +3830,7 @@ function cerrarDetalleNovedad(){$('novedad-modal').style.display='none';}
 
 // ========== SISTEMA DE PAUTA META ADS ==========
 // Persistencia en localStorage con clave dedicada
-const LS_PAUTA = 'vitalia_pauta_v1';
+const LS_PAUTA = 'dash_pauta_v1';
 
 let dMetaFiles = [];      // array de {filename, campanas:[{nombre, gasto, cuenta, plataforma}]}
 let dTiktokFiles = [];    // igual que dMetaFiles, pero para informes de TikTok Ads
@@ -3753,7 +3855,7 @@ function exportarConfigPauta(){
   const data = JSON.stringify({paquetes, fusiones}, null, 2);
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([data], {type:'application/json'}));
-  a.download = 'vitalia-pauta-config.json';
+  a.download = 'pauta-config.json';
   a.click();
 }
 
@@ -4177,7 +4279,7 @@ function gastoPorNombreProducto(nombre){
 
 
 // ---- FUSIÓN DE PRODUCTOS ----
-const LS_FUSION = 'vitalia_fusiones_v1';
+const LS_FUSION = 'dash_fusiones_v1';
 let fusionesProducto = [];
 
 function cargarFusionesLS(){
