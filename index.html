@@ -125,17 +125,18 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(0.6);cursor:po
 .tab.active .tbi{opacity:1;}
 .tp{display:none;}.tp.active{display:block;animation:tpIn .42s var(--ease);}
 @keyframes tpIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-.mg{display:grid;grid-template-columns:repeat(auto-fit,minmax(156px,1fr));gap:13px;margin-bottom:16px;}
-.mc{background:linear-gradient(165deg,rgba(255,255,255,.06),rgba(255,255,255,.015));border-radius:16px;padding:17px 19px;border:1px solid var(--border);position:relative;overflow:hidden;transition:transform .25s var(--ease),border-color .25s var(--ease),box-shadow .25s var(--ease);}
-.mc::before{content:'';position:absolute;top:0;left:0;right:0;height:2.5px;background:rgba(255,255,255,.12);}
-.mc::after{content:'';position:absolute;top:-40%;right:-30%;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.08),transparent 70%);pointer-events:none;transition:opacity .3s;opacity:0;}
-.mc:hover{transform:translateY(-3px);border-color:var(--border2);box-shadow:0 20px 40px -24px rgba(0,0,0,.7);}
-.mc:hover::after{opacity:1;}
-.mc .lb{font-size:9.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.42);margin-bottom:9px;}
-.mc .vl{font-size:24px;font-weight:700;letter-spacing:-.6px;line-height:1;font-family:var(--font-mono);}
-.mc .sb{font-size:10.5px;color:var(--muted);margin-top:6px;}
+/* KPIs como "tablero de datos": sin cajas, celdas transparentes separadas por
+   líneas finas, misma altura, con un acento de color fino a la izquierda. */
+.mg{display:grid;grid-template-columns:repeat(auto-fit,minmax(184px,1fr));gap:0 2px;margin-bottom:8px;}
+.mc{background:none!important;border:none!important;border-radius:0!important;box-shadow:inset 0 -1px 0 var(--border)!important;padding:15px 16px 15px 18px;min-height:98px;position:relative;display:flex;flex-direction:column;overflow:visible;transition:background .18s var(--ease);opacity:1!important;}
+.mc::before{content:'';position:absolute;left:0;top:15px;bottom:16px;width:3px;border-radius:0 3px 3px 0;background:rgba(255,255,255,.18);}
+.mc::after{display:none;}
+.mc:hover{background:rgba(255,255,255,.03)!important;transform:none;box-shadow:inset 0 -1px 0 var(--border2)!important;}
+.mc .lb{font-size:9.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.46);margin-bottom:auto;padding-bottom:9px;line-height:1.35;}
+.mc .vl{font-size:27px;font-weight:700;letter-spacing:-.7px;line-height:1;font-family:var(--font-mono);}
+.mc .sb{font-size:10.5px;color:var(--muted);margin-top:7px;}
 .mc.g .vl{color:var(--green);}.mc.r .vl{color:var(--red);}.mc.b .vl{color:var(--blue);}.mc.o .vl{color:var(--orange);}.mc.a .vl{color:var(--amber);}.mc.p .vl{color:var(--purple);}
-.mc.g::before{background:var(--green);}.mc.r::before{background:var(--red);}.mc.b::before{background:var(--blue);}.mc.o::before{background:var(--orange);}.mc.a::before{background:var(--amber);}.mc.p::before{background:var(--purple);}
+.mc.g::before{background:var(--green);box-shadow:0 0 10px -2px var(--green);}.mc.r::before{background:var(--red);box-shadow:0 0 10px -2px var(--red);}.mc.b::before{background:var(--blue);box-shadow:0 0 10px -2px var(--blue);}.mc.o::before{background:var(--orange);box-shadow:0 0 10px -2px var(--orange);}.mc.a::before{background:var(--amber);box-shadow:0 0 10px -2px var(--amber);}.mc.p::before{background:var(--purple);box-shadow:0 0 10px -2px var(--purple);}
 .sdv{border:none;border-top:1px solid var(--border);margin:18px 0;}
 .tw{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
 @media(max-width:700px){.tw{grid-template-columns:1fr;}}
@@ -316,23 +317,28 @@ body.app-ready #landing{opacity:0;visibility:hidden;transform:scale(1.05);pointe
 .workbar .wbback{margin-left:auto;font-size:12px;color:var(--muted);background:rgba(255,255,255,.05);border:1px solid var(--border2);border-radius:999px;padding:7px 15px;cursor:pointer;transition:all .15s;white-space:nowrap;}
 .workbar .wbback:hover{color:var(--text);background:rgba(255,255,255,.1);}
 
-/* ===== KPIs de porcentaje → medidor circular (gauge) ===== */
-.mc.gauge{display:flex;flex-direction:column;align-items:center;text-align:center;padding:20px 12px 16px;background:radial-gradient(130% 85% at 50% -10%,rgba(255,255,255,.06),rgba(255,255,255,.01));}
-.mc.gauge::before,.mc.gauge::after{display:none;}
-.mc.gauge:hover{transform:translateY(-3px);}
-.gauge-ring{position:relative;width:112px;height:112px;margin:0 auto 12px;}
-.gauge-ring svg{width:112px;height:112px;transform:rotate(-90deg);display:block;overflow:visible;}
-.gauge-ring .gtrack{fill:none;stroke:rgba(255,255,255,.07);stroke-width:9;}
-.gauge-ring .garc{fill:none;stroke-width:9;stroke-linecap:round;transition:stroke-dashoffset 1.15s cubic-bezier(.16,1,.3,1);}
-.gauge-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-weight:700;font-size:24px;letter-spacing:-.8px;line-height:1;}
-.gauge-num small{font-size:12px;font-weight:600;opacity:.7;margin-left:1px;}
-.mc.gauge .lb{margin:0;font-size:10px;}
-.mc.gauge .sb{margin-top:6px;}
+/* ===== Panel de diagnóstico (veredicto + alertas) ===== */
+.diag{background:linear-gradient(135deg,rgba(255,255,255,.05),rgba(255,255,255,.012));border:1px solid var(--border2);border-left:4px solid var(--dc);border-radius:var(--rl);padding:18px 22px;margin-bottom:22px;box-shadow:var(--shadow-card);position:relative;overflow:hidden;}
+.diag::after{content:'';position:absolute;top:-60%;right:-10%;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--dc) 18%,transparent),transparent 70%);pointer-events:none;}
+.diag-head{display:flex;align-items:center;gap:15px;position:relative;z-index:1;}
+.diag-ic{font-size:27px;line-height:1;filter:drop-shadow(0 0 12px var(--dc));flex-shrink:0;}
+.diag-txt{flex:1;min-width:0;}
+.diag-t{font-family:var(--font-display);font-size:16.5px;font-weight:700;color:var(--text);letter-spacing:-.3px;}
+.diag-s{font-size:12.5px;color:var(--muted);margin-top:4px;line-height:1.55;}
+.diag-badge{margin-left:auto;font-size:11px;font-weight:700;color:var(--dc);background:rgba(255,255,255,.05);border:1px solid var(--dc);border-radius:999px;padding:6px 13px;white-space:nowrap;flex-shrink:0;}
+.diag-list{display:flex;flex-direction:column;gap:8px;margin-top:15px;position:relative;z-index:1;}
+.diag-list:empty{display:none;}
 
-/* ===== KPIs de valor (dinero/conteo) — más protagonistas ===== */
-.mc:not(.gauge) .vl{font-size:26px;}
-.mc:not(.gauge){padding-top:19px;}
-.mc:not(.gauge) .lb{position:relative;padding-left:0;}
+/* ===== KPIs de porcentaje → cifra grande + anillo pequeño (misma celda, sin caja) ===== */
+.mc.gauge .lb{margin-bottom:auto;padding-bottom:9px;}
+.gauge-body{display:flex;align-items:center;gap:12px;}
+.gauge-figure{font-family:var(--font-mono);font-weight:700;font-size:27px;letter-spacing:-.7px;line-height:1;}
+.gauge-figure small{font-size:13px;font-weight:600;opacity:.62;margin-left:1px;}
+.gauge-ring{position:relative;width:50px;height:50px;flex-shrink:0;margin-left:auto;}
+.gauge-ring svg{width:50px;height:50px;transform:rotate(-90deg);display:block;overflow:visible;}
+.gauge-ring .gtrack{fill:none;stroke:rgba(255,255,255,.09);stroke-width:6;}
+.gauge-ring .garc{fill:none;stroke-width:6;stroke-linecap:round;transition:stroke-dashoffset 1.2s cubic-bezier(.16,1,.3,1);filter:drop-shadow(0 0 4px currentColor);}
+.mc.gauge .sb{margin-top:7px;}
 
 /* ===== Medidores de barra con brillo (estados, ciudades, transportadoras, productos) ===== */
 .sb2,.ciudad-bar-wrap,.ciudad-bar-track,.transp-bar-track,.prod-bar-wrap,.rank-bar-track,.mapa-top5-bar-track{height:9px;background:rgba(255,255,255,.06);box-shadow:inset 0 1px 2px rgba(0,0,0,.28);}
@@ -950,14 +956,16 @@ function enhanceGauges(scope){
     let cvar='--orange';
     for(const k in _GAUGE_COL){if(mc.classList.contains(k)){cvar=_GAUGE_COL[k];break;}}
     const col=_cssVar(cvar)||'#ff6b35';
-    const R=48,C=2*Math.PI*R;
+    const R=21,C=2*Math.PI*R;
     mc.classList.add('gauge-done','gauge');
     mc.innerHTML=
-      '<div class="gauge-ring"><svg viewBox="0 0 112 112">'
-      +'<circle class="gtrack" cx="56" cy="56" r="'+R+'"></circle>'
-      +'<circle class="garc" cx="56" cy="56" r="'+R+'" stroke="'+col+'" style="stroke-dasharray:'+C+';stroke-dashoffset:'+C+'"></circle>'
-      +'</svg><div class="gauge-num" style="color:'+col+'">'+num+'<small>%</small></div></div>'
-      +'<div class="lb">'+lb+'</div>'
+      '<div class="lb">'+lb+'</div>'
+      +'<div class="gauge-body">'
+      +'<span class="gauge-figure" style="color:'+col+'">'+num+'<small>%</small></span>'
+      +'<span class="gauge-ring"><svg viewBox="0 0 50 50">'
+      +'<circle class="gtrack" cx="25" cy="25" r="'+R+'"></circle>'
+      +'<circle class="garc" cx="25" cy="25" r="'+R+'" stroke="'+col+'" style="color:'+col+';stroke-dasharray:'+C+';stroke-dashoffset:'+C+'"></circle>'
+      +'</svg></span></div>'
       +(sb?'<div class="sb">'+sb+'</div>':'');
     const arc=mc.querySelector('.garc');
     requestAnimationFrame(()=>requestAnimationFrame(()=>{if(arc)arc.style.strokeDashoffset=C*(1-pct/100);}));
@@ -1538,7 +1546,24 @@ function renderRes(d,s,m,w){
     if(ratioPub>40)alertas.push({sev:'aw',msg:`⚠️ La pauta representa ${pct(ratioPub)} de la utilidad bruta (umbral sano: 40%).`});
   }
   const elAlertas=$('alertas-resumen');
-  if(elAlertas)elAlertas.innerHTML=alertas.map(a=>`<div class="al ${a.sev}" style="margin-bottom:8px">${a.msg}</div>`).join('');
+  if(elAlertas){
+    const peor=alertas.some(a=>a.sev==='ar')?'ar':(alertas.some(a=>a.sev==='aw')?'aw':'ao');
+    const V={ar:{ic:'🔴',t:'Requiere tu atención ya',c:'var(--red)'},aw:{ic:'🟡',t:'Puntos por vigilar',c:'var(--amber)'},ao:{ic:'🟢',t:'Operación en orden',c:'var(--green)'}}[peor];
+    const resumen=alertas.length
+      ? `Detecté ${alertas.length} punto${alertas.length>1?'s':''} que conviene revisar antes de que te toquen la utilidad.`
+      : `Tu operación va bien: ${pct(d?.pE||0)} de entrega efectiva y devoluciones bajo control. Sigue así.`;
+    const cuerpo=alertas.length
+      ? alertas.map(a=>`<div class="al ${a.sev}" style="margin:0">${a.msg}</div>`).join('')
+      : `<div class="al ao" style="margin:0">✓ Sin alertas de logística ni financieras en este período.</div>`;
+    elAlertas.innerHTML=`<div class="diag" style="--dc:${V.c}">
+      <div class="diag-head">
+        <span class="diag-ic">${V.ic}</span>
+        <div class="diag-txt"><div class="diag-t">${V.t}</div><div class="diag-s">${resumen}</div></div>
+        <span class="diag-badge">${alertas.length} alerta${alertas.length===1?'':'s'}</span>
+      </div>
+      <div class="diag-list">${cuerpo}</div>
+    </div>`;
+  }
 
   // ---- ESTADO DE CUENTA — utilidad neta real del negocio ----
   // Nómina, gastos extras, % impuestos y anticipos son manuales (Credenciales), aplican al
