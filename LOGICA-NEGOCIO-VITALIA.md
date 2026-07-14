@@ -631,3 +631,28 @@ entran en el % de efectividad"*. El número (`devolucionDirecta.length`) y el c�
   asignar una campaña, ya no hay que crear un paquete nuevo — se puede seleccionar la campaña
   en el buscador y sumarla a cualquier paquete ya creado (con su producto ya asignado) desde un
   selector nuevo junto al de "Crear paquete". Recalcula `gasto` del paquete automáticamente.
+
+---
+
+## 24. Fecha de Shopify por teléfono — ya no se queda solo con la más antigua (2026-07-14)
+
+**Bug real, causaba el desfase de "número de pedidos por fecha" reportado por el usuario:**
+`shopifyFechaPorTelefono()` (la función que hace que la fecha de creación de Shopify tenga
+prioridad sobre la FECHA propia de Dropi — sección 10, regla de negocio explícita del usuario:
+*"Shopify es la fecha REAL de la orden"*) guardaba, por cada teléfono, únicamente la fecha
+**más antigua** de todos sus pedidos en Shopify (`if(!porTel[o.tel]||o.fecha<porTel[o.tel])`).
+
+Para un **cliente recurrente** (varios pedidos distintos en Shopify a lo largo del tiempo, algo
+común en un negocio de consumo recurrente), esto hacía que **TODOS** sus pedidos en Dropi —
+sin importar a cuál compra correspondieran realmente — heredaran la fecha de su **primera
+compra**, desplazándolos fuera del día en que realmente ocurrieron. Esto inflaba el conteo del
+día de la primera compra y vaciaba los días de las compras posteriores — exactamente el tipo de
+"un día metí 137 y me puso 148" que se reportó.
+
+**Fix:** `shopifyFechaPorTelefono()` ahora guarda TODAS las fechas de Shopify de cada teléfono
+(`{tel: [fecha1, fecha2, ...]}`), y una nueva función `fechaShopifyMasCercana(fechas, ref)`
+elige, para cada pedido de Dropi, la fecha de Shopify de ESE teléfono más cercana a la FECHA
+propia del pedido en Dropi (usada solo como ancla para desempatar cuál de las varias compras es
+esta). Así cada pedido de Dropi se empareja con SU propio pedido de Shopify, no con el primero
+que ese cliente hizo alguna vez. El caso simple (un solo pedido de Shopify por teléfono, o
+ningún match) se comporta exactamente igual que antes.

@@ -1230,9 +1230,28 @@ function shopifyFechaPorTelefono(){
   const porTel={};
   (completo?.ords||[]).forEach(o=>{
     if(!o.tel||!o.fecha)return;
-    if(!porTel[o.tel]||o.fecha<porTel[o.tel])porTel[o.tel]=o.fecha;
+    // Guardar TODAS las fechas de Shopify de ese teléfono, no solo la más antigua — un
+    // cliente recurrente puede tener varios pedidos distintos en Shopify, y cada pedido de
+    // Dropi con ese mismo teléfono debe emparejarse con SU propio pedido de Shopify, no con
+    // el primero que hizo alguna vez (eso desplazaba pedidos reales al día equivocado).
+    if(!porTel[o.tel])porTel[o.tel]=[];
+    porTel[o.tel].push(o.fecha);
   });
   return porTel;
+}
+
+// De las fechas de Shopify disponibles para un teléfono, elige la más cercana a la fecha
+// propia del pedido de Dropi (referencia) — así un cliente con varias compras en Shopify no
+// hace que TODOS sus pedidos de Dropi hereden la fecha de su primera compra.
+function fechaShopifyMasCercana(fechas,ref){
+  if(!fechas||!fechas.length)return undefined;
+  if(!ref)return fechas[0];
+  let mejor=fechas[0],mejorDiff=Math.abs(new Date(fechas[0])-new Date(ref));
+  for(const f of fechas){
+    const diff=Math.abs(new Date(f)-new Date(ref));
+    if(diff<mejorDiff){mejor=f;mejorDiff=diff;}
+  }
+  return mejor;
 }
 
 function procesarDropi(df,dt){
@@ -1246,7 +1265,7 @@ function procesarDropi(df,dt){
     const id=String(r['ID']||'');
     const isoDropi=parseFecha(r['FECHA']);
     const telNorm=normTel(r['TELÉFONO']||'');
-    const isoShop=telNorm?fechaShopifyPorTel[telNorm]:undefined;
+    const isoShop=telNorm?fechaShopifyMasCercana(fechaShopifyPorTel[telNorm],isoDropi):undefined;
     const iso=isoShop||isoDropi; // si Shopify trae fecha de creación para este teléfono, esa manda sobre la de Dropi
     if(df&&dt&&(iso<df||iso>dt))return;
     const dup=String(r['TAGS']||'').toLowerCase().includes('pedido duplicado');
