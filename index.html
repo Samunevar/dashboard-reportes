@@ -615,7 +615,7 @@ body.app-ready #landing{opacity:0;visibility:hidden;transform:scale(1.05);pointe
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
         <span class="sl" style="margin:0">Ver</span>
         <select id="stair-scope" onchange="renderEscalonado()" style="max-width:280px;padding:8px 12px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-size:12.5px;font-family:'Inter',sans-serif">
-          <option value="__global__">Todo el negocio</option>
+          <option value="__global__" style="background:var(--bg3);color:var(--text)">Todo el negocio</option>
         </select>
       </div>
       <div id="stair-chart"></div>
@@ -894,10 +894,24 @@ body.app-ready #landing{opacity:0;visibility:hidden;transform:scale(1.05);pointe
           </div>
           <div>
             <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Producto Dropi asociado</label>
-            <select id="paquete-producto" style="width:100%;padding:8px 11px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-size:12px"><option value="">— Seleccionar producto —</option></select>
+            <select id="paquete-producto" style="width:100%;padding:8px 11px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-size:12px"><option value="" style="background:var(--bg3);color:var(--text)">— Seleccionar producto —</option></select>
           </div>
           <div>
             <button class="bp" style="font-size:12px;padding:9px 16px;white-space:nowrap" onclick="crearPaquete()">+ Crear paquete</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Agregar campañas seleccionadas a un paquete YA existente -->
+      <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:14px;margin-bottom:16px">
+        <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.06em">¿Te faltó una campaña? Agrégala a un paquete que ya existe</div>
+        <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end;flex-wrap:wrap">
+          <div>
+            <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Paquete existente</label>
+            <select id="paquete-existente" style="width:100%;padding:8px 11px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-size:12px"><option value="" style="background:var(--bg3);color:var(--text)">— Selecciona un paquete —</option></select>
+          </div>
+          <div>
+            <button class="bs" style="font-size:12px;padding:9px 16px;white-space:nowrap" onclick="agregarACampanaPaquete()">+ Agregar a este paquete</button>
           </div>
         </div>
       </div>
@@ -2919,10 +2933,15 @@ async function fetchAll(){
     calcPedidosAdicionales(dropiData,[]);
   }
 
-  // Meta Ads y TikTok Ads — suma automática de informes subidos; el campo manual queda como fallback
-  const gastoMetaArchivos=todasLasCampanasMeta().reduce((s,c)=>s+c.gasto,0);
+  // Meta Ads y TikTok Ads — suma automática de informes subidos, RECORTADA al rango de
+  // fechas elegido (Desde/Hasta) cuando el informe trae desglose diario real. Antes se sumaba
+  // el gasto TOTAL del informe sin importar el rango seleccionado — por eso filtrar a un solo
+  // día mostraba como si se hubiera gastado el 100% de la pauta ese día. Ahora, si hay
+  // desglose por día, solo se cuenta lo gastado DENTRO del rango elegido; si una campaña no
+  // trae ese desglose, se usa su total completo (no hay forma de recortarla por fecha).
+  const gastoMetaArchivos=pautaEnRango(todasLasCampanasMeta(),df,dt);
   const gastoMetaFinal=gastoMetaArchivos>0?gastoMetaArchivos:(ms||0);
-  const gastoTiktokArchivos=todasLasCampanasTiktok().reduce((s,c)=>s+c.gasto,0);
+  const gastoTiktokArchivos=pautaEnRango(todasLasCampanasTiktok(),df,dt);
   const gastoTiktokFinal=gastoTiktokArchivos>0?gastoTiktokArchivos:(tt||0);
   const metaData={tG:gastoMetaFinal,tot:gastoMetaFinal+gastoTiktokFinal,tt:gastoTiktokFinal,tI:0,tC:0,ctr:0,cpc:0,desdeArchivos:gastoMetaArchivos>0,ttDesdeArchivos:gastoTiktokArchivos>0};
 
@@ -3413,8 +3432,8 @@ function calcEscalonado(scope){
 function renderEscalonado(){
   const sel=$('stair-scope');
   if(sel&&sel.dataset.built!=='1'){
-    const opts=['<option value="__global__">Todo el negocio</option>']
-      .concat(gProdsFin.filter(p=>p.desp>0).sort((a,b)=>b.desp-a.desp).map(p=>`<option value="${p.nombre.replace(/"/g,'&quot;')}">${p.nombre}</option>`));
+    const opts=['<option value="__global__" style="background:var(--bg3);color:var(--text)">Todo el negocio</option>']
+      .concat(gProdsFin.filter(p=>p.desp>0).sort((a,b)=>b.desp-a.desp).map(p=>`<option value="${p.nombre.replace(/"/g,'&quot;')}" style="background:var(--bg3);color:var(--text)">${p.nombre}</option>`));
     sel.innerHTML=opts.join('');
     sel.dataset.built='1';
   }
@@ -3647,7 +3666,10 @@ function renderControlDiario(){
   const fechaNovByID={},novTextByID={},transpByID={},guiaByID={},clienteByID={};
   dOrd.forEach(r=>{
     const id=String(r['ID']||'');
-    fechaNovByID[id]=r['FECHA DE NOVEDAD']||'';
+    // Si el reporte trae FECHA DE NOVEDAD vacía para un pedido que SÍ tiene novedad
+    // registrada (columna NOVEDAD llena), no se descarta: se usa la fecha de último
+    // movimiento como mejor estimado, para que esa novedad real no desaparezca del conteo.
+    fechaNovByID[id]=r['FECHA DE NOVEDAD']||r['FECHA DE ÚLTIMO MOVIMIENTO']||r['FECHA']||'';
     novTextByID[id]=r['NOVEDAD']||'';
     transpByID[id]=r['TRANSPORTADORA']||'';
     guiaByID[id]=r['NÚMERO GUIA']||'';
@@ -3740,7 +3762,7 @@ function renderControlDiario(){
   $('m-novsol').innerHTML=`
     <div class="mc b"><div class="lb">Total novedades del período</div><div class="vl">${todasNovedades.length}</div></div>
     <div class="mc r"><div class="lb">Sin solucionar</div><div class="vl">${noSolucionadas.length}</div><div class="sb">${todasNovedades.length>0?(noSolucionadas.length/todasNovedades.length*100).toFixed(1):0}% del total</div></div>
-    <div class="mc o"><div class="lb">Solucionadas — devolución directa</div><div class="vl">${devolucionDirecta.length}</div><div class="sb">no cuenta como gestión real</div></div>
+    <div class="mc o"><div class="lb">Solucionadas — devolución directa</div><div class="vl">${devolucionDirecta.length}</div><div class="sb">sí se gestionaron; no entran en el % de efectividad</div></div>
     <div class="mc g" style="border:1px solid rgba(34,197,94,0.25)"><div class="lb">Efectividad de gestión</div><div class="vl">${pctEfectividad.toFixed(1)}%</div><div class="sb">${evalEntregados.length} entregados / ${evaluables.length} evaluables</div></div>
   `;
 
@@ -3976,20 +3998,30 @@ function gastoDiarioReal(){
 function parsearInformeMeta(rows, filename){
   // Encontrar la fila de headers (tiene "Nombre de la campaña")
   let headerRow = -1;
-  let cuentaCol = -1, campanaCol = -1, gastoCol = -1;
+  let cuentaCol = -1, campanaCol = -1, gastoCol = -1, diaCol = -1;
   for(let i=0; i<rows.length; i++){
     const r = rows[i].map(c=>String(c||'').trim());
     const ci = r.findIndex(c=>c.includes('Nombre de la cuenta'));
     const cai = r.findIndex(c=>c.includes('Nombre de la campa'));
     const gi = r.findIndex(c=>c.includes('Importe gastado'));
+    const di = r.findIndex(c=>c==='Día'||c==='Dia'||c.includes('Día'));
     if(cai>=0 && gi>=0){
-      headerRow=i; cuentaCol=ci; campanaCol=cai; gastoCol=gi;
+      headerRow=i; cuentaCol=ci; campanaCol=cai; gastoCol=gi; diaCol=di;
       break;
     }
   }
   if(headerRow<0) return [];
 
-  const campanas = [];
+  // Algunos exports de Meta traen columna "Día": cada campaña aparece en VARIAS filas —
+  // una de total del período completo (Día="All") y una POR CADA DÍA con su gasto real.
+  // Si se sumaran todas las filas tal cual, se contaría el total del período DOS VECES (una
+  // vez como fila-total, otra como la suma de las filas diarias). Para evitarlo: se agrupa
+  // por campaña, se ignoran las filas "Día=All"/vacías cuando existen filas con fecha real
+  // para esa campaña, y se guarda el desglose en `porDia` para poder filtrar por fecha
+  // después (ver `pautaEnRango`). Si el export NO trae columna "Día", el comportamiento es
+  // exactamente el de antes (una fila = un total, sin desglose).
+  const porCampana = {};
+  const orden = [];
   let cuentaActual = '';
   for(let i=headerRow+1; i<rows.length; i++){
     const r = rows[i];
@@ -3997,6 +4029,7 @@ function parsearInformeMeta(rows, filename){
     const campana = String(r[campanaCol]||'').trim();
     const gastoRaw = String(r[gastoCol]||'').replace(/[^0-9.]/g,'');
     const gasto = parseFloat(gastoRaw)||0;
+    const dia = diaCol>=0 ? String(r[diaCol]||'').trim() : '';
 
     if(!campana && !cuenta) continue;
 
@@ -4015,12 +4048,40 @@ function parsearInformeMeta(rows, filename){
 
     // Si tiene cuenta en esta fila, actualizarla
     if(cuenta) cuentaActual = cuenta;
+    if(!campana) continue;
 
-    if(campana && gasto>0){
-      campanas.push({nombre:campana, gasto, cuenta:cuentaActual, archivo:filename, plataforma:'meta'});
+    const key = cuentaActual+'|'+campana;
+    if(!porCampana[key]){
+      porCampana[key]={nombre:campana, cuenta:cuentaActual, gastoTotal:0, gastoDiario:0, porDia:{}, tieneDiario:false};
+      orden.push(key);
+    }
+    const c = porCampana[key];
+    if(diaCol>=0 && /^\d{4}-\d{2}-\d{2}$/.test(dia)){
+      c.porDia[dia]=(c.porDia[dia]||0)+gasto;
+      c.gastoDiario+=gasto;
+      c.tieneDiario=true;
+    } else if(gasto>0){
+      c.gastoTotal+=gasto;
     }
   }
-  return campanas;
+
+  return orden.map(key=>{
+    const c=porCampana[key];
+    const gasto = c.tieneDiario ? c.gastoDiario : c.gastoTotal;
+    return {nombre:c.nombre, gasto, cuenta:c.cuenta, archivo:filename, plataforma:'meta', porDia:c.tieneDiario?c.porDia:null};
+  }).filter(c=>c.gasto>0);
+}
+
+// Suma SOLO el gasto real dentro del rango [df,dt] usando el desglose diario de cada
+// campaña cuando existe (porDia). Si una campaña no trae ese desglose, no hay forma de
+// filtrarla por fecha — se usa su total completo tal cual (igual que se hacía antes).
+function pautaEnRango(campanas, df, dt){
+  return campanas.reduce((s,c)=>{
+    if(c.porDia){
+      return s+Object.entries(c.porDia).filter(([f])=>f>=df&&f<=dt).reduce((s2,[,g])=>s2+g,0);
+    }
+    return s+c.gasto;
+  },0);
 }
 
 // ---- CARGA DE ARCHIVOS TIKTOK ----
@@ -4060,20 +4121,25 @@ function parsearInformeTiktok(rows, filename){
   const posiblesCuenta=['nombre de la cuenta','nombre del anunciante','account name','advertiser name'];
   const posiblesCampana=['nombre de la campa','campaign name'];
   const posiblesGasto=['costo total','costo (cop)','costo','cost','gasto','total cost'];
-  let headerRow=-1, cuentaCol=-1, campanaCol=-1, gastoCol=-1;
+  const posiblesDia=['día','dia','day','date','fecha'];
+  let headerRow=-1, cuentaCol=-1, campanaCol=-1, gastoCol=-1, diaCol=-1;
   for(let i=0;i<rows.length;i++){
     const r = rows[i].map(c=>String(c||'').trim().toLowerCase());
     const cai = r.findIndex(c=>posiblesCampana.some(p=>c.includes(p)));
     const gi = r.findIndex(c=>posiblesGasto.some(p=>c.includes(p)));
     if(cai>=0 && gi>=0){
       const ci = r.findIndex(c=>posiblesCuenta.some(p=>c.includes(p)));
-      headerRow=i; cuentaCol=ci; campanaCol=cai; gastoCol=gi;
+      const di = r.findIndex(c=>posiblesDia.some(p=>c===p||c.includes(p)));
+      headerRow=i; cuentaCol=ci; campanaCol=cai; gastoCol=gi; diaCol=di;
       break;
     }
   }
   if(headerRow<0) return [];
 
-  const campanas = [];
+  // Mismo cuidado que en Meta: si el export trae columna de día/fecha, evitar sumar el
+  // total de la campaña dos veces (una como fila-total, otra como suma de las diarias).
+  const porCampana = {};
+  const orden = [];
   let cuentaActual = '';
   for(let i=headerRow+1; i<rows.length; i++){
     const r = rows[i];
@@ -4081,6 +4147,7 @@ function parsearInformeTiktok(rows, filename){
     const campana = String(r[campanaCol]||'').trim();
     const gastoRaw = String(r[gastoCol]||'').replace(/[^0-9.]/g,'');
     const gasto = parseFloat(gastoRaw)||0;
+    const dia = diaCol>=0 ? String(r[diaCol]||'').trim() : '';
 
     if(!campana && !cuenta) continue;
 
@@ -4098,12 +4165,28 @@ function parsearInformeTiktok(rows, filename){
 
     if(!cuenta && !campana) continue;
     if(cuenta) cuentaActual = cuenta;
+    if(!campana) continue;
 
-    if(campana && gasto>0){
-      campanas.push({nombre:campana, gasto, cuenta:cuentaActual, archivo:filename, plataforma:'tiktok'});
+    const key = cuentaActual+'|'+campana;
+    if(!porCampana[key]){
+      porCampana[key]={nombre:campana, cuenta:cuentaActual, gastoTotal:0, gastoDiario:0, porDia:{}, tieneDiario:false};
+      orden.push(key);
+    }
+    const c = porCampana[key];
+    if(diaCol>=0 && /^\d{4}-\d{2}-\d{2}$/.test(dia)){
+      c.porDia[dia]=(c.porDia[dia]||0)+gasto;
+      c.gastoDiario+=gasto;
+      c.tieneDiario=true;
+    } else if(gasto>0){
+      c.gastoTotal+=gasto;
     }
   }
-  return campanas;
+
+  return orden.map(key=>{
+    const c=porCampana[key];
+    const gasto = c.tieneDiario ? c.gastoDiario : c.gastoTotal;
+    return {nombre:c.nombre, gasto, cuenta:c.cuenta, archivo:filename, plataforma:'tiktok', porDia:c.tieneDiario?c.porDia:null};
+  }).filter(c=>c.gasto>0);
 }
 
 function todasLasCampanasMeta(){
@@ -4220,8 +4303,15 @@ function renderPauta(){
       const original=String(r['PRODUCTO']||'').trim();
       if(original)nombresUnicos.add(resolverNombreProducto(original));
     });
-    const opts=[...nombresUnicos].sort().map(nom=>`<option value="${nom.replace(/"/g,'&quot;')}">${nom}</option>`).join('');
-    selProd.innerHTML='<option value="">— Seleccionar producto —</option>'+opts;
+    const opts=[...nombresUnicos].sort().map(nom=>`<option value="${nom.replace(/"/g,'&quot;')}" style="background:var(--bg3);color:var(--text)">${nom}</option>`).join('');
+    selProd.innerHTML='<option value="" style="background:var(--bg3);color:var(--text)">— Seleccionar producto —</option>'+opts;
+  }
+
+  // Poblar selector de paquetes YA existentes (para agregarles campañas sin recrearlos)
+  const selPaq = $('paquete-existente');
+  if(selPaq){
+    const optsPaq=paquetes.map(p=>`<option value="${p.id}" style="background:var(--bg3);color:var(--text)">${p.nombre}${p.prodId?' → '+p.prodId:' (sin producto)'}</option>`).join('');
+    selPaq.innerHTML='<option value="" style="background:var(--bg3);color:var(--text)">— Selecciona un paquete —</option>'+optsPaq;
   }
 
   // Render paquetes
@@ -4313,6 +4403,27 @@ function eliminarPaquete(id){
   if(allOrds.length&&dProd.length) renderTodoAnalisis({allV:allOrds.filter(o=>!o.dup)});
 }
 
+// Agrega las campañas actualmente marcadas (campSeleccion) a un paquete que YA existe,
+// sin crear uno nuevo ni tener que volver a elegir nombre/producto — para cuando a alguien
+// se le olvidó asignar una campaña y ya tiene el paquete de ese producto armado.
+function agregarACampanaPaquete(){
+  const id = parseFloat($('paquete-existente')?.value||'');
+  if(!id){ setS('err','Selecciona un paquete existente'); return; }
+  if(!campSeleccion.size){ setS('err','Selecciona al menos una campaña'); return; }
+  const p = paquetes.find(x=>x.id===id);
+  if(!p){ setS('err','Ese paquete ya no existe'); return; }
+
+  const nuevas = [...campSeleccion].filter(n=>!p.campanas.includes(n));
+  p.campanas.push(...nuevas);
+  p.gasto = todasLasCampanas().filter(c=>p.campanas.includes(c.nombre)).reduce((s,c)=>s+c.gasto,0);
+
+  campSeleccion.clear();
+  guardarPautaLS();
+  renderPauta();
+  if(allOrds.length&&dProd.length) renderTodoAnalisis({allV:allOrds.filter(o=>!o.dup)});
+  setS('ok', `${nuevas.length} campaña${nuevas.length===1?'':'s'} agregada${nuevas.length===1?'':'s'} a "${p.nombre}"`);
+}
+
 function renderPaquetes(){
   const cont = $('paquetes-lista');
   if(!cont) return;
@@ -4320,11 +4431,11 @@ function renderPaquetes(){
     cont.innerHTML='<div class="empty">Sin paquetes creados aún. Selecciona campañas arriba y crea un paquete.</div>';
     return;
   }
-  const prodNombres = {};
-  dProd.forEach(r=>{const id=String(r['PRODUCTO ID']||'');const nom=String(r['PRODUCTO']||'').trim();if(id&&nom)prodNombres[id]=nom;});
 
   cont.innerHTML = paquetes.map(p=>{
-    const prodNom = p.prodId ? (prodNombres[p.prodId]||`ID ${p.prodId}`) : '— Sin producto asignado —';
+    // p.prodId ya es el NOMBRE del producto (resuelto con fusión), no un ID de Dropi —
+    // se muestra directo, sin intentar volver a buscarlo en ninguna otra tabla.
+    const prodNom = p.prodId || '— Sin producto asignado —';
     const gastoReal = todasLasCampanas().filter(c=>p.campanas.includes(c.nombre)).reduce((s,c)=>s+c.gasto,0);
     return`<div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:12px 14px;margin-bottom:8px">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
@@ -4340,10 +4451,14 @@ function renderPaquetes(){
 
 // ---- GASTO DE PAUTA POR PRODUCTO ----
 // El paquete guarda prodId = nombre del producto (ya resuelto con fusión si aplica).
-// Match directo, sin pasos intermedios.
+// Match directo, sin pasos intermedios. Se recorta al rango de fechas elegido (Desde/Hasta)
+// igual que el total general, para que el ranking de productos y su ROAS no infle la pauta
+// cuando se filtra a un rango más corto que el período completo del informe.
 function gastoPorNombreProducto(nombre){
+  const df=$('date-from')?.value||'',dt=$('date-to')?.value||'';
   return paquetes.filter(p=>p.prodId===nombre).reduce((s,p)=>{
-    const gastoReal=todasLasCampanas().filter(c=>p.campanas.includes(c.nombre)).reduce((s2,c)=>s2+c.gasto,0);
+    const camps=todasLasCampanas().filter(c=>p.campanas.includes(c.nombre));
+    const gastoReal=(df&&dt)?pautaEnRango(camps,df,dt):camps.reduce((s2,c)=>s2+c.gasto,0);
     return s+(gastoReal>0?gastoReal:p.gasto);
   },0);
 }

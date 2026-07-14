@@ -547,3 +547,87 @@ entran en el cálculo)`, tanto para "Por producto" como para "Por transportadora
 del panel se rediseñó con clases dedicadas (`.cd-panel`, `.cd-row`, `.cd-bar`, etc.) en vez de
 estilos en línea sueltos, para que coincida visualmente con el resto del dashboard ya
 rediseñado — no cambia ningún número, solo la presentación y la aclaración de cancelados.
+
+---
+
+## 20. Netlify retirado del proyecto (2026-07-14)
+
+Se eliminaron `netlify.toml` y `netlify/functions/*.js` (proxies viejos a las APIs de Meta y
+Shopify de una versión anterior del proyecto, antes de que pasara a ser 100% client-side con
+archivos subidos). No estaban referenciados por `index.html` ni por el despliegue real (que
+siempre ha sido GitHub Pages) — el usuario confirmó que no se usan y no quiere pagar por ese
+servicio.
+
+---
+
+## 21. Pauta Meta/TikTok — doble conteo corregido y ahora respeta el rango de fechas (2026-07-14)
+
+**Bug real, confirmado analizando un export real de Meta Ads:** algunos informes de Meta traen,
+dentro de la MISMA hoja que ya se lee (`parsearInformeMeta`), una fila de **total del período**
+por campaña (columna "Día" = `"All"`) Y ADEMÁS una fila **por cada día** con el gasto real de
+esa fecha. El código anterior no distinguía esto — empujaba CADA fila (la de total y cada una
+de las diarias) como una entrada separada de `campanas[]` con el mismo nombre, así que al sumar
+`todasLasCampanasMeta().reduce((s,c)=>s+c.gasto,0)` se contaba el total del período **dos
+veces** (una como fila-total, otra como la suma de las diarias que ya sumaban ese mismo total).
+
+**Fix en `parsearInformeMeta`/`parsearInformeTiktok`:** ahora se detecta la columna "Día" (si
+existe) y se agrupa por campaña. Si una campaña tiene filas con fecha real
+(`/^\d{4}-\d{2}-\d{2}$/`), su `gasto` final es la SUMA de solo esas filas (ignorando la fila de
+total-de-período, que ya no hace falta); si no tiene columna "Día", el comportamiento es
+idéntico al de siempre (una fila = un total). Cada entrada de `campanas[]` ahora también trae
+`porDia: {fecha: gasto}` (o `null` si el archivo no tenía ese desglose).
+
+**Bug #2 — la pauta no se recortaba al rango de fechas elegido:** el total de pauta usado en
+Resumen/ROAS/Estado de Cuenta (`gastoMetaFinal`/`gastoTiktokFinal`) sumaba el gasto COMPLETO de
+todos los archivos subidos, sin importar el rango "Desde/Hasta" seleccionado en Credenciales —
+por eso filtrar a un solo día mostraba como si el 100% de la pauta del período completo se
+hubiera gastado ese único día. Nueva función `pautaEnRango(campanas, df, dt)`: para cada
+campaña, si tiene `porDia`, suma SOLO los días dentro de `[df, dt]`; si no tiene desglose
+diario, usa su total completo (no hay forma de recortarla por fecha en ese caso). Se usa en:
+- `fetchAll()` — reemplaza la suma plana para `gastoMetaArchivos`/`gastoTiktokArchivos`.
+- `gastoPorNombreProducto(nombre)` — igual, para que el ranking de productos y su ROAS por
+  producto no infle la pauta cuando se filtra a un rango más corto que el informe completo.
+
+Nota: `extraerGastoDiarioWB`/`gastoDiarioReal()` (sección 18, usados solo por "Análisis por
+día") no se tocaron — siguen funcionando igual, ya estaban correctamente implementados.
+
+---
+
+## 22. Novedades — fecha de novedad vacía ya no descarta la novedad (2026-07-14)
+
+**Bug real:** en `renderControlDiario`, si el campo `FECHA DE NOVEDAD` de Dropi venía vacío
+para un pedido que SÍ tenía una novedad registrada (columna `NOVEDAD` llena), esa novedad se
+descartaba silenciosamente del conteo total (`todasNovedades`) porque `enRango('')` siempre es
+falso. Esto hacía que "Total novedades del período" mostrara un número menor al real.
+
+**Fix:** `fechaNovByID[id]` ahora usa `FECHA DE NOVEDAD || FECHA DE ÚLTIMO MOVIMIENTO ||
+FECHA` como cadena de respaldo — una novedad real nunca desaparece del conteo solo porque le
+falte ese campo específico. Afecta tanto al Bloque 1 (novedades pendientes) como al Bloque 2
+(total de novedades del período) por igual, ya que ambos parten de `fechaNovByID`.
+
+**Corrección de texto:** la tarjeta "Solucionadas — devolución directa" decía "no cuenta como
+gestión real", lo cual es incorrecto — SÍ hubo gestión (se registró una solución). Lo que no
+cuenta es en el **% de efectividad** (porque esos casos no representan una oportunidad real de
+"salvar" el pedido, ya iban directo a devolución). Texto corregido a: *"sí se gestionaron; no
+entran en el % de efectividad"*. El número (`devolucionDirecta.length`) y el cálculo de
+`pctEfectividad` (que ya los excluía correctamente del denominador) no cambiaron.
+
+---
+
+## 23. Publicidad — arreglos en la asignación de paquetes (2026-07-14)
+
+- **Contraste roto en los `<select>` de producto/paquete:** los `<option>` generados
+  dinámicamente (`#paquete-producto`, `#paquete-existente`, `#stair-scope`) no tenían
+  `background`/`color` propio, así que el popup nativo del navegador los mostraba con texto
+  claro sobre fondo claro (heredado del tema oscuro de la página, pero renderizado por el SO
+  sin ese contexto) — prácticamente ilegible. Fix: cada `<option>` generado ahora lleva
+  `style="background:var(--bg3);color:var(--text)"` explícito.
+- **`renderPaquetes()` mostraba el producto mal:** intentaba buscar `p.prodId` (que en realidad
+  YA es el nombre resuelto del producto, no un ID) dentro de un mapa indexado por la columna
+  `PRODUCTO ID` de Dropi — un cruce que nunca iba a coincidir, cayendo casi siempre al
+  fallback `ID ${p.prodId}` (mostraba algo como "ID ETHIOPIAN BLACK SEED OIL"). Fix: se
+  muestra `p.prodId` directo, sin ese cruce roto.
+- **Nueva opción "Agregar a un paquete existente"** (`agregarACampanaPaquete()`): si falta
+  asignar una campaña, ya no hay que crear un paquete nuevo — se puede seleccionar la campaña
+  en el buscador y sumarla a cualquier paquete ya creado (con su producto ya asignado) desde un
+  selector nuevo junto al de "Crear paquete". Recalcula `gasto` del paquete automáticamente.
