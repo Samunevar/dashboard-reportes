@@ -528,3 +528,22 @@ la suma final de todos los días siempre cuadra exactamente con el gasto total o
 muestra el resto del dashboard (Resumen, ROAS, etc.) — nunca se cuenta pauta de más ni de
 menos. Si ningún archivo trae desglose diario, el comportamiento es idéntico al anterior
 (100% proporcional).
+
+---
+
+## 19. Detalle por ciudad (clic en una ciudad, tab Logística) — cancelados visibles (2026-07-13)
+
+Al hacer clic en una ciudad (`renderCiudadesFiltradas` → panel `#ciudad-det-i`), el desglose
+"Por producto" y "Por transportadora" mostraba `entregados · devueltos · en movimiento · total`,
+pero esos tres primeros números casi nunca suman el `total` — la diferencia son **cancelados**
+(y en teoría pendientes, aunque en la práctica casi no aparecen a nivel de ciudad), que
+correctamente **no cuentan** en la base de la barra de efectividad (`desp = ent+dev+mov`, sin
+cancelados) ni en el % mostrado. Antes ese número no se explicaba en ningún lado, lo que parecía
+un error de suma.
+
+Ahora, si `d.can>0`, se muestra una línea aparte **arriba** del detalle: `N cancelados (no
+entran en el cálculo)`, tanto para "Por producto" como para "Por transportadora"
+(`transpPorCiudad` ahora también cuenta `can`, igual que `prodPorCiudad` ya lo hacía). El resto
+del panel se rediseñó con clases dedicadas (`.cd-panel`, `.cd-row`, `.cd-bar`, etc.) en vez de
+estilos en línea sueltos, para que coincida visualmente con el resto del dashboard ya
+rediseñado — no cambia ningún número, solo la presentación y la aclaración de cancelados.
