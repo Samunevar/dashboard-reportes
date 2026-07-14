@@ -597,7 +597,7 @@ body.app-ready #landing{opacity:0;visibility:hidden;transform:scale(1.05);pointe
 
     <div class="card">
       <div class="ct">Utilidad según cuánto entregues de lo que ya tienes en movimiento</div>
-      <div class="al ai" style="margin-bottom:14px">Esto <b>no es una proyección adicional</b> — es un simulador con lo que YA existe hoy: tus pedidos <b>en movimiento</b> (ni entregados ni devueltos todavía). Si tu operación de ventas parara ahora mismo y solo fueras entregando ese inventario en camino, así se vería tu utilidad bruta y neta según el % que logres entregar. La pauta se mantiene <b>constante</b> — ya se gastó, no cambia con el resultado.</div>
+      <div class="al ai" style="margin-bottom:14px">Esto <b>no es una proyección adicional</b> — es un simulador con lo que YA existe hoy: si apagaras las campañas ahora mismo y solo te quedaras a esperar el resultado de lo que ya está despachado, así se vería tu utilidad según la <b>efectividad final</b> que termine teniendo la operación. Los % son la efectividad total sobre lo despachado (entregados+devueltos+en movimiento) — no un % del inventario en camino. El primer bloque te muestra tu efectividad real de HOY; los siguientes simulan qué pasaría si el resultado final fuera 25%, 35%, 45%... usando únicamente los pedidos que ya tienes en movimiento como margen de maniobra (nunca puede superar el techo de lo que ya está despachado). La pauta se mantiene <b>constante</b> — ya se gastó, no cambia con el resultado.</div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
         <span class="sl" style="margin:0">Ver</span>
         <select id="stair-scope" onchange="renderEscalonado()" style="max-width:280px;padding:8px 12px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-size:12.5px;font-family:'Inter',sans-serif">
@@ -899,7 +899,7 @@ body.app-ready #landing{opacity:0;visibility:hidden;transform:scale(1.05);pointe
     <details class="how"><summary><span class="qm">?</span> ¿Cómo funciona este apartado?<span class="chev">▶</span></summary><div class="howbody">Desglosa el período <b>día por día</b>: cuánto vendiste, cuánto costó y cuánto quedó cada fecha. La publicidad y los gastos fijos se reparten según el <b>peso de cada día</b>, para ver qué jornadas fueron las más rentables.</div></details>
     <div class="card">
       <div class="ct">Análisis por día</div>
-      <div class="al ai" style="margin-bottom:12px">Ventas, costos y utilidad de cada día del rango del reporte. La pauta publicitaria y los gastos fijos (nómina + gastos extras, de Credenciales) se reparten proporcionalmente según qué % de las ventas totales del período generó cada día — un día sin ventas no recibe nada de ese reparto.</div>
+      <div class="al ai" style="margin-bottom:12px">Ventas, costos y utilidad de cada día del rango del reporte. Si tu informe de Meta/TikTok trae el desglose diario real (algunos exports lo incluyen en una hoja oculta), la pauta de esos días usa ese <strong>gasto real</strong> (marcado con <span style="color:var(--green)">●real</span>); los días sin ese dato, y los gastos fijos (nómina + gastos extras), se siguen repartiendo proporcionalmente según qué % de las ventas totales del período generó cada día.</div>
       <div class="tw2">
         <table>
           <thead><tr><th>Fecha</th><th>Entregados</th><th>Despachados</th><th>Ventas</th><th>Costo producto</th><th>Costo flete</th><th>Pauta (prop.)</th><th>Gastos fijos (prop.)</th><th>Utilidad neta</th><th>Margen</th></tr></thead>
@@ -3370,39 +3370,41 @@ function calcProductosFinanciero(allValidas){
   });
 }
 
-// ---- SIMULADOR ESCALONADO: utilidad según % de lo YA en movimiento que se entregue ----
+// ---- SIMULADOR ESCALONADO: utilidad según la efectividad final de la operación ----
 // No es una proyección — usa el promedio REAL de utilidad por entrega (calculado con los
-// pedidos que ya se entregaron) y lo aplica a distintos % de conversión del inventario que
-// ya está en movimiento hoy. La pauta es una constante: no depende de este resultado.
+// pedidos que ya se entregaron) y simula distintos escenarios de EFECTIVIDAD FINAL sobre lo
+// YA despachado (entregados+devueltos+en movimiento), tomando como único margen de maniobra
+// los pedidos que hoy siguen en movimiento. El % de cada escalón es la efectividad total que
+// tendría la operación (ej. "si al final entrego el 60% de lo despachado"), NO un % del pool
+// en movimiento. La pauta es una constante: no depende de este resultado.
 const STAIR_STEPS=[25,35,45,55,65,75,85,95];
 function calcEscalonado(scope){
   if(!gDropiData)return null;
   const fin=calcFinanciero(gDropiData.allV);
+  let desp,ent,numMov,utilBase,utilPorEntrega,pauta,nombre;
   if(scope==='__global__'){
-    const numMov=gDropiData.numMov||0,ent=gDropiData.ent||0;
-    const utilPorEntrega=ent>0?Math.max((fin.totalOrdenEnt-fin.fleteEnt-fin.costoProvEnt)/ent,0):0;
-    const pauta=gPautaTotal||0;
-    return{
-      nombre:'Todo el negocio',numMov,utilBase:Math.max(fin.utilBruta,0),utilPorEntrega,pauta,tienePauta:pauta>0,
-      steps:STAIR_STEPS.map(pctStep=>{
-        const extra=Math.round(numMov*pctStep/100);
-        const utilBruta=Math.max(fin.utilBruta,0)+extra*utilPorEntrega;
-        return{pctStep,extra,utilBruta,utilNeta:pauta>0?utilBruta-pauta:null};
-      })
-    };
+    desp=gDropiData.desp||0;ent=gDropiData.ent||0;numMov=gDropiData.numMov||0;
+    utilBase=Math.max(fin.utilBruta,0);
+    utilPorEntrega=ent>0?Math.max((fin.totalOrdenEnt-fin.fleteEnt-fin.costoProvEnt)/ent,0):0;
+    pauta=gPautaTotal||0;nombre='Todo el negocio';
+  }else{
+    const p=gProdsFin.find(x=>x.nombre===scope);
+    if(!p)return null;
+    desp=p.desp;ent=p.ent;numMov=Math.max(p.desp-p.ent-p.dev,0);
+    utilBase=p.utilBruta;utilPorEntrega=p.utilPorEntrega;pauta=p.pauta||0;nombre=p.nombre;
   }
-  const p=gProdsFin.find(x=>x.nombre===scope);
-  if(!p)return null;
-  const numMov=Math.max(p.desp-p.ent-p.dev,0);
-  const pauta=p.pauta||0;
-  return{
-    nombre:p.nombre,numMov,utilBase:p.utilBruta,utilPorEntrega:p.utilPorEntrega,pauta,tienePauta:pauta>0,
-    steps:STAIR_STEPS.map(pctStep=>{
-      const extra=Math.round(numMov*pctStep/100);
-      const utilBruta=p.utilBruta+extra*p.utilPorEntrega;
-      return{pctStep,extra,utilBruta,utilNeta:pauta>0?utilBruta-pauta:null};
-    })
-  };
+  const pEactual=desp>0?(ent/desp*100):0; // efectividad real actual sobre lo despachado
+  const techo=desp>0?((ent+numMov)/desp*100):0; // máximo alcanzable si TODO lo en movimiento se entrega
+  const steps=STAIR_STEPS.map(pctStep=>{
+    const targetEnt=Math.round(desp*pctStep/100);
+    const entregasExtra=targetEnt-ent;
+    const yaSuperado=entregasExtra<=0; // la operación ya está por encima de este escalón
+    const excedeTecho=entregasExtra>numMov; // no alcanza ni entregando el 100% de lo en movimiento
+    const clamped=Math.max(0,Math.min(entregasExtra,numMov));
+    const utilBruta=utilBase+clamped*utilPorEntrega;
+    return{pctStep,extra:clamped,yaSuperado,excedeTecho,utilBruta,utilNeta:pauta>0?utilBruta-pauta:null};
+  });
+  return{nombre,numMov,desp,ent,utilBase,pauta,tienePauta:pauta>0,pEactual,techo,steps};
 }
 function renderEscalonado(){
   const sel=$('stair-scope');
@@ -3416,29 +3418,31 @@ function renderEscalonado(){
   const data=calcEscalonado(scope);
   const cont=$('stair-chart');
   if(!cont)return;
-  if(!data||data.numMov===0){
-    cont.innerHTML='<div class="empty">No hay pedidos en movimiento para simular en esta selección.</div>';
+  if(!data||data.desp===0){
+    cont.innerHTML='<div class="empty">No hay pedidos despachados para simular en esta selección.</div>';
     return;
   }
-  const maxBruta=Math.max(...data.steps.map(s=>s.utilBruta),1);
+  const maxBruta=Math.max(data.utilBase,...data.steps.map(s=>s.utilBruta),1);
   cont.innerHTML=`<div class="stair-list">`
     +`<div class="stair-step stair-real">
-        <div class="stair-pct">Hoy<small>real</small></div>
+        <div class="stair-pct">${data.pEactual.toFixed(1)}%<small>efectividad real hoy</small></div>
         <div class="stair-bars">
           <div class="stair-bar-row"><span class="stair-bar-label">Utilidad bruta</span><div class="stair-bar-track"><div class="stair-bar-fill" style="width:${(data.utilBase/maxBruta*100).toFixed(1)}%;background:var(--orange)"></div></div><span class="stair-bar-val" style="color:var(--orange)">${fmt(data.utilBase)}</span></div>
           ${data.tienePauta?`<div class="stair-bar-row"><span class="stair-bar-label">Utilidad neta</span><div class="stair-bar-track"><div class="stair-bar-fill" style="width:${(Math.max(data.utilBase-data.pauta,0)/maxBruta*100).toFixed(1)}%;background:${data.utilBase-data.pauta>=0?'var(--green)':'var(--red)'}"></div></div><span class="stair-bar-val" style="color:${data.utilBase-data.pauta>=0?'var(--green)':'var(--red)'}">${fmt(data.utilBase-data.pauta)}</span></div>`:''}
         </div>
       </div>`
-    +data.steps.map(s=>`
+    +data.steps.map(s=>{
+      const nota=s.yaSuperado?'ya superado hoy':s.excedeTecho?`techo real: ${data.techo.toFixed(1)}%`:`+${s.extra} entregas`;
+      return`
       <div class="stair-step">
-        <div class="stair-pct">${s.pctStep}%<small>+${s.extra} entregas</small></div>
+        <div class="stair-pct">${s.pctStep}%<small>${nota}</small></div>
         <div class="stair-bars">
           <div class="stair-bar-row"><span class="stair-bar-label">Utilidad bruta</span><div class="stair-bar-track"><div class="stair-bar-fill" style="width:${(s.utilBruta/maxBruta*100).toFixed(1)}%;background:var(--green)"></div></div><span class="stair-bar-val" style="color:var(--green)">${fmt(s.utilBruta)}</span></div>
           ${data.tienePauta?`<div class="stair-bar-row"><span class="stair-bar-label">Utilidad neta</span><div class="stair-bar-track"><div class="stair-bar-fill" style="width:${(Math.max(s.utilNeta,0)/maxBruta*100).toFixed(1)}%;background:${s.utilNeta>=0?'var(--blue)':'var(--red)'}"></div></div><span class="stair-bar-val" style="color:${s.utilNeta>=0?'var(--blue)':'var(--red)'}">${fmt(s.utilNeta)}</span></div>`:'<div class="stair-bar-row"><span class="stair-bar-label">Utilidad neta</span><span style="font-size:11px;color:var(--hint)">Sin pauta asignada</span></div>'}
         </div>
-      </div>`).join('')
+      </div>`;}).join('')
     +`</div>
-    <div style="font-size:10.5px;color:var(--hint);margin-top:10px">De ${data.numMov} pedido${data.numMov===1?'':'s'} en movimiento en esta selección · pauta ${data.tienePauta?fmt(data.pauta)+' (constante)':'no asignada'}</div>`;
+    <div style="font-size:10.5px;color:var(--hint);margin-top:10px">${data.numMov} pedido${data.numMov===1?'':'s'} en movimiento de ${data.desp} despachados en esta selección · techo alcanzable: ${data.techo.toFixed(1)}% · pauta ${data.tienePauta?fmt(data.pauta)+' (constante)':'no asignada'}</div>`;
 }
 
 // ---- CONTROL DIARIO ----
@@ -3565,10 +3569,23 @@ function renderAnalisisPorDia(){
   const totPauta=gastoMetaFinal+gastoTiktokFinal;
   const fixedMensual=parseFloat($('pl-nomina')?.value||0)+parseFloat($('pl-gastos')?.value||0);
 
-  tb.innerHTML=dias.map(f=>{
+  // Pauta diaria REAL (si algún informe la trae) — el resto de días sin dato real se
+  // completa repartiendo proporcionalmente lo que falta del total, para que la suma final
+  // siga cuadrando con el gasto total mostrado en el resto del dashboard.
+  const gastoDiario=gastoDiarioReal();
+  const diasConReal=dias.filter(f=>gastoDiario[f]!==undefined);
+  const diasSinReal=dias.filter(f=>gastoDiario[f]===undefined);
+  const totPautaReal=diasConReal.reduce((s,f)=>s+gastoDiario[f],0);
+  const totPautaRestante=Math.max(totPauta-totPautaReal,0);
+  const ventasDiasSinReal=diasSinReal.reduce((s,f)=>s+porDia[f].ventas,0);
+  const hayPautaReal=diasConReal.length>0;
+
+  tb.innerHTML=(hayPautaReal?`<tr><td colspan="10" style="padding:6px 14px;font-size:10.5px;color:var(--green)">✓ Pauta diaria real detectada en ${diasConReal.length} de ${dias.length} días (el resto se reparte proporcionalmente)</td></tr>`:'')
+  +dias.map(f=>{
     const b=porDia[f];
+    const esReal=gastoDiario[f]!==undefined;
+    const pautaDia=esReal?gastoDiario[f]:(ventasDiasSinReal>0?totPautaRestante*(b.ventas/ventasDiasSinReal):0);
     const share=totalVentasPeriodo>0?(b.ventas/totalVentasPeriodo):0;
-    const pautaDia=totPauta*share;
     const gastosDia=fixedMensual*share;
     const utilBrutaDia=b.ventas-b.costoProd-b.costoFlete;
     const utilNetaDia=utilBrutaDia-pautaDia-gastosDia;
@@ -3580,7 +3597,7 @@ function renderAnalisisPorDia(){
       <td style="font-family:'JetBrains Mono',monospace">${fmt(b.ventas)}</td>
       <td style="color:var(--red)">−${fmt(b.costoProd)}</td>
       <td style="color:var(--red)">−${fmt(b.costoFlete)}</td>
-      <td style="color:var(--red)">−${fmt(pautaDia)}</td>
+      <td style="color:var(--red)">−${fmt(pautaDia)}${esReal?' <span style="color:var(--green);font-size:9.5px">●real</span>':''}</td>
       <td style="color:var(--red)">−${fmt(gastosDia)}</td>
       <td style="color:${utilNetaDia>=0?'var(--green)':'var(--red)'};font-weight:700">${fmt(utilNetaDia)}</td>
       <td style="color:${margenDia>=0?'var(--green)':'var(--red)'}">${margenDia.toFixed(1)}%</td>
@@ -3888,20 +3905,68 @@ function hfMeta(files){
         const ws = wb.Sheets[wb.SheetNames[0]];
         const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
         const campanas = parsearInformeMeta(rows, file.name);
+        const porDia = extraerGastoDiarioWB(wb);
         // Reemplazar si ya existía el mismo archivo
         const idx = dMetaFiles.findIndex(f=>f.filename===file.name);
-        if(idx>=0) dMetaFiles[idx] = {filename:file.name, campanas};
-        else dMetaFiles.push({filename:file.name, campanas});
+        if(idx>=0) dMetaFiles[idx] = {filename:file.name, campanas, porDia};
+        else dMetaFiles.push({filename:file.name, campanas, porDia});
         procesados++;
         if(procesados===pendientes.length){
           renderArchivosMeta();
           renderPauta();
-          setS('ok', `${dMetaFiles.length} informe(s) Meta cargados — ${todasLasCampanasMeta().length} campañas`);
+          renderAnalisisPorDia();
+          const diasReales=Object.keys(gastoDiarioReal()).length;
+          setS('ok', `${dMetaFiles.length} informe(s) Meta cargados — ${todasLasCampanasMeta().length} campañas${diasReales?` · pauta diaria real detectada (${diasReales} días)`:''}`);
         }
       } catch(err){ setS('err','Error al leer '+file.name+': '+err.message); }
     };
     r.readAsBinaryString(file);
   });
+}
+
+// ---- GASTO REAL POR DÍA (si el informe lo trae) ----
+// Meta Ads a veces exporta una segunda hoja oculta con una fila POR CAMPAÑA Y POR DÍA
+// (columnas "Nombre de la campaña", "Día", "Importe gastado (COP)"), además de la hoja
+// visible con solo el total por campaña. Si esa hoja existe, se usa para saber EXACTAMENTE
+// cuánto se gastó cada día — en vez de repartir el total del período proporcionalmente.
+// Se descartan las filas de subtotal (campaña u/o "Día" = "All" o vacío).
+function extraerGastoDiarioWB(wb){
+  const porDia={};
+  wb.SheetNames.forEach(name=>{
+    const ws=wb.Sheets[name];
+    const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+    let headerRow=-1,campanaCol=-1,diaCol=-1,gastoCol=-1;
+    for(let i=0;i<rows.length;i++){
+      const r=rows[i].map(c=>String(c||'').trim());
+      const cai=r.findIndex(c=>c.includes('Nombre de la campa'));
+      const di=r.findIndex(c=>c==='Día'||c==='Dia'||c.includes('Día'));
+      const gi=r.findIndex(c=>c.includes('Importe gastado'));
+      if(cai>=0&&di>=0&&gi>=0){headerRow=i;campanaCol=cai;diaCol=di;gastoCol=gi;break;}
+    }
+    if(headerRow<0)return;
+    for(let i=headerRow+1;i<rows.length;i++){
+      const r=rows[i];
+      const campana=String(r[campanaCol]||'').trim();
+      const dia=String(r[diaCol]||'').trim();
+      if(!campana||campana==='All')continue;
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(dia))continue; // solo filas con una fecha real (no "All")
+      const gastoRaw=String(r[gastoCol]||'').replace(/[^0-9.]/g,'');
+      const gasto=parseFloat(gastoRaw)||0;
+      if(gasto>0)porDia[dia]=(porDia[dia]||0)+gasto;
+    }
+  });
+  return porDia;
+}
+// Junta el gasto diario real de todos los informes Meta+TikTok cargados (puede quedar
+// vacío si ningún archivo trae el desglose por día — en ese caso todo se sigue repartiendo
+// proporcionalmente, como antes).
+function gastoDiarioReal(){
+  const porDia={};
+  [...dMetaFiles,...dTiktokFiles].forEach(f=>{
+    if(!f.porDia)return;
+    Object.entries(f.porDia).forEach(([fecha,g])=>{porDia[fecha]=(porDia[fecha]||0)+g;});
+  });
+  return porDia;
 }
 
 function parsearInformeMeta(rows, filename){
@@ -3967,14 +4032,17 @@ function hfTiktok(files){
         const ws = wb.Sheets[wb.SheetNames[0]];
         const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
         const campanas = parsearInformeTiktok(rows, file.name);
+        const porDia = extraerGastoDiarioWB(wb);
         const idx = dTiktokFiles.findIndex(f=>f.filename===file.name);
-        if(idx>=0) dTiktokFiles[idx] = {filename:file.name, campanas};
-        else dTiktokFiles.push({filename:file.name, campanas});
+        if(idx>=0) dTiktokFiles[idx] = {filename:file.name, campanas, porDia};
+        else dTiktokFiles.push({filename:file.name, campanas, porDia});
         procesados++;
         if(procesados===pendientes.length){
           renderArchivosTiktok();
           renderPauta();
-          setS('ok', `${dTiktokFiles.length} informe(s) TikTok cargados — ${todasLasCampanasTiktok().length} campañas`);
+          renderAnalisisPorDia();
+          const diasReales=Object.keys(gastoDiarioReal()).length;
+          setS('ok', `${dTiktokFiles.length} informe(s) TikTok cargados — ${todasLasCampanasTiktok().length} campañas${diasReales?` · pauta diaria real detectada (${diasReales} días)`:''}`);
         }
       } catch(err){ setS('err','Error al leer '+file.name+': '+err.message); }
     };

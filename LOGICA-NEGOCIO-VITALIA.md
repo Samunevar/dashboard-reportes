@@ -433,47 +433,98 @@ los índices `st(i)` con la posición física de los paneles (ver sección 13).
 
 ---
 
-## 17. Simulador escalonado — utilidad según % entregado de lo que ya está en movimiento (2026-07-13)
+## 17. Simulador escalonado — utilidad según la efectividad final de la operación (2026-07-13, corregido 2026-07-13)
 
-Nueva tarjeta en el tab **Proyección** (`renderEscalonado()`, tabla `calcEscalonado(scope)`).
+Nueva tarjeta en el tab **Proyección** (`renderEscalonado()`, `calcEscalonado(scope)`).
 **No es una proyección adicional ni cambia la proyección existente (85%)** — es un simulador
-aparte que responde: *"si mi operación de ventas parara hoy y solo fuera entregando lo que
-ya tengo en movimiento, ¿cuánta utilidad me deja según qué % logre entregar?"*.
+aparte que responde: *"si apagara las campañas y solo esperara el resultado de lo que ya está
+despachado, ¿cuánta utilidad me deja según la efectividad final que termine teniendo la
+operación?"*.
 
-**Universo de datos:** únicamente los pedidos `EST_MOV` (en movimiento) que existen HOY —
-no inventa pedidos nuevos ni usa ninguna proyección de ventas futuras.
+**Importante — el % de cada escalón es la EFECTIVIDAD TOTAL sobre lo despachado**
+(entregados + devueltos + en movimiento), **no** un porcentaje del pool en movimiento. La
+primera versión de este simulador cometía ese error (aplicaba el % como fracción incremental
+de `numMov`, lo que producía incrementos ridículamente pequeños e ignoraba la efectividad real
+ya alcanzada). Corrección:
 
-**Promedio real por entrega:** se calcula con los pedidos que **ya se entregaron de verdad**
-en el período (no con los en movimiento, que todavía no se sabe si entregan bien):
+```
+desp = entregados + devueltos + enMovimiento   (mismo "despachado" que el resto del dashboard)
+pEactual = entregados / desp × 100             (efectividad real de HOY — se muestra explícita)
+techo    = (entregados + numMov) / desp × 100  (máximo posible si TODO lo en movimiento entrega bien)
+```
+
+**Por cada paso de % objetivo (25, 35, 45, 55, 65, 75, 85, 95 — efectividad FINAL deseada):**
+```
+targetEntregados = round(desp × pctStep / 100)
+entregasExtra     = targetEntregados − entregados
+```
+- Si `entregasExtra ≤ 0` → ese escalón **ya está superado** por la efectividad actual; se
+  muestra con la nota "ya superado hoy" y usa 0 entregas extra (el bloque queda igual que
+  "Hoy").
+- Si `entregasExtra > numMov` → el escalón **no es alcanzable** ni entregando el 100% de lo
+  que queda en movimiento; se muestra con la nota "techo real: X%" y se usa como tope
+  `numMov` completo (no se puede fabricar entregas que no existen).
+- En cualquier otro caso, `entregasExtra` es exactamente cuántos de los pedidos en movimiento
+  tendrían que resolverse bien para llegar a ese % final.
+
+```
+utilBruta(step) = utilBrutaHoy + entregasExtraClamped × utilPorEntrega
+utilNeta(step)  = utilBruta(step) − pauta        (solo si hay pauta asignada; si no, null)
+```
+
+**Promedio real por entrega** (sin cambios respecto a la versión anterior):
 ```
 utilPorEntrega (global) = max((totalOrdenEnt − fleteEnt − costoProvEnt) / entregados, 0)
 utilPorEntrega (producto) = p.utilPorEntrega  (ya existía en calcProductosFinanciero)
 ```
-Nota: NO se resta de nuevo el flete/costoProv de los pedidos en movimiento o devueltos —
-esos ya están descontados una sola vez en la utilidad bruta base (`fin.utilBruta` /
-`p.utilBruta`), que es el punto de partida ("Hoy real") de cada escalón.
-
-**Por cada paso de % (25, 35, 45, 55, 65, 75, 85, 95 — sobre el total en movimiento):**
-```
-entregasExtra   = round(numMov × pctStep / 100)
-utilBruta(step) = utilBrutaHoy + entregasExtra × utilPorEntrega
-utilNeta(step)  = utilBruta(step) − pauta        (solo si hay pauta asignada; si no, null)
-```
+No se resta de nuevo el flete/costoProv de los pedidos en movimiento o devueltos — esos ya
+están descontados una sola vez en la utilidad bruta base (`fin.utilBruta` / `p.utilBruta`),
+que es el punto de partida ("Hoy real", que ahora también muestra `pEactual` explícito).
 
 **La pauta es constante en todos los pasos** — ya se gastó, no depende de cuánto termines
 entregando, por eso no se recalcula ni se prorratea entre escalones.
 
 **Alcance (`scope`) seleccionable:**
-- `__global__` = todo el negocio, usa `gPautaTotal` (el mismo `tot` de Meta+TikTok que ya
-  usa el Resumen) y `gDropiData.numMov`.
-- Por producto = usa `gProdsFin` (el resultado de `calcProductosFinanciero`, solo disponible
-  si se subió el archivo de "Órdenes con productos"). `numMov` del producto se deriva como
-  `desp − ent − dev` porque `calcProductosFinanciero` no expone el Set de movimiento
-  directamente. Si el producto no tiene pauta asignada (`gastoPorNombreProducto`), la fila de
-  "Utilidad neta" muestra "Sin pauta asignada" en vez de un número — nunca se inventa un
-  costo de pauta.
+- `__global__` = todo el negocio, usa `gPautaTotal` y los agregados de `gDropiData`
+  (`desp`, `ent`, `numMov`).
+- Por producto = usa `gProdsFin` (resultado de `calcProductosFinanciero`, solo disponible si
+  se subió el archivo de "Órdenes con productos"). `numMov` del producto se deriva como
+  `desp − ent − dev`. Si el producto no tiene pauta asignada (`gastoPorNombreProducto`), la
+  fila de "Utilidad neta" muestra "Sin pauta asignada" en vez de un número.
 
 Variables globales nuevas para sostener este cálculo fuera de `fetchAll()`:
 `gDropiData` (resultado de `procesarDropi`), `gPautaTotal` (pauta total del período, mismo
 valor que `metaData.tot`), `gProdsFin` (array de `calcProductosFinanciero`, vacío si no hay
 `dProd`). Se guardan al final de `fetchAll()`, después de `renderRes`.
+
+---
+
+## 18. Pauta diaria REAL (extracción automática desde el informe de Meta/TikTok) (2026-07-13)
+
+Algunos exports de Meta Ads incluyen una **segunda hoja oculta** en el mismo `.xlsx` (junto a
+la hoja visible con los totales por campaña) con una fila **por campaña Y por día**: columnas
+`Nombre de la cuenta`, `Nombre de la campaña`, `Día`, `Importe gastado (COP)`, etc. El nombre
+de esa hoja puede variar, así que `extraerGastoDiarioWB(wb)` **escanea TODAS las hojas** del
+workbook buscando una fila de encabezados que tenga a la vez "Nombre de la campa", "Día" e
+"Importe gastado" (mismo criterio de detección tolerante que ya usaba `parsearInformeMeta`).
+
+**Filas que se descartan** (son subtotales, no gasto diario real):
+- Campaña vacía (fila de total global del reporte).
+- Campaña = `"All"` (subtotal de cuenta para todo el período).
+- Día que no matchee `/^\d{4}-\d{2}-\d{2}$/` — esto excluye tanto el subtotal de cuenta
+  (Día="All") como el de campaña-período-completo (Día="All" con campaña real). Solo se toman
+  las filas donde "Día" es una fecha real específica.
+
+Resultado: `porDia = {'2026-06-01': 800000, '2026-06-02': 750000, ...}` — gasto sumado de
+TODAS las campañas de ese día. Se guarda en cada entrada de `dMetaFiles`/`dTiktokFiles` como
+`.porDia`, y `gastoDiarioReal()` los junta todos en un solo objeto.
+
+**Uso en "Análisis por día" (`renderAnalisisPorDia`):** para cada día del rango, si existe
+`gastoDiarioReal()[fecha]`, se usa ESE valor exacto como pauta del día (marcado visualmente
+con `● real`). Para los días que NO tienen ese dato, se reparte proporcionalmente — pero
+**solo el remanente** (`totPauta − Σ pauta real de los días con dato`), distribuido según el
+% de ventas que esos días-sin-dato representan ENTRE ELLOS (no sobre el período completo), así
+la suma final de todos los días siempre cuadra exactamente con el gasto total oficial que
+muestra el resto del dashboard (Resumen, ROAS, etc.) — nunca se cuenta pauta de más ni de
+menos. Si ningún archivo trae desglose diario, el comportamiento es idéntico al anterior
+(100% proporcional).
