@@ -1126,7 +1126,7 @@ function observarLogistica(){observarScrollReveal();}
 function saveKeys(){localStorage.setItem(LS,JSON.stringify({tt:$('tiktok-spend').value,ms:$('meta-spend').value,plNom:$('pl-nomina').value,plGas:$('pl-gastos').value,plImp:$('pl-impuestos').value,plAnt:$('pl-anticipos').value}));setS('ok','Valores guardados');}
 function loadKeys(){
   cargarFusionesLS();const d=JSON.parse(localStorage.getItem(LS)||'{}');if(d.tt)$('tiktok-spend').value=d.tt;if(d.ms)$('meta-spend').value=d.ms;if(d.plNom)$('pl-nomina').value=d.plNom;if(d.plGas)$('pl-gastos').value=d.plGas;if(d.plImp)$('pl-impuestos').value=d.plImp;if(d.plAnt)$('pl-anticipos').value=d.plAnt;cargarPautaLS();}
-function setDates(){const t=new Date(),f=new Date(t.getFullYear(),t.getMonth(),1);$('date-to').value=t.toISOString().slice(0,10);$('date-from').value=f.toISOString().slice(0,10);}
+function setDates(){const hasta=hoyISOBogota();$('date-to').value=hasta;$('date-from').value=hasta.slice(0,8)+'01';}
 
 function df(e,t){e.preventDefault();e.currentTarget.classList.remove('drag');hf(e.dataTransfer.files[0],t);}
 function hf(file,tipo){
@@ -1217,6 +1217,42 @@ function filtOrd(ords){if(selProds.size===0)return ords;return ords.filter(o=>o.
 function recalc(){const f=filtOrd(allOrds.filter(o=>!o.dup));const d=calcM(f);d.dups=allOrds.filter(o=>o.dup).length;d.allV=f;renderLog(d);renderProy(d);renderRes(d,gS,gM,gW);renderTodoAnalisis(d);}
 
 function parseFecha(f){const s=String(f||'').slice(0,10);const p=s.split('-');if(p.length===3&&p[0].length===2)return`${p[2]}-${p[1]}-${p[0]}`;return s;}
+
+// ---- ZONA HORARIA: TODO el dashboard opera en hora de Bogotá (GMT-5) ----
+// Los pedidos ocurren en Bogotá, así que "hoy" y toda la aritmética de fechas (días hábiles,
+// antigüedad de pedidos, rangos rápidos de Control Diario, etc.) deben calcularse desde ahí,
+// SIN IMPORTAR en qué zona horaria esté el navegador de quien abre el dashboard — de lo
+// contrario alguien viendo el reporte desde otro huso horario vería "hoy" con horas de
+// diferencia respecto a la hora real de Bogotá, desalineando alertas y filtros de fecha.
+// Colombia no tiene horario de verano, así que el desplazamiento es siempre fijo: -5h.
+const BOGOTA_OFFSET_MS = 5*60*60*1000;
+// Devuelve un Date cuyo instante coincide con "ahora mismo" leído en hora de Bogotá. SIEMPRE
+// se deben leer sus componentes con los getters UTC (getUTCFullYear, getUTCDate, etc.) — usar
+// los getters locales volvería a aplicarle encima la zona horaria del navegador.
+function nowBogota(){return new Date(Date.now()-BOGOTA_OFFSET_MS);}
+function hoyISOBogota(){
+  const d=nowBogota();
+  return`${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
+}
+// Suma/resta días de calendario a una fecha 'YYYY-MM-DD' sin arrastrar ninguna zona horaria
+// (Date.UTC construye el instante directo desde los componentes, sin interpretación local).
+function sumarDiasISO(iso,dias){
+  const[y,m,d]=iso.split('-').map(Number);
+  const t=Date.UTC(y,m-1,d)+dias*86400000;
+  const dd=new Date(t);
+  return`${dd.getUTCFullYear()}-${String(dd.getUTCMonth()+1).padStart(2,'0')}-${String(dd.getUTCDate()).padStart(2,'0')}`;
+}
+// Día de la semana (0=domingo...6=sábado) de una fecha 'YYYY-MM-DD', también sin zona horaria.
+function diaDeSemanaISO(iso){
+  const[y,m,d]=iso.split('-').map(Number);
+  return new Date(Date.UTC(y,m-1,d)).getUTCDay();
+}
+// Número de día absoluto (desde el epoch) de una fecha 'YYYY-MM-DD' — para restar dos fechas
+// y obtener la diferencia exacta en días de calendario, sin ninguna zona horaria de por medio.
+function epochDiasISO(iso){
+  const[y,m,d]=iso.split('-').map(Number);
+  return Math.round(Date.UTC(y,m-1,d)/86400000);
+}
 
 // Fecha real de creación por teléfono, tomada del CSV de Shopify (si se subió), sin filtrar por
 // rango — un pedido siempre llega primero a Shopify y migra a Dropi después (a veces con
@@ -1408,9 +1444,7 @@ function calcEfectividad(d){
 
   // Rango > 14 dias: KPI basado en pedidos con fecha <= (fecha_fin - 10 dias)
   // Esos pedidos ya tienen tiempo suficiente para estar cerrados
-  const fechaCorteD=new Date(dt);
-  fechaCorteD.setDate(fechaCorteD.getDate()-10);
-  const fechaCorte=fechaCorteD.toISOString().slice(0,10);
+  const fechaCorte=sumarDiasISO(dt,-10);
 
   const cerrados=allOrds.filter(o=>!o.dup&&o.fecha&&o.fecha<=fechaCorte);
   const entC=cerrados.filter(o=>EST_ENT.includes(o.estatus)).length;
@@ -1433,13 +1467,12 @@ function calcEfectividad(d){
 }
 
 function diasDesdeHoyReal(fechaCreacion){
-  // Días transcurridos desde la creación del pedido hasta HOY (fecha real del sistema),
-  // sin importar qué rango de fechas se esté viendo en el reporte.
+  // Días transcurridos desde la creación del pedido hasta HOY en Bogotá (no la del navegador
+  // de quien mira el reporte), sin importar qué rango de fechas se esté viendo.
   try{
-    const parseF=s=>{const str=String(s||'').trim();const p=str.split('-');if(p[0].length===2)return new Date(`${p[2]}-${p[1]}-${p[0]}`);return new Date(str);};
-    const hoy=new Date();hoy.setHours(0,0,0,0);
-    const fCre=parseF(fechaCreacion);fCre.setHours(0,0,0,0);
-    return Math.round((hoy-fCre)/(1000*60*60*24));
+    const fCreISO=parseFecha(fechaCreacion);
+    if(!fCreISO)return 0;
+    return epochDiasISO(hoyISOBogota())-epochDiasISO(fCreISO);
   }catch{return 0;}
 }
 
@@ -1754,18 +1787,17 @@ const FESTIVOS_CO = new Set([
 
 function diasHabiles(fechaStr){
   try {
-    const s=String(fechaStr||'').trim();
-    let d;
-    const p=s.includes('-')?s.split('-'):s.split('/');
-    if(p[0].length===2)d=new Date(`${p[2]}-${p[1]}-${p[0]}`);
-    else d=new Date(s);
-    if(isNaN(d))return -1;
-    const hoy=new Date();hoy.setHours(0,0,0,0);
-    const fechaMov=new Date(d);fechaMov.setHours(0,0,0,0);
+    const fechaMov=parseFecha(fechaStr);
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(fechaMov))return -1;
+    const hoy=hoyISOBogota();
     if(fechaMov>=hoy)return 0;
     let habiles=0;
-    let cur=new Date(fechaMov);cur.setDate(cur.getDate()+1);
-    while(cur<hoy){const dow=cur.getDay();const iso=cur.toISOString().slice(0,10);if(dow!==0&&dow!==6&&!FESTIVOS_CO.has(iso))habiles++;cur.setDate(cur.getDate()+1);}
+    let cur=sumarDiasISO(fechaMov,1);
+    while(cur<hoy){
+      const dow=diaDeSemanaISO(cur);
+      if(dow!==0&&dow!==6&&!FESTIVOS_CO.has(cur))habiles++;
+      cur=sumarDiasISO(cur,1);
+    }
     return habiles;
   }catch{return -1;}
 }
@@ -2983,7 +3015,7 @@ async function fetchAll(){
   $('btn-run').disabled=false;$('spin').style.display='none';
   st(0);
   if(errs.length)setS('err','Parcial — '+errs[0]+(errs.length>1?` (+${errs.length-1} más)`:''));
-  else setS('ok','✓ Reporte generado · '+new Date().toLocaleTimeString('es-CO'));
+  else setS('ok','✓ Reporte generado · '+new Date().toLocaleTimeString('es-CO',{timeZone:'America/Bogota'})+' (Bogotá)');
 }
 
 
@@ -3492,22 +3524,16 @@ function renderEscalonado(){
 // porque el equipo trabaja ese dia). No se usa en ningun otro calculo del dashboard.
 function diasHabilesControl(fechaStr){
   try {
-    const s=String(fechaStr||'').trim();
-    let d;
-    const p=s.includes('-')?s.split('-'):s.split('/');
-    if(p[0].length===2)d=new Date(`${p[2]}-${p[1]}-${p[0]}`);
-    else d=new Date(s);
-    if(isNaN(d))return -1;
-    const hoy=new Date();hoy.setHours(0,0,0,0);
-    const fechaMov=new Date(d);fechaMov.setHours(0,0,0,0);
+    const fechaMov=parseFechaControl(fechaStr);
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(fechaMov))return -1;
+    const hoy=hoyISOBogota();
     if(fechaMov>=hoy)return 0;
     let habiles=0;
-    let cur=new Date(fechaMov);cur.setDate(cur.getDate()+1);
+    let cur=sumarDiasISO(fechaMov,1);
     while(cur<hoy){
-      const dow=cur.getDay();
-      const iso=cur.toISOString().slice(0,10);
-      if(dow!==0&&!FESTIVOS_CO.has(iso))habiles++; // solo excluye domingo (0), sabado SI cuenta
-      cur.setDate(cur.getDate()+1);
+      const dow=diaDeSemanaISO(cur);
+      if(dow!==0&&!FESTIVOS_CO.has(cur))habiles++; // solo excluye domingo (0), sabado SI cuenta
+      cur=sumarDiasISO(cur,1);
     }
     return habiles;
   } catch { return -1; }
@@ -3533,19 +3559,17 @@ function copiarGuiasCoordSinNovedad(){
   navigator.clipboard.writeText(texto).then(()=>{const el=$('coord-sinnov-copiadas');el.style.display='block';setTimeout(()=>el.style.display='none',3000);});
 }
 
-function fmtISO(d){return d.toISOString().slice(0,10);}
-
 function setControlRapido(tipo,el){
   document.querySelectorAll('#cd-hoy,#cd-ayer,#cd-antier,#cd-semana,#cd-mes').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
-  const hoy=new Date();hoy.setHours(0,0,0,0);
-  let desde=new Date(hoy),hasta=new Date(hoy);
+  const hoy=hoyISOBogota();
+  let desde=hoy,hasta=hoy;
   if(tipo==='hoy'){ /* desde=hasta=hoy */ }
-  else if(tipo==='ayer'){desde.setDate(desde.getDate()-1);hasta.setDate(hasta.getDate()-1);}
-  else if(tipo==='antier'){desde.setDate(desde.getDate()-2);hasta.setDate(hasta.getDate()-2);}
-  else if(tipo==='semana'){desde.setDate(desde.getDate()-7);}
-  else if(tipo==='mes'){desde.setDate(desde.getDate()-30);}
-  controlDesde=fmtISO(desde);controlHasta=fmtISO(hasta);
+  else if(tipo==='ayer'){desde=sumarDiasISO(hoy,-1);hasta=desde;}
+  else if(tipo==='antier'){desde=sumarDiasISO(hoy,-2);hasta=desde;}
+  else if(tipo==='semana'){desde=sumarDiasISO(hoy,-7);}
+  else if(tipo==='mes'){desde=sumarDiasISO(hoy,-30);}
+  controlDesde=desde;controlHasta=hasta;
   $('control-desde').value=controlDesde;
   $('control-hasta').value=controlHasta;
   actualizarRangoTxt();
@@ -3654,8 +3678,8 @@ function renderControlDiario(){
   }
   // Inicializar rango por defecto en "hoy" si aun no se ha tocado el selector
   if(!controlDesde||!controlHasta){
-    const hoy=new Date();hoy.setHours(0,0,0,0);
-    controlDesde=fmtISO(hoy);controlHasta=fmtISO(hoy);
+    const hoy=hoyISOBogota();
+    controlDesde=hoy;controlHasta=hoy;
     const elD=$('control-desde'),elH=$('control-hasta');
     if(elD)elD.value=controlDesde;
     if(elH)elH.value=controlHasta;

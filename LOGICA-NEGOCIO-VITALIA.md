@@ -656,3 +656,45 @@ propia del pedido en Dropi (usada solo como ancla para desempatar cuál de las v
 esta). Así cada pedido de Dropi se empareja con SU propio pedido de Shopify, no con el primero
 que ese cliente hizo alguna vez. El caso simple (un solo pedido de Shopify por teléfono, o
 ningún match) se comporta exactamente igual que antes.
+
+---
+
+## 25. Zona horaria: todo el dashboard opera en hora de Bogotá (GMT-5) (2026-07-14)
+
+**Regla de negocio explícita del usuario:** los pedidos ocurren en Bogotá, así que "hoy" y toda
+la aritmética de fechas (días hábiles, antigüedad de pedidos "sin movimiento", rangos rápidos
+de Control Diario, filtros de fecha por defecto) deben calcularse **siempre desde GMT-5**, sin
+importar en qué zona horaria esté el dispositivo de quien abre el dashboard.
+
+**Por qué importaba:** varias funciones usaban `new Date()` + getters/setters LOCALES
+(`.getDate()`, `.setHours(0,0,0,0)`, `.getDay()`, `.toISOString()` mezclado con operaciones
+locales) para calcular "hoy" y hacer aritmética de fechas. Esto es correcto SOLO si el reloj del
+sistema operativo de quien mira el dashboard está puesto en GMT-5 — si alguien lo abre desde
+otra zona horaria (o un dispositivo mal configurado), "hoy" podía quedar desfasado por horas,
+corriendo los rangos por defecto, los días hábiles de "Sin movimiento" y de Control Diario, y
+la antigüedad de pedidos a un día equivocado.
+
+**Solución — utilidades centralizadas (junto a `parseFecha`), todas sin ninguna dependencia de
+la zona horaria del navegador:**
+```js
+const BOGOTA_OFFSET_MS = 5*60*60*1000;               // Colombia no tiene horario de verano
+function nowBogota()                                  // instante "ahora" leído en hora Bogotá
+function hoyISOBogota()                                // 'YYYY-MM-DD' de HOY en Bogotá
+function sumarDiasISO(iso, dias)                       // suma/resta días de calendario
+function diaDeSemanaISO(iso)                           // 0=domingo...6=sábado
+function epochDiasISO(iso)                             // día absoluto, para restar dos fechas
+```
+Todas construyen sus instantes con `Date.UTC(...)` y se leen con getters `getUTC*` — nunca con
+los getters locales (`getDate`, `getHours`, etc.), que son los que dependían del reloj del
+dispositivo.
+
+**Funciones migradas a estas utilidades** (mismo comportamiento, ahora ancladas a Bogotá):
+`setDates()` (rango por defecto: hoy + primero del mes), `calcEfectividad()` (fecha de corte
+-10 días), `diasDesdeHoyReal()` (antigüedad para "Sin movimiento"), `diasHabiles()` (días
+hábiles sin sábado/domingo), `diasHabilesControl()` (días hábiles de Control Diario, sábado SÍ
+cuenta), `setControlRapido()` (hoy/ayer/antier/semana/mes) y la inicialización por defecto de
+`controlDesde`/`controlHasta` en `renderControlDiario()`. Se eliminó `fmtISO()` (ya no hace
+falta). Los cálculos que YA comparaban dos fechas-string ISO directamente (`fechaShopifyMasCercana`,
+`diasRango` en `calcEfectividad`) no se tocaron porque restar dos `new Date('YYYY-MM-DD')`
+siempre da un resultado exacto en días sin importar la zona horaria (el spec de JS parsea
+fechas-solo-fecha como medianoche UTC).
