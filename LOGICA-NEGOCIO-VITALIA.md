@@ -698,3 +698,26 @@ falta). Los cálculos que YA comparaban dos fechas-string ISO directamente (`fec
 `diasRango` en `calcEfectividad`) no se tocaron porque restar dos `new Date('YYYY-MM-DD')`
 siempre da un resultado exacto en días sin importar la zona horaria (el spec de JS parsea
 fechas-solo-fecha como medianoche UTC).
+
+---
+
+## 26. Trazabilidad Shopify — el "Total analizados" contaba líneas de producto, no pedidos (2026-07-14)
+
+**Bug real, confirmado por el usuario comparando contra una tabla dinámica de Excel** (agrupada
+por dirección IP — un campo que sí identifica al pedido completo, no cada línea): el mes de
+julio tenía 2169 pedidos reales en Shopify, pero el dashboard mostraba 2276 en la tarjeta
+"Total Shopify analizados" de Trazabilidad — una inflación de ~5%, consistente con pedidos que
+tienen más de un producto (línea) por orden.
+
+**Causa:** `calcTrazabilidad()` arma `resultados` con **una fila por cada producto/línea** de
+cada pedido de Shopify (`sOrd.productos.forEach(shopProd=>{resultados.push(...)})`) — necesario
+para el detalle (mostrar cada producto y si migró), pero los KPIs (`migrados`, `noBajados`,
+`diffProd`, `total`) se calculaban con `resultados.filter(...).length`/`resultados.length`
+directamente. Un pedido con 2 productos distintos contaba como 2 pedidos; uno con 3, como 3.
+
+**Fix:** los KPIs ahora se agrupan primero por `shopName` (el pedido real) — cada orden se
+clasifica una sola vez según su MEJOR resultado entre sus líneas (si alguna línea migró →
+migrada; si ninguna migró pero alguna tiene producto distinto en Dropi → producto diferente; si
+no → no migrada). `total` ahora es el número de **pedidos únicos**, no de líneas. La tabla de
+detalle (`trazData`/`resultados`, con una fila por producto) NO se tocó — sigue mostrando el
+desglose línea por línea, solo los KPIs de resumen quedaron corregidos.

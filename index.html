@@ -3191,11 +3191,23 @@ function calcTrazabilidad(shopiRows,dropiData,df,dt){
 
   trazData=resultados;
 
-  // KPIs
-  const migrados=resultados.filter(r=>r.estado==='migrado').length;
-  const noBajados=resultados.filter(r=>r.estado==='no_migrado').length;
-  const diffProd=resultados.filter(r=>r.estado==='prod_diferente').length;
-  const total=resultados.length;
+  // KPIs — por PEDIDO de Shopify (shopName), no por línea de producto. `resultados` trae una
+  // fila por cada producto de la orden (para el detalle), así que contar resultados.length
+  // infla el total en cualquier pedido con más de un producto. Cada orden se clasifica según
+  // su mejor resultado entre sus líneas: si alguna migró, cuenta como migrada; si no migró
+  // ninguna pero alguna tiene producto distinto en Dropi, cuenta como "producto diferente";
+  // si no, no migrada.
+  const porOrden={};
+  resultados.forEach(r=>{
+    if(!porOrden[r.shopName])porOrden[r.shopName]={migrado:false,diffProd:false};
+    if(r.estado==='migrado')porOrden[r.shopName].migrado=true;
+    else if(r.estado==='prod_diferente')porOrden[r.shopName].diffProd=true;
+  });
+  const ordenesUnicas=Object.values(porOrden);
+  const total=ordenesUnicas.length;
+  const migrados=ordenesUnicas.filter(o=>o.migrado).length;
+  const diffProd=ordenesUnicas.filter(o=>!o.migrado&&o.diffProd).length;
+  const noBajados=ordenesUnicas.filter(o=>!o.migrado&&!o.diffProd).length;
 
   $('m-traz').innerHTML=`
     <div class="mc g"><div class="lb">Migrados correctamente</div><div class="vl">${migrados}</div><div class="sb">${total>0?(migrados/total*100).toFixed(1):0}% del total</div></div>
