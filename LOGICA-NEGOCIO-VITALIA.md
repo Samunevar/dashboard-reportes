@@ -721,3 +721,92 @@ migrada; si ninguna migró pero alguna tiene producto distinto en Dropi → prod
 no → no migrada). `total` ahora es el número de **pedidos únicos**, no de líneas. La tabla de
 detalle (`trazData`/`resultados`, con una fila por producto) NO se tocó — sigue mostrando el
 desglose línea por línea, solo los KPIs de resumen quedaron corregidos.
+
+---
+
+## 27. Cuentas con acumulación de pedidos (Supabase) (2026-07-15)
+
+Sistema opcional de inicio de sesión para que el negocio pueda ir acumulando su historial de
+pedidos de Dropi entre subidas, sin duplicar ni perder información. **Puramente aditivo:** si
+`SUPABASE_URL`/`SUPABASE_ANON_KEY` no están configurados (siguen con el valor placeholder), `sb`
+queda `null` y todo el dashboard se comporta exactamente igual que antes — sin login, sin
+guardado, sin ningún cambio de comportamiento.
+
+### Por qué "pedido por pedido" y no "reporte por reporte"
+
+El primer diseño (descartado) guardaba un JSON-resumen por cada reporte generado (por rango de
+fechas). Ese enfoque **no permite mezclar rangos que se traslapan** sin duplicar o perder datos:
+si el último informe subido fue del 1 al 15 y el nuevo es del 10 al 30, no hay forma de "sumar"
+dos resúmenes ya calculados sin ambigüedad. La solución correcta es guardar **cada pedido
+individual**, usando su campo `ID` de Dropi (único por pedido) como llave de upsert:
+- Si el `ID` ya existía → se actualiza en su lugar (nunca se duplica).
+- Si es nuevo → se agrega.
+- Los pedidos de subidas anteriores que no vuelven a aparecer en la subida actual **se quedan
+  tal cual estaban** — nunca se pierden ni se ignoran.
+
+Esto logra exactamente "acumular sin duplicar, complementando" para cualquier combinación de
+rangos de fechas, sin necesidad de lógica especial de fusión de reportes.
+
+### Esquema (`supabase_schema.sql`, para pegar en el SQL Editor de Supabase)
+
+Tabla `pedidos_dropi`: `user_id`, `pedido_id` (el `ID` de Dropi, como texto), `orden` (jsonb —
+la fila cruda de `dOrd` para ese pedido), `productos` (jsonb — array de las filas crudas de
+`dProd` de ese pedido), `actualizado_en`. Llave primaria `(user_id, pedido_id)` — es lo que
+permite el upsert por ID. RLS habilitado con una sola policy `for all` restringida a
+`auth.uid() = user_id`.
+
+**Por qué no satura:** el tamaño crece con el número REAL de pedidos del negocio (no con
+cuántas veces se re-sube el mismo rango), y cada fila pesa unos cientos de bytes de JSON — la
+capa gratuita de Supabase (500MB) cubre años de operación típica. Escala a muchas cuentas
+porque cada una queda aislada por `user_id` vía RLS.
+
+**Alcance actual:** solo pedidos de Dropi (`dOrd`+`dProd`). Shopify/Meta/TikTok podrían sumarse
+después con el mismo patrón (tabla propia, llave natural: `Name` de Shopify, campaña de
+Meta/TikTok) si se pide.
+
+### Piezas nuevas en `index.html`
+
+- **Cliente:** `<script>` de `@supabase/supabase-js` (junto al de XLSX), y `let sb = ...` —
+  `let` (no `const`) para poder reconfigurarlo sin recargar si hiciera falta. Constantes
+  `SUPABASE_URL`/`SUPABASE_ANON_KEY` con placeholder por defecto.
+- **UI de auth:** dentro del landing (`#lg-auth`, con pestañas Entrar/Crear cuenta) y en el
+  header (`#hdr-session`, correo + "Cerrar sesión") — ambos ocultos si `sb` es `null`.
+  `lgAuthSubmit()` llama `sb.auth.signInWithPassword()` / `sb.auth.signUp()`; `cerrarSesion()`
+  llama `sb.auth.signOut()`.
+- **Fusión** (el corazón del feature):
+  - `agruparProdPorId(filas)` — agrupa filas de `dProd` por el `ID` de pedido al que
+    pertenecen (varias líneas de producto comparten el mismo `ID`).
+  - `cargarPedidosGuardados()` — trae TODOS los pedidos guardados del usuario, paginando de a
+    1000 filas (límite de Supabase por consulta) hasta que una página vuelve incompleta.
+  - `guardarPedidosNuevos(nuevosOrd, nuevosProdPorId)` — sube en tandas de 500 SOLO los
+    pedidos recién subidos en esta sesión de navegador (no todo lo acumulado, para no
+    reescribir de más). Si falla (sin internet, etc.) no bloquea el flujo — solo un aviso.
+  - En `fetchAll()` (justo antes de `procesarDropi`): si hay sesión activa y se subió algo,
+    se trae lo guardado, se combina con lo recién subido (lo recién subido gana en caso de
+    `ID` repetido — es la versión más fresca), se reasignan los globales `dOrd`/`dProd` al
+    resultado mezclado, y se guarda (en segundo plano) solo lo nuevo. El rango de fechas
+    seleccionado (`df`/`dt`) sigue siendo el que la persona eligió — si quiere ver todo lo
+    acumulado, solo tiene que ampliar el rango de "Desde/Hasta".
+  - `onSesionActiva()` — al detectar sesión (login exitoso o ya activa al cargar la página):
+    trae todo lo acumulado, si hay datos ajusta `date-from`/`date-to` al rango completo
+    (mínima/máxima fecha encontrada) y llama `fetchAll()` — así la persona ve de inmediato
+    todo su historial sin subir nada. Si la cuenta es nueva (sin datos), se queda en el
+    landing normal.
+  - `verificarSesionInicial()` — se llama al cargar la página (línea final del script) y
+    revisa `sb.auth.getSession()` para restaurar la sesión si ya existía.
+
+### Verificación realizada
+
+Se probó con un cliente Supabase simulado en memoria (mock de `auth` + tabla `pedidos_dropi`
+con upsert real por `(user_id,pedido_id)`), ya que no se contaba con credenciales reales de un
+proyecto Supabase en esta sesión: registro, login con clave incorrecta, subida de pedidos 1-15,
+subida de pedidos 10-30 (con 10-15 cambiando de estatus y 16-30 nuevos) → se confirmó que el
+resultado final tiene exactamente 30 pedidos únicos, los no tocados (1-9) intactos, los
+traslapados (10-15) actualizados al nuevo estatus, cierre de sesión, y auto-carga completa de
+los 30 pedidos acumulados al simular una sesión de navegador nueva — sin subir ningún archivo.
+Barrido de las 9 tabs sin errores de consola en todo el proceso.
+
+**Pendiente del lado del usuario:** crear el proyecto en supabase.com, correr
+`supabase_schema.sql` en el SQL Editor, y reemplazar `SUPABASE_URL`/`SUPABASE_ANON_KEY` en
+`index.html` con los valores reales del proyecto (Project Settings → API) para activar el
+login de verdad en producción.

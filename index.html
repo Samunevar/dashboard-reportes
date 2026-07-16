@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Reporte E-commerce</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 :root{
@@ -324,6 +325,24 @@ body.app-ready #landing{opacity:0;visibility:hidden;transform:scale(1.05);pointe
 #landing .lg-foot{margin-top:40px;font-size:11px;color:var(--hint);font-family:var(--font-mono);animation-delay:.75s;}
 @media(max-width:560px){#landing .lg-logo{width:66px;height:66px;font-size:34px;border-radius:22px;}}
 
+/* ===== Login/registro (dentro del landing, opcional) ===== */
+#landing .lg-auth{margin-top:30px;max-width:320px;margin-left:auto;margin-right:auto;text-align:left;animation-delay:.5s;}
+#landing .lg-auth-tabs{display:flex;gap:4px;background:rgba(255,255,255,.05);border:1px solid var(--border2);border-radius:999px;padding:4px;margin-bottom:12px;}
+#landing .lg-auth-tab{flex:1;padding:8px;border:none;background:none;color:var(--muted);font-size:12px;font-weight:600;border-radius:999px;cursor:pointer;font-family:var(--font);transition:all .18s;}
+#landing .lg-auth-tab.active{background:linear-gradient(135deg,#ff8a55,#ff6b35);color:#fff;}
+#landing .lg-auth-form{display:flex;flex-direction:column;gap:8px;}
+#landing .lg-auth-form input{font-size:12.5px;padding:10px 13px;}
+#landing .lg-auth-form button{width:100%;justify-content:center;margin-top:2px;}
+#landing .lg-auth-msg{font-size:11.5px;margin-top:8px;text-align:center;min-height:14px;}
+#landing .lg-auth-msg.err{color:var(--red);}
+#landing .lg-auth-msg.ok{color:var(--green);}
+#landing .lg-session{margin-top:28px;display:flex;align-items:center;gap:10px;justify-content:center;font-size:12.5px;color:var(--muted);animation-delay:.5s;}
+#landing .lg-session b{color:var(--text);}
+.hdr-session{display:flex;align-items:center;gap:10px;font-size:11.5px;color:var(--muted);margin-left:12px;}
+.hdr-session b{color:var(--text);}
+.hdr-session button{background:none;border:none;color:var(--hint);cursor:pointer;font-size:11.5px;text-decoration:underline;font-family:var(--font);}
+.hdr-session button:hover{color:var(--text);}
+
 /* ===== Intro band (arriba del área de trabajo) ===== */
 .workbar{display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,rgba(255,138,76,.14),rgba(255,107,53,.03));border:1px solid var(--ob);border-radius:var(--rl);padding:15px 20px;margin-bottom:20px;font-size:13px;color:var(--muted);}
 .workbar .wbi{font-size:19px;}
@@ -399,6 +418,26 @@ body.app-ready #landing{opacity:0;visibility:hidden;transform:scale(1.05);pointe
       <div class="lg-chip"><i>📈</i> ROAS y pauta</div>
     </div>
     <div class="lg-foot lg-anim">Todo se procesa en tu navegador · nada sale de tu equipo</div>
+
+    <!-- Login/registro — solo aparece si el dashboard tiene Supabase configurado -->
+    <div class="lg-auth" id="lg-auth" style="display:none">
+      <div class="lg-auth-tabs">
+        <button type="button" class="lg-auth-tab active" id="lg-tab-login" onclick="lgAuthTab('login')">Entrar</button>
+        <button type="button" class="lg-auth-tab" id="lg-tab-signup" onclick="lgAuthTab('signup')">Crear cuenta</button>
+      </div>
+      <form class="lg-auth-form" id="lg-auth-form" onsubmit="lgAuthSubmit(event);return false">
+        <input type="email" id="lg-email" placeholder="Correo" autocomplete="email" required>
+        <input type="password" id="lg-pass" placeholder="Contraseña" autocomplete="current-password" required minlength="6">
+        <button type="submit" class="bp" id="lg-auth-btn">Entrar</button>
+      </form>
+      <div class="lg-auth-msg" id="lg-auth-msg"></div>
+    </div>
+
+    <!-- Estado de sesión activa -->
+    <div class="lg-session" id="lg-session" style="display:none">
+      Conectado como <b id="lg-session-email"></b>
+      <button class="bs" style="font-size:11px;padding:6px 12px" onclick="cerrarSesion()">Cerrar sesión</button>
+    </div>
   </div>
 </div>
 
@@ -409,7 +448,13 @@ body.app-ready #landing{opacity:0;visibility:hidden;transform:scale(1.05);pointe
     <div class="hlogo" onclick="volverInicio()" title="Volver al inicio" style="cursor:pointer">📦</div>
     <div><h1>Centro de control</h1><p id="hdate">Dropi · Shopify · Colombia</p></div>
   </div>
-  <div class="hbadge" id="hbadge">Sin datos</div>
+  <div style="display:flex;align-items:center">
+    <div class="hbadge" id="hbadge">Sin datos</div>
+    <div class="hdr-session" id="hdr-session" style="display:none">
+      <b id="hdr-session-email"></b>
+      <button onclick="cerrarSesion()">Cerrar sesión</button>
+    </div>
+  </div>
 </div>
 
 <div class="card">
@@ -950,6 +995,16 @@ const mono=n=>Math.round(n||0).toLocaleString('es-CO');
 let dOrd=[],dProd=[],dShopi=[],selProds=new Set(),allOrds=[];
 let gD={},gS={},gM={},gW={},gP={};
 
+// ---- CUENTAS (Supabase) — opcional; si no se configura, el dashboard funciona igual que
+// siempre, sin login ni persistencia. Reemplaza estos dos valores con los de tu proyecto
+// (Project Settings → API en supabase.com) para activar el inicio de sesión.
+const SUPABASE_URL='TU_SUPABASE_URL_AQUI';
+const SUPABASE_ANON_KEY='TU_SUPABASE_ANON_KEY_AQUI';
+let sb=(SUPABASE_URL.startsWith('http')&&typeof supabase!=='undefined')
+  ?supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY)
+  :null;
+let sesionActual=null; // {id, email} del usuario logueado, o null si no hay sesión
+
 // Cada lista incluye el nombre exacto ya validado + variantes de redacción que Dropi puede
 // traer según la versión/configuración del export (mismo grupo de negocio, solo tolerancia de
 // texto — no cambia ninguna regla de cálculo existente).
@@ -986,6 +1041,134 @@ function entrarApp(){
 function volverInicio(){
   const l=document.getElementById('landing');if(l)l.style.display='';
   requestAnimationFrame(()=>{document.body.classList.add('landing-lock');document.body.classList.remove('app-ready');window.scrollTo({top:0,behavior:'smooth'});});
+}
+
+// ===== CUENTAS (Supabase) — opcional, puramente aditivo =====
+// Si SUPABASE_URL/ANON_KEY no están configurados, `sb` es null y todo este bloque queda
+// inerte: el dashboard funciona exactamente igual que sin cuentas (sin login, sin guardado).
+let lgAuthMode='login';
+function lgAuthTab(mode){
+  lgAuthMode=mode;
+  $('lg-tab-login').classList.toggle('active',mode==='login');
+  $('lg-tab-signup').classList.toggle('active',mode==='signup');
+  $('lg-auth-btn').textContent=mode==='login'?'Entrar':'Crear cuenta';
+  $('lg-auth-msg').textContent='';
+}
+async function lgAuthSubmit(){
+  if(!sb)return;
+  const email=$('lg-email').value.trim(),pass=$('lg-pass').value;
+  const msg=$('lg-auth-msg'),btn=$('lg-auth-btn');
+  msg.className='lg-auth-msg';msg.textContent='';
+  btn.disabled=true;
+  try{
+    if(lgAuthMode==='login'){
+      const{data,error}=await sb.auth.signInWithPassword({email,password:pass});
+      if(error)throw error;
+      sesionActual={id:data.user.id,email:data.user.email};
+      msg.className='lg-auth-msg ok';msg.textContent='¡Listo! Cargando tu información...';
+      await onSesionActiva();
+    }else{
+      const{data,error}=await sb.auth.signUp({email,password:pass});
+      if(error)throw error;
+      if(!data.session){
+        msg.className='lg-auth-msg ok';
+        msg.textContent='Cuenta creada — revisa tu correo para confirmarla y luego inicia sesión.';
+      }else{
+        sesionActual={id:data.user.id,email:data.user.email};
+        msg.className='lg-auth-msg ok';msg.textContent='¡Cuenta creada! Ya puedes generar tu primer reporte.';
+        actualizarUISesion();
+      }
+    }
+  }catch(err){
+    msg.className='lg-auth-msg err';msg.textContent=err.message||'Error al procesar la solicitud';
+  }finally{
+    btn.disabled=false;
+  }
+}
+async function cerrarSesion(){
+  if(!sb)return;
+  await sb.auth.signOut();
+  sesionActual=null;
+  actualizarUISesion();
+  volverInicio();
+  setS('ok','Sesión cerrada');
+}
+function actualizarUISesion(){
+  const activa=!!sesionActual;
+  const lgAuth=$('lg-auth'),lgSes=$('lg-session'),hdrSes=$('hdr-session');
+  if(lgAuth)lgAuth.style.display=(sb&&!activa)?'block':'none';
+  if(lgSes)lgSes.style.display=activa?'flex':'none';
+  if(hdrSes)hdrSes.style.display=activa?'flex':'none';
+  if(activa){
+    const e1=$('lg-session-email'),e2=$('hdr-session-email');
+    if(e1)e1.textContent=sesionActual.email;
+    if(e2)e2.textContent=sesionActual.email;
+  }
+}
+
+// ---- Fusión de pedidos: guardar/traer por pedido, para acumular sin duplicar ----
+// Ver "Diseño de datos" — cada pedido se identifica por su 'ID' de Dropi. Al subir un reporte
+// nuevo, cada pedido se UPSERTEA: si el ID ya existía se actualiza en su lugar (nunca se
+// duplica); si es nuevo, se agrega. Los pedidos de subidas anteriores que no vuelven a
+// aparecer en la subida actual se quedan tal cual estaban — nunca se pierden.
+function agruparProdPorId(filas){
+  const porId={};
+  filas.forEach(r=>{const id=String(r['ID']||'');if(!id)return;(porId[id]=porId[id]||[]).push(r);});
+  return porId;
+}
+async function cargarPedidosGuardados(){
+  const ordPorId={},prodPorId={};
+  if(!sb||!sesionActual)return{ordPorId,prodPorId};
+  let desde=0;
+  while(true){
+    const{data,error}=await sb.from('pedidos_dropi').select('pedido_id,orden,productos')
+      .eq('user_id',sesionActual.id).range(desde,desde+999);
+    if(error||!data||!data.length)break;
+    data.forEach(r=>{ordPorId[r.pedido_id]=r.orden;prodPorId[r.pedido_id]=r.productos||[];});
+    if(data.length<1000)break;
+    desde+=1000;
+  }
+  return{ordPorId,prodPorId};
+}
+async function guardarPedidosNuevos(nuevosOrd,nuevosProdPorId){
+  if(!sb||!sesionActual||!nuevosOrd.length)return;
+  const filas=nuevosOrd.map(r=>{
+    const id=String(r['ID']||'');
+    return{user_id:sesionActual.id,pedido_id:id,orden:r,productos:nuevosProdPorId[id]||[]};
+  }).filter(f=>f.pedido_id);
+  if(!filas.length)return;
+  try{
+    // Supabase limita el tamaño del payload — se sube en tandas
+    for(let i=0;i<filas.length;i+=500){
+      const{error}=await sb.from('pedidos_dropi').upsert(filas.slice(i,i+500),{onConflict:'user_id,pedido_id'});
+      if(error)throw error;
+    }
+  }catch(err){
+    setS('err','No se pudo sincronizar con tu cuenta (el reporte se generó igual): '+err.message);
+  }
+}
+
+// Al iniciar sesión (login o sesión ya activa al cargar la página): traer todo lo acumulado
+// y pintar el dashboard de una vez, sin pedir que se vuelva a subir nada.
+async function onSesionActiva(){
+  actualizarUISesion();
+  const{ordPorId,prodPorId}=await cargarPedidosGuardados();
+  if(!Object.keys(ordPorId).length)return; // cuenta nueva, sin datos aún — landing normal
+  dOrd=Object.values(ordPorId);
+  dProd=Object.values(prodPorId).flat();
+  const fechas=dOrd.map(r=>parseFecha(r['FECHA'])).filter(f=>/^\d{4}-\d{2}-\d{2}$/.test(f)).sort();
+  if(fechas.length){$('date-from').value=fechas[0];$('date-to').value=fechas[fechas.length-1];}
+  entrarApp();
+  await fetchAll();
+}
+async function verificarSesionInicial(){
+  if(!sb)return;
+  try{
+    const{data}=await sb.auth.getSession();
+    const user=data?.session?.user;
+    if(user){sesionActual={id:user.id,email:user.email};await onSesionActiva();}
+    else actualizarUISesion();
+  }catch(err){/* sin conexión u otro problema — el dashboard sigue usable sin cuenta */}
 }
 
 // ===== KPIs de % → medidor circular animado (gauge) =====
@@ -2953,6 +3136,22 @@ async function fetchAll(){
   $('results').style.display='none';
   const errs=[];
 
+  // Si hay sesión activa, combinar lo recién subido con el historial ya guardado ANTES de
+  // procesar — así el reporte se va acumulando sin duplicar ni perder pedidos anteriores
+  // (ver sección de acumulación en LOGICA-NEGOCIO-VITALIA.md). El rango de fechas elegido
+  // (df/dt) sigue siendo el que la persona seleccionó — si quiere ver todo lo acumulado,
+  // solo tiene que ampliar el rango.
+  if(sb&&sesionActual&&dOrd.length){
+    setS('loading','Combinando con tu historial guardado...');
+    const nuevosOrd=dOrd,nuevosProdPorId=agruparProdPorId(dProd);
+    const{ordPorId,prodPorId}=await cargarPedidosGuardados();
+    nuevosOrd.forEach(r=>{const id=String(r['ID']||'');if(id)ordPorId[id]=r;});
+    Object.assign(prodPorId,nuevosProdPorId);
+    dOrd=Object.values(ordPorId);
+    dProd=Object.values(prodPorId).flat();
+    guardarPedidosNuevos(nuevosOrd,nuevosProdPorId); // no se espera; no debe bloquear el flujo
+  }
+
   let dropiData=null;
   if(dOrd.length){
     setS('loading','Procesando Dropi...');
@@ -4598,7 +4797,7 @@ function resolverNombreProducto(nombreOriginal){
 }
 
 
-loadKeys();setDates();setupMapaInteraccion();observarScrollReveal();iniciarGauges();
+loadKeys();setDates();setupMapaInteraccion();observarScrollReveal();iniciarGauges();verificarSesionInicial();
 </script>
 </body>
 </html>
