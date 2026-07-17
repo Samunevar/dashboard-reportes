@@ -998,8 +998,8 @@ let gD={},gS={},gM={},gW={},gP={};
 // ---- CUENTAS (Supabase) — opcional; si no se configura, el dashboard funciona igual que
 // siempre, sin login ni persistencia. Reemplaza estos dos valores con los de tu proyecto
 // (Project Settings → API en supabase.com) para activar el inicio de sesión.
-const SUPABASE_URL='TU_SUPABASE_URL_AQUI';
-const SUPABASE_ANON_KEY='TU_SUPABASE_ANON_KEY_AQUI';
+const SUPABASE_URL='https://vjeamsiwoqeujlvrydnq.supabase.co';
+const SUPABASE_ANON_KEY='sb_publishable_8CLRSVzZ4c2AO7AT7lb1cg_HXDrqndg';
 let sb=(SUPABASE_URL.startsWith('http')&&typeof supabase!=='undefined')
   ?supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY)
   :null;
