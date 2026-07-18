@@ -309,7 +309,7 @@ details.how[open]>summary .chev{transform:rotate(90deg);}
 
 /* ===== Landing / homepage ===== */
 body.landing-lock{overflow:hidden;}
-#landing{position:fixed;inset:0;z-index:900;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 24px;background:radial-gradient(circle at 50% 30%,rgba(20,22,30,.55),rgba(8,9,13,.92) 70%);backdrop-filter:blur(2px);transition:opacity .7s var(--ease),transform .7s var(--ease),visibility .7s;}
+#landing{position:fixed;inset:0;z-index:900;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 24px;background-color:var(--bg);background-image:radial-gradient(circle at 50% 30%,rgba(30,26,24,1),var(--bg) 72%);transition:opacity .7s var(--ease),transform .7s var(--ease),visibility .7s;}
 body.app-ready #landing{opacity:0;visibility:hidden;transform:scale(1.05);pointer-events:none;}
 #landing .lg-orb{position:absolute;border-radius:50%;filter:blur(60px);pointer-events:none;opacity:.55;}
 #landing .lg-orb.o1{width:420px;height:420px;background:radial-gradient(circle,rgba(255,107,53,.5),transparent 70%);top:-8%;left:8%;animation:auroraDrift 18s ease-in-out infinite alternate;}
