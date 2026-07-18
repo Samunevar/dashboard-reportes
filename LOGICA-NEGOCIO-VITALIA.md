@@ -860,3 +860,26 @@ animado) y un tag "Bienvenido de nuevo" arriba.
 Una vez hay sesión activa, el flujo de siempre sigue igual: `onSesionActiva()` carga todo lo
 acumulado y entra directo al dashboard (sección 27); si la cuenta es nueva sin datos, se queda
 en el landing pero ya mostrando "Conectado como [correo]" en vez del formulario.
+
+---
+
+## 30. Tipografía monoespaciada retirada + fondo sólido del login + autofill (2026-07-16)
+
+**Tipografía:** `JetBrains Mono` (usada en casi todos los números del dashboard — KPIs,
+montos en tablas, IDs, guías) se veía "de código/juego de los 90" según el usuario. Se
+reemplazó por `'Inter',sans-serif` en las ~32 apariciones del archivo (la variable
+`--font-mono`, todos los `style="font-family:'JetBrains Mono',monospace"` inline, y los dos
+usos en `canvas` para las etiquetas de las tortas) y se quitó `JetBrains+Mono` del `@import`
+de Google Fonts (ya no se usa, no hace falta cargarlo). Para que las columnas de dinero sigan
+alineándose bien con una fuente proporcional, se agregó `font-variant-numeric:tabular-nums`
+en `body` (los dígitos quedan con el mismo ancho entre sí, sin ser monoespaciados).
+
+**Fondo del landing:** tenía transparencia real (`rgba` con alpha .55–.92 + `backdrop-filter:
+blur(2px)`), dejando ver claramente las tarjetas del dashboard (Credenciales, Archivos)
+detrás del login. Ahora es 100% opaco: `background-color` sólido + gradiente entre dos
+colores sólidos (sin alpha), sin `backdrop-filter`.
+
+**Autofill de Chrome:** el navegador fuerza un fondo claro/blanco en campos que reconoce (como
+el de correo), ignorando el CSS del sitio. Se agregó la regla estándar
+`input:-webkit-autofill{-webkit-box-shadow:0 0 0 1000px var(--bg3) inset!important;...}` para
+que el autocompletado respete el tema oscuro.

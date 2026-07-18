@@ -7,7 +7,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sora:wght@400;500;600;700;800&display=swap');
 :root{
   --bg:#08090d;
   --bg-elev:#0f1118;
@@ -29,12 +29,21 @@
   --shadow-card:0 30px 60px -34px rgba(0,0,0,.78),0 6px 20px -12px rgba(0,0,0,.5);
   --font-display:'Sora',sans-serif;
   --font:'Inter',sans-serif;
-  --font-mono:'JetBrains Mono',monospace;
+  --font-mono:'Inter',sans-serif;
   --ease:cubic-bezier(.16,1,.3,1);
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 html{background:var(--bg);overflow-x:hidden;scroll-behavior:smooth;}
-body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13.5px;line-height:1.6;min-height:100vh;position:relative;overflow-x:hidden;-webkit-font-smoothing:antialiased;}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13.5px;line-height:1.6;min-height:100vh;position:relative;overflow-x:hidden;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums;}
+/* El autocompletado de Chrome fuerza un fondo claro en campos reconocidos (como el correo) —
+   esto lo neutraliza para que respete el tema oscuro del dashboard. */
+input:-webkit-autofill,input:-webkit-autofill:hover,input:-webkit-autofill:focus{
+  -webkit-text-fill-color:var(--text)!important;
+  -webkit-box-shadow:0 0 0 1000px var(--bg3) inset!important;
+  box-shadow:0 0 0 1000px var(--bg3) inset!important;
+  caret-color:var(--text);
+  transition:background-color 9999s ease-in-out 0s;
+}
 body::before{
   content:'';position:fixed;inset:-15%;z-index:-1;pointer-events:none;
   background:
@@ -147,7 +156,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(0.6);cursor:po
 .sn{font-size:12px;color:var(--muted);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .sb2{flex:2;background:rgba(255,255,255,.07);border-radius:999px;height:6px;overflow:hidden;}
 .sf{height:100%;border-radius:999px;transition:width .4s;}
-.snn{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--text);width:36px;text-align:right;}
+.snn{font-size:11px;font-family:'Inter',sans-serif;color:var(--text);width:36px;text-align:right;}
 .sp2{font-size:10px;color:var(--hint);width:36px;text-align:right;}
 .tw2{overflow-x:auto;overflow-y:hidden;border-radius:var(--r);border:1px solid var(--border);}
 table{width:100%;border-collapse:collapse;font-size:12.5px;}
@@ -161,7 +170,7 @@ tr:hover td{background:rgba(255,255,255,.035);}
 .pt{font-size:11px;font-weight:600;color:var(--orange);margin-bottom:14px;letter-spacing:.06em;text-transform:uppercase;}
 .pg2{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:14px;}
 .pi .lb{font-size:10px;color:rgba(255,107,53,.75);margin-bottom:4px;}
-.pi .vl{font-size:20px;font-weight:700;color:var(--orange);font-family:'JetBrains Mono',monospace;letter-spacing:-.3px;}
+.pi .vl{font-size:20px;font-weight:700;color:var(--orange);font-family:'Inter',sans-serif;letter-spacing:-.3px;}
 .al{border-radius:var(--r);padding:12px 16px 12px 18px;font-size:12.5px;margin-bottom:12px;position:relative;border:1px solid transparent;}
 .al::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:3px 0 0 3px;}
 .aw{background:rgba(245,158,11,.1);color:#fbbf24;border-color:rgba(245,158,11,.25);}.aw::before{background:var(--amber);}
@@ -173,7 +182,7 @@ tr:hover td{background:rgba(255,255,255,.035);}
 .cr{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);}
 .cr:last-child{border-bottom:none;}
 .cl2{font-size:12px;color:var(--muted);}
-.cv{font-size:12.5px;font-family:'JetBrains Mono',monospace;}
+.cv{font-size:12.5px;font-family:'Inter',sans-serif;}
 .ar{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
 .bnr{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;font-size:11.5px;color:var(--muted);margin-top:8px;}
 .bnr a{color:var(--orange);}
@@ -187,7 +196,7 @@ tr:hover td{background:rgba(255,255,255,.035);}
 .pftag.all.active{background:rgba(255,255,255,0.12);border-color:var(--border2);color:var(--text);box-shadow:none;}
 .prod-card{background:var(--bg2);border-radius:var(--r);padding:14px 18px;margin-bottom:10px;border:1px solid var(--border);display:flex;align-items:center;gap:16px;transition:transform .15s ease,border-color .15s ease;}
 .prod-card:hover{transform:translateX(2px);border-color:var(--border2);}
-.prod-rank{font-size:18px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--hint);width:30px;flex-shrink:0;text-align:center;}
+.prod-rank{font-size:18px;font-weight:700;font-family:'Inter',sans-serif;color:var(--hint);width:30px;flex-shrink:0;text-align:center;}
 .prod-rank.gold{color:#ffd166;text-shadow:0 0 14px rgba(255,209,102,.5);}.prod-rank.silver{color:#d7dbe2;text-shadow:0 0 12px rgba(215,219,226,.35);}.prod-rank.bronze{color:#e0a458;text-shadow:0 0 12px rgba(224,164,88,.35);}
 .prod-info{flex:1;min-width:0;}
 .prod-name{font-size:13.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -195,7 +204,7 @@ tr:hover td{background:rgba(255,255,255,.035);}
 .prod-bar-fill{height:100%;border-radius:999px;transition:width .5s ease;}
 .prod-stats{display:flex;gap:16px;flex-shrink:0;font-size:11px;text-align:right;}
 .prod-stat .lbl{color:var(--hint);font-size:9px;text-transform:uppercase;letter-spacing:.05em;}
-.prod-stat .val{font-family:'JetBrains Mono',monospace;font-weight:600;margin-top:2px;}
+.prod-stat .val{font-family:'Inter',sans-serif;font-weight:600;margin-top:2px;}
 .transp-row{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--border);}
 .transp-row:last-child{border-bottom:none;}
 .ciudad-row{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--border);}
@@ -1758,14 +1767,14 @@ function renderProy(d){
     const n=netoOrden*EF;
     const[l,c]=PILL(o.estatus);
     return`<tr>
-      <td style="font-family:'JetBrains Mono',monospace;font-size:11px">${o.id}</td>
+      <td style="font-family:'Inter',sans-serif;font-size:11px">${o.id}</td>
       <td>${o.cliente}</td>
       <td style="color:var(--muted);max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.productos}</td>
       <td><span class="pill ${c}">${l}</span></td>
-      <td style="font-family:'JetBrains Mono',monospace">${fmt(o.valor)}</td>
-      <td style="color:var(--muted);font-family:'JetBrains Mono',monospace">${fmt(o.costoProv)}</td>
-      <td style="color:var(--muted);font-family:'JetBrains Mono',monospace">${fmt(o.flete)}</td>
-      <td style="color:var(--green);font-family:'JetBrains Mono',monospace">${fmt(n)}</td>
+      <td style="font-family:'Inter',sans-serif">${fmt(o.valor)}</td>
+      <td style="color:var(--muted);font-family:'Inter',sans-serif">${fmt(o.costoProv)}</td>
+      <td style="color:var(--muted);font-family:'Inter',sans-serif">${fmt(o.flete)}</td>
+      <td style="color:var(--green);font-family:'Inter',sans-serif">${fmt(n)}</td>
     </tr>`;
   }).join('')||'<tr><td colspan="8" class="empty">Sin pedidos en movimiento</td></tr>';
 
@@ -1815,12 +1824,12 @@ function renderMeta(data,tt,ms){
     return`<tr>
       <td style="color:var(--muted);font-size:11px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.account_name||''}</td>
       <td style="max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.campaign_name}</td>
-      <td style="font-family:'JetBrains Mono',monospace">${fmt(sp)}</td>
-      <td style="font-family:'JetBrains Mono',monospace">${mono(cl)}</td>
+      <td style="font-family:'Inter',sans-serif">${fmt(sp)}</td>
+      <td style="font-family:'Inter',sans-serif">${mono(cl)}</td>
       <td>${pct(im>0?cl/im*100:0)}</td>
-      <td style="font-family:'JetBrains Mono',monospace">${fmt(cl>0?sp/cl:0)}</td>
-      <td style="font-family:'JetBrains Mono',monospace">${fmt(cpm)}</td>
-      <td style="font-family:'JetBrains Mono',monospace;color:${cpa>0?'var(--amber)':'var(--hint)'}">${cpa>0?fmt(cpa):'—'}</td>
+      <td style="font-family:'Inter',sans-serif">${fmt(cl>0?sp/cl:0)}</td>
+      <td style="font-family:'Inter',sans-serif">${fmt(cpm)}</td>
+      <td style="font-family:'Inter',sans-serif;color:${cpa>0?'var(--amber)':'var(--hint)'}">${cpa>0?fmt(cpa):'—'}</td>
     </tr>`;
   }).join('')||'<tr><td colspan="8" class="empty">Sin campañas en este período</td></tr>';
   gM={tG,tot,tt:tt||0,ms:ms||0,tI,tC,ctr,cpc};return gM;
@@ -2080,7 +2089,7 @@ function calcSinMovimiento(dropiData){
   $('tb-sinmov').innerHTML=pendientes.map(o=>{
     const[lbl,cls]=PILL(o.estatus);
     const alerta=o.diasHab>=5?'style="color:var(--red)"':o.diasHab>=3?'style="color:var(--amber)"':'';
-    return`<tr><td>${o.cliente}</td><td style="font-family:'JetBrains Mono',monospace">${o.tel}</td><td style="font-family:'JetBrains Mono',monospace;font-size:11px">${o.guia||'—'}</td><td><span class="pill ${cls}">${lbl}</span></td><td style="color:var(--muted)">${o.fechaUltMov}</td><td ${alerta} style="font-family:'JetBrains Mono',monospace;text-align:center"><strong>${o.diasHab}d</strong></td></tr>`;
+    return`<tr><td>${o.cliente}</td><td style="font-family:'Inter',sans-serif">${o.tel}</td><td style="font-family:'Inter',sans-serif;font-size:11px">${o.guia||'—'}</td><td><span class="pill ${cls}">${lbl}</span></td><td style="color:var(--muted)">${o.fechaUltMov}</td><td ${alerta} style="font-family:'Inter',sans-serif;text-align:center"><strong>${o.diasHab}d</strong></td></tr>`;
   }).join('')||'<tr><td colspan="6" class="empty">Sin guías atrasadas — todo en orden ✓</td></tr>';
   if(pendientes.length>0){const tab=$('tab-sin-mov');if(tab)tab.innerHTML=`Sin movimiento <span style="background:var(--red);color:#fff;font-size:9px;padding:1px 5px;border-radius:10px;margin-left:4px">${pendientes.length}</span>`;}
 }
@@ -2759,12 +2768,12 @@ function dibujarGraficoLineal(nPedTotal,ctx,cpa){
     const y=padT+plotH*(i/gridLines);
     c.beginPath();c.moveTo(padL,y);c.lineTo(W-padR,y);c.stroke();
     const val=maxVal*(1-i/gridLines);
-    c.fillStyle='#888';c.font='10px JetBrains Mono,monospace';c.textAlign='right';c.textBaseline='middle';
+    c.fillStyle='#888';c.font='10px Inter,sans-serif';c.textAlign='right';c.textBaseline='middle';
     c.fillText(fmtShort(val),padL-8,y);
   }
 
   // Eje X labels
-  c.fillStyle='#888';c.font='10px JetBrains Mono,monospace';c.textAlign='center';c.textBaseline='top';
+  c.fillStyle='#888';c.font='10px Inter,sans-serif';c.textAlign='center';c.textBaseline='top';
   puntos.forEach(p=>{
     c.fillText(p.n,xFor(p.n),H-padB+8);
   });
@@ -3530,9 +3539,9 @@ function renderTrazabilidad(){
   $('tb-traz').innerHTML=lista.map(r=>{
     const[lbl,cls]=estadoInfo[r.estado]||['—','pgr'];
     return`<tr>
-      <td style="font-family:'JetBrains Mono',monospace;font-size:11px">${r.shopName}</td>
+      <td style="font-family:'Inter',sans-serif;font-size:11px">${r.shopName}</td>
       <td>${r.cliente}</td>
-      <td style="font-family:'JetBrains Mono',monospace;font-size:11px">${r.tel}</td>
+      <td style="font-family:'Inter',sans-serif;font-size:11px">${r.tel}</td>
       <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)">${r.shopProd}</td>
       <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)">${r.dropiProd}</td>
       <td>${r.dropiEstado!=='—'?`<span class="pill ${PILL(r.dropiEstado)[1]}">${PILL(r.dropiEstado)[0]}</span>`:'—'}</td>
@@ -3646,12 +3655,12 @@ function renderPedidosAdicionales(){
   $('tb-adic').innerHTML=lista.map(o=>{
     const[lbl,cls]=PILL(o.estatus);
     return`<tr>
-      <td style="font-family:'JetBrains Mono',monospace;font-size:11px">${o.id}</td>
+      <td style="font-family:'Inter',sans-serif;font-size:11px">${o.id}</td>
       <td>${o.cliente}</td>
-      <td style="font-family:'JetBrains Mono',monospace;font-size:11px">${o.tel}</td>
+      <td style="font-family:'Inter',sans-serif;font-size:11px">${o.tel}</td>
       <td style="color:var(--muted)">${o.ciudad}</td>
       <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)">${o.productos}</td>
-      <td style="font-family:'JetBrains Mono',monospace">${fmt(o.valor)}</td>
+      <td style="font-family:'Inter',sans-serif">${fmt(o.valor)}</td>
       <td><span class="pill ${cls}">${lbl}</span></td>
     </tr>`;
   }).join('')||'<tr><td colspan="7" class="empty">Sin pedidos adicionales detectados</td></tr>';
@@ -3945,7 +3954,7 @@ function renderAnalisisPorDia(){
       <td style="color:var(--muted)">${f}</td>
       <td>${b.ent}</td>
       <td>${b.desp}</td>
-      <td style="font-family:'JetBrains Mono',monospace">${fmt(b.ventas)}</td>
+      <td style="font-family:'Inter',sans-serif">${fmt(b.ventas)}</td>
       <td style="color:var(--red)">−${fmt(b.costoProd)}</td>
       <td style="color:var(--red)">−${fmt(b.costoFlete)}</td>
       <td style="color:var(--red)">−${fmt(pautaDia)}${esReal?' <span style="color:var(--green);font-size:9.5px">●real</span>':''}</td>
@@ -4024,7 +4033,7 @@ function renderControlDiario(){
     const color=o.diasHab>=2?'style="color:var(--red)"':o.diasHab>=1?'style="color:var(--amber)"':'';
     return`<tr>
       <td>${o.cliente}</td>
-      <td style="font-family:'JetBrains Mono',monospace;font-size:11px">${o.guia||'—'}</td>
+      <td style="font-family:'Inter',sans-serif;font-size:11px">${o.guia||'—'}</td>
       <td style="color:var(--muted)">${o.transp}</td>
       <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)">${o.novTexto}</td>
       <td style="color:var(--muted)">${o.fechaNov}</td>
@@ -4099,7 +4108,7 @@ function renderControlDiario(){
     const resultado=esDD?'<span class="pill po">Dev. directa</span>':EST_ENT.includes(o.estatus)?'<span class="pill pg">Entregado</span>':(o.estatus==='DEVOLUCION'||o.estatus==='RECHAZADO')?'<span class="pill pr">Devuelto</span>':`<span class="pill pgr">${o.estatus}</span>`;
     return`<tr style="cursor:pointer" onclick="abrirDetalleNovedad(${i})">
       <td>${o.cliente}</td>
-      <td style="font-family:'JetBrains Mono',monospace;font-size:11px">${o.guia||'—'}</td>
+      <td style="font-family:'Inter',sans-serif;font-size:11px">${o.guia||'—'}</td>
       <td style="color:var(--muted)">${o.fechaSol} ${o.horaSol||''}</td>
       <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)" title="${o.novTexto.replace(/"/g,'&quot;')}">${o.novTexto||'—'}</td>
       <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)">${o.solTexto}</td>
@@ -4153,7 +4162,7 @@ function renderControlDiario(){
   $('tb-coord-sinnov').innerHTML=guiasCoordSinNovedad.map(o=>`
     <tr>
       <td>${o.cliente}</td>
-      <td style="font-family:'JetBrains Mono',monospace;font-size:11px">${o.guia||'—'}</td>
+      <td style="font-family:'Inter',sans-serif;font-size:11px">${o.guia||'—'}</td>
       <td style="color:var(--muted)">${o.transp}</td>
       <td style="color:var(--muted)">${o.ciudad}</td>
       <td style="color:var(--muted)">${o.fecha}</td>
@@ -4170,7 +4179,7 @@ function abrirDetalleNovedad(i){
   $('novedad-modal-content').innerHTML=`
     <div style="margin-bottom:16px">
       <div style="font-size:17px;font-weight:700;color:var(--text);margin-bottom:4px">${o.cliente}</div>
-      <div style="font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace">${o.id} · Guía ${o.guia||'—'}</div>
+      <div style="font-size:11px;color:var(--muted);font-family:'Inter',sans-serif">${o.id} · Guía ${o.guia||'—'}</div>
     </div>
     <div class="cr"><div class="cl2">Teléfono</div><div class="cv">${o.tel||'—'}</div></div>
     <div class="cr"><div class="cl2">Ciudad</div><div class="cv">${o.ciudad||'—'}</div></div>
@@ -4594,7 +4603,7 @@ function renderListaCampanasPorCuenta(elId,campanas,vacioMsg){
         const enPaquete=paquetes.find(p=>p.campanas.includes(c.nombre));
         return`<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--border);font-size:12px">
           <div style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.nombre}</div>
-          <div style="color:var(--amber);font-family:'JetBrains Mono',monospace;flex-shrink:0">${fmt(c.gasto)}</div>
+          <div style="color:var(--amber);font-family:'Inter',sans-serif;flex-shrink:0">${fmt(c.gasto)}</div>
           ${enPaquete?`<span style="font-size:10px;padding:2px 6px;border-radius:4px;background:var(--gd);color:var(--green)">${enPaquete.nombre}</span>`:'<span style="font-size:10px;color:var(--hint)">sin asignar</span>'}
         </div>`;
       }).join('')}
@@ -4670,7 +4679,7 @@ function renderBuscadorCampanas(){
       ${plat}
       <div style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${c.nombre}">${c.nombre}</div>
       <div style="font-size:10px;color:var(--muted);flex-shrink:0">${c.cuenta||''}</div>
-      <div style="color:var(--amber);font-family:'JetBrains Mono',monospace;flex-shrink:0;font-size:11px">${fmt(c.gasto)}</div>
+      <div style="color:var(--amber);font-family:'Inter',sans-serif;flex-shrink:0;font-size:11px">${fmt(c.gasto)}</div>
       ${enPaquete?`<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:var(--gd);color:var(--green);flex-shrink:0">${enPaquete.nombre}</span>`:''}
     </label>`;
   }).join('');
@@ -4768,7 +4777,7 @@ function renderPaquetes(){
     return`<div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:12px 14px;margin-bottom:8px">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
         <div style="font-size:13px;font-weight:700;color:var(--text);flex:1">${p.nombre}</div>
-        <div style="font-size:13px;font-weight:700;color:var(--amber);font-family:'JetBrains Mono',monospace">${fmt(gastoReal>0?gastoReal:p.gasto)}</div>
+        <div style="font-size:13px;font-weight:700;color:var(--amber);font-family:'Inter',sans-serif">${fmt(gastoReal>0?gastoReal:p.gasto)}</div>
         <button onclick="eliminarPaquete(${p.id})" style="background:none;border:none;cursor:pointer;color:var(--hint);font-size:14px">✕</button>
       </div>
       <div style="font-size:11px;color:${p.prodId?'var(--green)':'var(--hint)'}">📦 ${prodNom}</div>
