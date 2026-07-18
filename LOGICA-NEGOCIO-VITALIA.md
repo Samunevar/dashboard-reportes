@@ -810,3 +810,27 @@ Barrido de las 9 tabs sin errores de consola en todo el proceso.
 `supabase_schema.sql` en el SQL Editor, y reemplazar `SUPABASE_URL`/`SUPABASE_ANON_KEY` en
 `index.html` con los valores reales del proyecto (Project Settings → API) para activar el
 login de verdad en producción.
+
+**Actualización:** ya conectado con el proyecto real del usuario (`SUPABASE_URL`/
+`SUPABASE_ANON_KEY` con los valores reales, no el placeholder). Verificado con un signup real
+contra el proyecto — Supabase pide confirmar el correo por defecto, y el usuario desactivó esa
+opción (Authentication → Sign In / Providers → "Confirm email") para simplificar el registro
+mientras el número de cuentas es pequeño.
+
+---
+
+## 28. Ciudades: expandir por producto como tabla dinámica de Excel (2026-07-16)
+
+El desglose por ciudad (clic en una ciudad → "Por producto"/"Por transportadora", sección 19)
+ahora se comporta como el drill-down de una tabla dinámica de Excel:
+- **Flechita que gira** (`.cd-chev`) en la fila de la ciudad, igual al patrón ya usado en los
+  `<details class="how">` — indica visualmente que la fila es expandible y su estado actual.
+- **Acordeón, no acumulativo**: solo una ciudad puede estar expandida a la vez. Al abrir una
+  nueva, la que estuviera abierta se cierra sola (`ciudadAbierta` guarda el índice de la única
+  ciudad abierta). Antes se podían dejar varias ciudades abiertas al mismo tiempo.
+- El panel de detalle (`.cd-panel`) se ve "conectado" a la fila de la ciudad (sin borde
+  superior, con una línea vertical sutil a la izquierda) en vez de una tarjeta flotando aparte,
+  para reforzar la sensación de jerarquía ciudad → producto/transportadora.
+
+No cambia ningún cálculo — es puramente la interacción/presentación de `renderCiudadesFiltradas`
+y `toggleCiudadDetalle`, ambas en `index.html`.

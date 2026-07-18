@@ -231,8 +231,16 @@ tr:hover td{background:rgba(255,255,255,.035);}
 .ciudad-val{font-size:11.5px;font-weight:700;width:42px;text-align:right;flex-shrink:0;}
 .ciudad-ped{font-size:11px;color:var(--muted);width:55px;text-align:right;flex-shrink:0;}
 .ciudad-item.mapa-highlight{background:rgba(255,138,76,.14);border-radius:var(--r);}
+/* Ciudad expandible tipo tabla dinámica de Excel: flechita que gira + fila resaltada
+   mientras está abierta, y el panel de abajo se ve "conectado" a esa fila (como un
+   grupo de pivot table desplegado), no como una tarjeta aparte flotando. */
+.ciudad-item.cd-expandible{transition:background .15s;}
+.ciudad-item.cd-open{background:rgba(255,138,76,.06);}
+.cd-chev{font-size:9px;color:var(--hint);flex-shrink:0;transition:transform .22s var(--ease),color .15s;margin-left:2px;}
+.ciudad-item.cd-open .cd-chev{transform:rotate(90deg);color:var(--orange);}
 /* Panel de detalle al hacer clic en una ciudad (por producto / por transportadora) */
-.cd-panel{background:linear-gradient(165deg,rgba(255,255,255,.045),rgba(255,255,255,.012));border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:6px;}
+.cd-panel{background:linear-gradient(165deg,rgba(255,255,255,.045),rgba(255,255,255,.012));border:1px solid var(--border);border-top:none;border-radius:0 0 var(--r) var(--r);padding:14px 16px 14px 26px;margin:-1px 0 6px;position:relative;animation:tpIn .28s var(--ease);}
+.cd-panel::before{content:'';position:absolute;left:12px;top:0;bottom:14px;width:1.5px;background:linear-gradient(180deg,var(--ob),transparent);}
 .cd-section-title{font-size:10px;font-weight:700;color:rgba(255,255,255,.42);letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px;}
 .cd-row{padding:9px 0;border-bottom:1px solid var(--border);}
 .cd-row:last-child{border-bottom:none;}
@@ -2946,19 +2954,37 @@ function renderCiudadesFiltradas(){
     const tieneDetalle=Object.keys(prods).length>0||Object.keys(transps).length>0;
     const detalleHTML=`${Object.keys(prods).length>0?`<div class="cd-section-title">Por producto</div>${prodsHTML}`:''}${Object.keys(transps).length>0?`<div class="cd-section-title" style="margin-top:${Object.keys(prods).length>0?'16px':'0'}">Por transportadora</div>${transpsHTML}`:''}`;
 
-    return`<div class="ciudad-item" data-ciudad="${escAttr(c.nombre)}" style="cursor:pointer" onclick="toggleCiudadDetalle(${i})">
+    return`<div class="ciudad-item${tieneDetalle?' cd-expandible':''}" data-ciudad="${escAttr(c.nombre)}" style="cursor:pointer" onclick="toggleCiudadDetalle(${i})">
       <div class="ciudad-name">${c.nombre}</div>
       <div class="ciudad-bar-track"><div class="ciudad-bar-fill" style="width:${bar}%;background:${col}"></div></div>
       <div class="ciudad-val" style="color:${v}">${(c.ef*100).toFixed(1)}%</div>
       <div class="ciudad-ped">${c.desp} desp.</div>
+      ${tieneDetalle?'<span class="cd-chev">▶</span>':''}
     </div>
     ${tieneDetalle?`<div id="ciudad-det-${i}" class="cd-panel" style="display:none">${detalleHTML}</div>`:''}`;
   }).join('')||'<div class="empty">Sin ciudades</div>';
 }
 
+// Comportamiento tipo tabla dinámica de Excel: al hacer clic en una ciudad se expande su
+// desglose por producto/transportadora justo debajo (con flechita que gira), y como en un
+// árbol de pivot table, solo una ciudad queda expandida a la vez — abrir una cierra la anterior.
+let ciudadAbierta=null;
 function toggleCiudadDetalle(i){
+  if(ciudadAbierta!==null&&ciudadAbierta!==i){
+    const elPrev=$(`ciudad-det-${ciudadAbierta}`);
+    if(elPrev){
+      elPrev.style.display='none';
+      const filaPrev=elPrev.previousElementSibling;
+      if(filaPrev)filaPrev.classList.remove('cd-open');
+    }
+    ciudadAbierta=null;
+  }
   const el=$(`ciudad-det-${i}`);if(!el)return;
-  el.style.display=el.style.display==='none'?'block':'none';
+  const abrir=el.style.display==='none'||!el.style.display;
+  el.style.display=abrir?'block':'none';
+  const fila=el.previousElementSibling;
+  if(fila)fila.classList.toggle('cd-open',abrir);
+  ciudadAbierta=abrir?i:null;
 }
 
 
