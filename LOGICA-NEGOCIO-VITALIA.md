@@ -883,3 +883,105 @@ colores sólidos (sin alpha), sin `backdrop-filter`.
 el de correo), ignorando el CSS del sitio. Se agregó la regla estándar
 `input:-webkit-autofill{-webkit-box-shadow:0 0 0 1000px var(--bg3) inset!important;...}` para
 que el autocompletado respete el tema oscuro.
+
+---
+
+## 31. "Mis informes" — ver y eliminar subidas completas (reemplaza el modelo de la sección 27) (2026-07-18)
+
+El usuario pidió poder ver los reportes que ha subido y **borrar uno específico** — ej. si
+subió el día 1, el día 2 y el día 3, poder quitar solo el del día 2 sin afectar los otros ni
+perder el resto del historial acumulado. El modelo de la sección 27 (`pedidos_dropi`, upsert
+por `ID` de pedido) **no puede soportar esto**: una vez que un pedido se sobrescribe con una
+subida nueva, no queda ningún rastro de cuál subida lo trajo ni de cuál era su valor antes —
+es físicamente imposible deshacer selectivamente una sola subida.
+
+### Nuevo modelo: guardar cada subida cruda, derivar el estado acumulado por reproducción
+
+En vez de una tabla ya fusionada, cada subida ("informe") se guarda como su propio registro
+con las filas crudas tal cual llegaron (`ord` = filas de `dOrd`, `productos` = filas de
+`dProd`). El estado acumulado que ve el dashboard **no se guarda directamente — se recalcula**
+reproduciendo todos los informes del usuario en orden cronológico (`creado_en` ascendente):
+el pedido que aparece en varios informes toma el valor del informe **más reciente que lo
+mencione**. Si se borra un informe, sus pedidos simplemente dejan de estar en esa reproducción
+— vuelven al valor de un informe anterior si alguno lo mencionaba, o desaparecen si ninguno
+más lo menciona. Esto es exactamente "quitar solo el del día 2" sin tener que versionar cada
+pedido individualmente.
+
+**Trade-off asumido:** el almacenamiento ahora crece con el TOTAL de filas subidas a través
+del tiempo (pedidos repetidos entre informes que se traslapan NO se deduplican), no solo con
+pedidos únicos como en el modelo anterior. Para el volumen de este negocio esto sigue siendo
+insignificante para la capa gratuita de Supabase.
+
+`pedidos_dropi` (tabla de la sección 27) **no se borra** — ya no recibe escrituras nuevas, pero
+se usa una única vez por cuenta para migrar cualquier dato que se haya acumulado con el
+sistema anterior (ver migración más abajo).
+
+### Esquema nuevo (`supabase_schema.sql`)
+
+Tabla `informes_dropi`: `id` (uuid, PK), `user_id`, `creado_en` (momento de la subida),
+`fecha_desde`/`fecha_hasta` (el rango que la persona eligió al generar ese reporte — puede ser
+`null` para el informe sintético de la migración), `num_pedidos` (para mostrarlo en la lista
+sin releer el JSON completo), `ord` (jsonb, filas crudas de `dOrd` de esa subida), `productos`
+(jsonb, filas crudas de `dProd`). RLS habilitado, misma policy `for all` restringida a
+`auth.uid() = user_id`.
+
+**Importante para el usuario:** este cambio requiere correr el bloque nuevo de
+`supabase_schema.sql` (la tabla `informes_dropi`) en el SQL Editor del proyecto Supabase real —
+sin eso, el login sigue funcionando pero guardar/ver/borrar informes falla silenciosamente
+(mismo criterio "aditivo" de siempre: nunca bloquea el dashboard).
+
+### Piezas nuevas/cambiadas en `index.html`
+
+- **`cargarPedidosGuardados()`** (reescrita) — ya no lee `pedidos_dropi` directo: primero llama
+  `migrarPedidosAntiguosSiHaceFalta()`, luego trae todos los `informes_dropi` del usuario
+  (paginado, 50 por página) ordenados por `creado_en` ascendente, y los reproduce uno por uno
+  sobre `ordPorId`/`prodPorId`. Devuelve la misma forma de siempre — ningún otro código que la
+  llama tuvo que cambiar.
+- **`guardarInforme(nuevosOrd, nuevosProd, df, dt)`** (reemplaza a `guardarPedidosNuevos`) — un
+  solo `insert` en `informes_dropi` con las filas crudas de la subida actual tal cual, más el
+  rango de fechas elegido. Si falla, solo un aviso — no bloquea el flujo.
+- **`migrarPedidosAntiguosSiHaceFalta()`** (nueva) — se ejecuta una sola vez por cuenta: si el
+  usuario no tiene ningún `informes_dropi` todavía pero sí tiene filas en `pedidos_dropi` (del
+  sistema viejo), las empaqueta todas en un único informe sintético (`fecha_desde`/`fecha_hasta`
+  en `null`, se muestra como "Historial previo" en la UI) para no perder nada de lo ya
+  acumulado.
+- **`fetchAll(soloRefrescar)`** — ahora acepta un parámetro opcional. Con `soloRefrescar=true`,
+  el bloque de fusión SOLO reproduce lo ya guardado (vía `cargarPedidosGuardados()`) y NO
+  guarda lo que haya en `dOrd`/`dProd` en ese momento como un informe nuevo. Esto es necesario
+  en dos casos donde `dOrd` contiene datos que YA están guardados (no una subida nueva del
+  usuario) y volver a guardarlos crearía un informe duplicado cada vez:
+  - **`onSesionActiva()`** (login o sesión ya activa al cargar la página) — carga el historial
+    acumulado en `dOrd` y llama `fetchAll(true)`. Antes llamaba `fetchAll()` sin el flag, lo
+    que guardaba TODO el historial acumulado como un informe nuevo en cada login — encontrado
+    y corregido durante la verificación de esta sección (sin el fix, cada recarga de página con
+    sesión activa duplicaba el historial completo).
+  - **`eliminarInforme(id)`** — tras borrar, si el dashboard ya tenía resultados en pantalla
+    (`$('results').style.display==='block'`), llama `fetchAll(true)` para refrescar los números
+    reflejando la eliminación, sin re-guardar la subida vieja que seguía en memoria (también
+    encontrado y corregido en la verificación: sin el fix, refrescar tras borrar revivía el
+    informe recién eliminado como uno nuevo).
+- **UI "Mis informes"** — botón junto a "Cerrar sesión" (en `#hdr-session` y en `#lg-session`)
+  que abre `#modal-informes` (reutiliza `.modal-overlay`/`.modal-panel` del modal de producto).
+  `listarInformesUI()` pinta cada informe (fecha de subida, rango `fecha_desde`–`fecha_hasta` o
+  "Historial previo", número de pedidos) reutilizando las clases `.cd-row`/`.cd-row-top`/
+  `.cd-meta` de los paneles de detalle por ciudad, con un botón "🗑 Eliminar" por fila.
+  `eliminarInforme(id)` pide confirmación nativa (acción irreversible, explica que los pedidos
+  que SOLO estaban en ese informe van a desaparecer), borra la fila de `informes_dropi`, y
+  refresca tanto la lista del modal como el dashboard.
+
+### Verificación realizada
+
+Con un cliente Supabase simulado (mismo patrón de la sección 27, extendido con `insert`/
+`delete` reales sobre `informes_dropi`): se subió informe A (pedidos 1-15, ENTREGADO), luego
+informe B (pedidos 10-30, con 10-15 en DEVOLUCION) → estado acumulado correcto (30 pedidos,
+10-15 con el valor de B, 1-9 y 16-30 intactos). Se cerró sesión y se volvió a iniciar sesión
+(simulando recarga de página): el número de informes guardados no cambió (2 antes y después —
+confirma el fix de `onSesionActiva`) y el estado acumulado se mantuvo igual (30 pedidos). Se
+eliminó el informe B: el estado acumulado volvió a ser exactamente pedidos 1-15 con los valores
+originales de A (confirmado pedido por pedido), los pedidos 16-30 desaparecieron por completo,
+y solo quedó el informe A guardado — replicando exactamente el caso "quitar solo el del día 2"
+pedido por el usuario. Se probó también la migración (cuenta nueva con datos solo en
+`pedidos_dropi`, sin `informes_dropi`): se creó un único informe sintético "Historial previo"
+con los 5 pedidos, y un segundo login no lo duplicó (confirma el mismo fix). Se confirmó que
+sin sesión activa (o sin Supabase configurado) el comportamiento es idéntico al de antes de
+este cambio. Sin errores de consola en ningún escenario.
