@@ -834,3 +834,29 @@ ahora se comporta como el drill-down de una tabla dinámica de Excel:
 
 No cambia ningún cálculo — es puramente la interacción/presentación de `renderCiudadesFiltradas`
 y `toggleCiudadDetalle`, ambas en `index.html`.
+
+---
+
+## 29. Landing enfocado en el login cuando hay cuentas configuradas (2026-07-16)
+
+Cuando `sb` está configurado (Supabase activo), el landing ya no muestra primero el copy de
+marketing con el login escondido al final — ahora el login/registro es lo PRIMERO y único que
+se ve, con un título grande y estilizado (`.lg-hero-title`, tipografía Sora con degradado
+animado) y un tag "Bienvenido de nuevo" arriba.
+
+**Cómo funciona (`ajustarLandingSegunCuentas()`, llamada al cargar la página):**
+- Si `sb` existe: oculta `#lg-marketing` (todo el copy/CTA/chips clásicos), muestra
+  `#lg-hero-auth`, le agrega la clase `lg-focus-auth` a `#landing` (atenúa los orbes de fondo
+  para que no compitan visualmente con el login), y **traslada** el mismo `#lg-auth` (no lo
+  duplica) al slot `#lg-auth-hero-slot` dentro del bloque épico — sigue siendo el mismo
+  formulario con la misma lógica de `lgAuthSubmit`/`lgAuthTab`, solo cambia de lugar en el DOM.
+- Si `sb` es `null` (sin cuentas configuradas): el landing se ve exactamente igual que antes
+  del sistema de cuentas — el bloque de marketing clásico con su CTA "Iniciar control
+  logístico".
+- **Escape hatch:** dentro del bloque épico hay un link pequeño "¿Solo quieres verlo? Continuar
+  sin cuenta →" (`usarSinCuenta()`) que llama a `entrarApp()` directo — para quien no quiera
+  crear cuenta, sigue pudiendo usar el dashboard de forma normal, sin persistencia.
+
+Una vez hay sesión activa, el flujo de siempre sigue igual: `onSesionActiva()` carga todo lo
+acumulado y entra directo al dashboard (sección 27); si la cuenta es nueva sin datos, se queda
+en el landing pero ya mostrando "Conectado como [correo]" en vez del formulario.

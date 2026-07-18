@@ -346,6 +346,18 @@ body.app-ready #landing{opacity:0;visibility:hidden;transform:scale(1.05);pointe
 #landing .lg-auth-msg.ok{color:var(--green);}
 #landing .lg-session{margin-top:28px;display:flex;align-items:center;gap:10px;justify-content:center;font-size:12.5px;color:var(--muted);animation-delay:.5s;}
 #landing .lg-session b{color:var(--text);}
+
+/* ===== Landing enfocado en el login (cuando hay cuentas configuradas) ===== */
+#landing.lg-focus-auth .lg-orb{opacity:.3;}
+#lg-hero-auth{max-width:380px;margin:0 auto;}
+#lg-hero-auth .lg-hero-logo{width:78px;height:78px;border-radius:25px;background:linear-gradient(140deg,#ff8a55,#ff6b35);display:flex;align-items:center;justify-content:center;font-size:38px;margin:0 auto 22px;box-shadow:0 26px 60px -16px rgba(255,107,53,.7),inset 0 2px 0 rgba(255,255,255,.4);animation-delay:.05s;}
+#lg-hero-auth .lg-hero-tag{font-size:12px;font-weight:700;letter-spacing:.26em;text-transform:uppercase;color:var(--orange);margin-bottom:18px;animation-delay:.15s;}
+#lg-hero-auth .lg-hero-title{font-family:var(--font-display);font-weight:800;font-size:clamp(32px,6vw,50px);letter-spacing:-1.4px;line-height:1.05;margin-bottom:8px;background:linear-gradient(120deg,#fff 15%,#ffd9c4 50%,#ff9d6e 85%);background-size:200% auto;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:heroShine 5s ease-in-out infinite,lgUp .9s var(--ease) forwards;animation-delay:0s,.25s;}
+@keyframes heroShine{0%,100%{background-position:0% center;}50%{background-position:100% center;}}
+#lg-hero-auth .lg-auth{margin-top:32px;animation-delay:.4s;}
+#lg-hero-auth .lg-skip{margin-top:26px;font-size:11.5px;color:var(--hint);cursor:pointer;transition:color .15s;animation-delay:.55s;}
+#lg-hero-auth .lg-skip b{color:var(--muted);font-weight:600;text-decoration:underline;}
+#lg-hero-auth .lg-skip:hover b{color:var(--text);}
 .hdr-session{display:flex;align-items:center;gap:10px;font-size:11.5px;color:var(--muted);margin-left:12px;}
 .hdr-session b{color:var(--text);}
 .hdr-session button{background:none;border:none;color:var(--hint);cursor:pointer;font-size:11.5px;text-decoration:underline;font-family:var(--font);}
@@ -414,20 +426,35 @@ body.app-ready #landing{opacity:0;visibility:hidden;transform:scale(1.05);pointe
   <div class="lg-orb o1"></div>
   <div class="lg-orb o2"></div>
   <div class="lg-inner">
-    <div class="lg-logo lg-anim">📦</div>
-    <div class="lg-eyebrow lg-anim">Panel de control</div>
-    <h1 class="lg-anim">Tu operación,<br>bajo control total.</h1>
-    <p class="lg-sub lg-anim">Sube tus reportes de Dropi, Shopify y tu pauta, y en segundos tienes <b>entregas, devoluciones, utilidad real y logística por ciudad</b> — claritos y en un solo lugar.</p>
-    <button class="lg-cta lg-anim" onclick="entrarApp()">Iniciar control logístico <span class="arw">→</span></button>
-    <div class="lg-chips lg-anim">
-      <div class="lg-chip"><i>📦</i> Efectividad y devoluciones</div>
-      <div class="lg-chip"><i>🗺️</i> Mapa por ciudad</div>
-      <div class="lg-chip"><i>💰</i> Utilidad neta real</div>
-      <div class="lg-chip"><i>📈</i> ROAS y pauta</div>
-    </div>
-    <div class="lg-foot lg-anim">Todo se procesa en tu navegador · nada sale de tu equipo</div>
 
-    <!-- Login/registro — solo aparece si el dashboard tiene Supabase configurado -->
+    <!-- Épico: cuando hay cuentas configuradas, esto es lo PRIMERO y ÚNICO que se ve —
+         el login/registro es el protagonista, sin ruido de marketing alrededor. -->
+    <div id="lg-hero-auth" style="display:none">
+      <div class="lg-hero-logo lg-anim">📦</div>
+      <div class="lg-hero-tag lg-anim">Bienvenido de nuevo</div>
+      <h1 class="lg-hero-title lg-anim">Tu operación,<br>en un solo lugar.</h1>
+      <div class="lg-auth lg-anim" id="lg-auth-hero-slot"></div>
+      <div class="lg-skip lg-anim" onclick="usarSinCuenta()">¿Solo quieres verlo? <b>Continuar sin cuenta →</b></div>
+    </div>
+
+    <!-- Marketing clásico — se muestra si NO hay cuentas configuradas (uso 100% local) -->
+    <div id="lg-marketing">
+      <div class="lg-logo lg-anim">📦</div>
+      <div class="lg-eyebrow lg-anim">Panel de control</div>
+      <h1 class="lg-anim">Tu operación,<br>bajo control total.</h1>
+      <p class="lg-sub lg-anim">Sube tus reportes de Dropi, Shopify y tu pauta, y en segundos tienes <b>entregas, devoluciones, utilidad real y logística por ciudad</b> — claritos y en un solo lugar.</p>
+      <button class="lg-cta lg-anim" onclick="entrarApp()">Iniciar control logístico <span class="arw">→</span></button>
+      <div class="lg-chips lg-anim">
+        <div class="lg-chip"><i>📦</i> Efectividad y devoluciones</div>
+        <div class="lg-chip"><i>🗺️</i> Mapa por ciudad</div>
+        <div class="lg-chip"><i>💰</i> Utilidad neta real</div>
+        <div class="lg-chip"><i>📈</i> ROAS y pauta</div>
+      </div>
+      <div class="lg-foot lg-anim">Todo se procesa en tu navegador · nada sale de tu equipo</div>
+    </div>
+
+    <!-- Login/registro — solo aparece si el dashboard tiene Supabase configurado. Vive aquí
+         en el DOM y se TRASLADA (moveAuthIntoHero) al slot de arriba cuando hay cuentas. -->
     <div class="lg-auth" id="lg-auth" style="display:none">
       <div class="lg-auth-tabs">
         <button type="button" class="lg-auth-tab active" id="lg-tab-login" onclick="lgAuthTab('login')">Entrar</button>
@@ -1113,6 +1140,27 @@ function actualizarUISesion(){
     if(e2)e2.textContent=sesionActual.email;
   }
 }
+
+// Cuando hay cuentas configuradas (Supabase activo), el landing se enfoca 100% en el
+// login/registro — se oculta el bloque de marketing y el formulario se traslada al slot
+// "épico" de arriba (una sola vez; el mismo elemento, solo cambia de lugar en el DOM).
+// Sin cuentas configuradas, el landing se ve exactamente igual que siempre.
+function ajustarLandingSegunCuentas(){
+  const marketing=$('lg-marketing'),hero=$('lg-hero-auth'),landing=$('landing');
+  if(sb){
+    if(marketing)marketing.style.display='none';
+    if(hero)hero.style.display='block';
+    if(landing)landing.classList.add('lg-focus-auth');
+    const slot=$('lg-auth-hero-slot'),auth=$('lg-auth');
+    if(slot&&auth&&auth.parentElement!==slot)slot.appendChild(auth);
+  }else{
+    if(marketing)marketing.style.display='';
+    if(hero)hero.style.display='none';
+    if(landing)landing.classList.remove('lg-focus-auth');
+  }
+}
+// Para quien no quiera crear cuenta — entra directo al flujo normal de subir archivos.
+function usarSinCuenta(){entrarApp();}
 
 // ---- Fusión de pedidos: guardar/traer por pedido, para acumular sin duplicar ----
 // Ver "Diseño de datos" — cada pedido se identifica por su 'ID' de Dropi. Al subir un reporte
@@ -4823,7 +4871,7 @@ function resolverNombreProducto(nombreOriginal){
 }
 
 
-loadKeys();setDates();setupMapaInteraccion();observarScrollReveal();iniciarGauges();verificarSesionInicial();
+loadKeys();setDates();setupMapaInteraccion();observarScrollReveal();iniciarGauges();ajustarLandingSegunCuentas();verificarSesionInicial();
 </script>
 </body>
 </html>
