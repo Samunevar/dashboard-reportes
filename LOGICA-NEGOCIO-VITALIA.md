@@ -985,21 +985,3 @@ pedido por el usuario. Se probó también la migración (cuenta nueva con datos 
 con los 5 pedidos, y un segundo login no lo duplicó (confirma el mismo fix). Se confirmó que
 sin sesión activa (o sin Supabase configurado) el comportamiento es idéntico al de antes de
 este cambio. Sin errores de consola en ningún escenario.
-
-### Corrección post-lanzamiento: migración fallaba con historiales grandes (2026-07-20)
-
-Un negocio real con **11.803 pedidos** acumulados en `pedidos_dropi` (del sistema viejo) se
-quedaba atascado en el landing tras iniciar sesión — la sesión sí quedaba activa, pero ningún
-dato cargaba, y "Mis informes" aparecía vacío. Causa: `migrarPedidosAntiguosSiHaceFalta()`
-empaquetaba TODOS los pedidos viejos en un único `insert` (una sola fila con un array de 11.803
-elementos en la columna `ord`) — eso supera el límite de tamaño de solicitud de Supabase, el
-`insert` falla, y como su resultado nunca se revisaba (`await sb.from(...).insert(...)` sin
-comprobar `error`), la falla quedaba completamente silenciosa: la cuenta terminaba sin ningún
-informe migrado y sin ningún aviso.
-
-**Corrección:** la migración ahora inserta los pedidos viejos en **lotes de 500** (varios
-informes sintéticos "Historial previo" en vez de uno solo). Verificado con 11.803 pedidos
-simulados contra un mock que rechaza inserciones de más de 800KB (para replicar el límite real):
-sin el fix, el insert único fallaba; con el fix, se migran los 11.803 en 24 lotes (23 de 500 y
-uno de 303) y el estado acumulado reproducido coincide exactamente (11.803 pedidos), sin
-errores de consola.

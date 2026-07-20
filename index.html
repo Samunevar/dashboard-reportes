@@ -1229,19 +1229,11 @@ async function migrarPedidosAntiguosSiHaceFalta(){
       desde+=1000;
     }
     if(!viejos.length)return;
-    // Se inserta en LOTES, no todo en una sola fila: con miles de pedidos acumulados (negocios
-    // reales llegan a tener +10.000), un solo insert gigante supera el límite de tamaño de
-    // solicitud de Supabase y falla — y como el insert no lanza excepción (solo devuelve un
-    // error que aquí no se revisaba), la migración quedaba "en blanco" sin avisar nada, dejando
-    // a la cuenta atascada en el landing sin historial. En lotes de 500 cada inserción es
-    // liviana y el riesgo de tamaño desaparece.
-    const TAM_LOTE=500;
-    for(let i=0;i<viejos.length;i+=TAM_LOTE){
-      const lote=viejos.slice(i,i+TAM_LOTE);
-      const ord=lote.map(r=>r.orden);
-      const productos=lote.flatMap(r=>r.productos||[]);
-      await sb.from('informes_dropi').insert({user_id:sesionActual.id,num_pedidos:ord.length,ord,productos});
-    }
+    const ord=viejos.map(r=>r.orden);
+    const productos=viejos.flatMap(r=>r.productos||[]);
+    await sb.from('informes_dropi').insert({
+      user_id:sesionActual.id,num_pedidos:ord.length,ord,productos
+    });
   }catch(err){/* si falla la migración, simplemente no aparece el historial previo — no bloquea nada */}
 }
 // Recalcula el estado acumulado actual reproduciendo TODOS los informes en orden cronológico:
