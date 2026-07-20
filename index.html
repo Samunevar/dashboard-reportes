@@ -31,6 +31,7 @@
   --font:'Inter',sans-serif;
   --font-mono:'Inter',sans-serif;
   --ease:cubic-bezier(.16,1,.3,1);
+  color-scheme:dark;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 html{background:var(--bg);overflow-x:hidden;scroll-behavior:smooth;}
@@ -696,11 +697,9 @@ body.app-ready #landing{opacity:0;visibility:hidden;transform:scale(1.05);pointe
   <!-- TAB 4: PROYECCIÓN -->
   <div class="tp" id="tp2">
     <details class="how"><summary><span class="qm">?</span> ¿Cómo funciona este apartado?<span class="chev">▶</span></summary><div class="howbody">Toma tus pedidos que <b>todavía están en movimiento</b> (ni entregados ni devueltos) y estima cuánto dinero podrían dejarte si terminan bien, con un criterio <b>conservador</b>. Sirve para anticipar cuánto está por entrar antes de que se cierre el ciclo.</div></details>
-    <div class="card"><div class="ct">Proyección de ingresos</div><div class="pbox" id="pbox"></div><div class="al ai" style="margin-bottom:12px">Proyección = 85% × pedidos en movimiento. Ingreso neto = (Valor − Flete − Costo proveedor) × 0.85</div><div class="tw2"><table><thead><tr><th>ID</th><th>Cliente</th><th>Producto</th><th>Estado</th><th>Valor</th><th>Costo prov.</th><th>Flete</th><th>Ingreso neto estimado</th></tr></thead><tbody id="tb-proy"></tbody></table></div></div>
-
     <div class="card">
       <div class="ct">Utilidad según cuánto entregues de lo que ya tienes en movimiento</div>
-      <div class="al ai" style="margin-bottom:14px">Esto <b>no es una proyección adicional</b> — es un simulador con lo que YA existe hoy: si apagaras las campañas ahora mismo y solo te quedaras a esperar el resultado de lo que ya está despachado, así se vería tu utilidad según la <b>efectividad final</b> que termine teniendo la operación. Los % son la efectividad total sobre lo despachado (entregados+devueltos+en movimiento) — no un % del inventario en camino. El primer bloque te muestra tu efectividad real de HOY; los siguientes simulan qué pasaría si el resultado final fuera 25%, 35%, 45%... usando únicamente los pedidos que ya tienes en movimiento como margen de maniobra (nunca puede superar el techo de lo que ya está despachado). La pauta se mantiene <b>constante</b> — ya se gastó, no cambia con el resultado.</div>
+      <div class="al ai" style="margin-bottom:14px">Esto <b>no es una proyección adicional</b> — es un simulador con lo que YA existe hoy: si apagaras las campañas ahora mismo y solo te quedaras a esperar el resultado de lo que ya está despachado, así se vería tu utilidad según la <b>efectividad final</b> que termine teniendo la operación. Los % son la efectividad total sobre lo despachado (entregados+devueltos+en movimiento) — no un % del inventario en camino. El primer bloque te muestra tu efectividad real de HOY; los siguientes simulan qué pasaría si el resultado final fuera 25%, 35%, 45%... usando únicamente los pedidos que ya tienes en movimiento como margen de maniobra (nunca puede superar el techo de lo que ya está despachado). La pauta se mantiene <b>constante</b> — ya se gastó, no cambia con el resultado. <b>Los escalones que muestran el mismo valor</b> están por encima de tu techo real: no hay suficientes pedidos en movimiento para alcanzar ese % exacto, así que todos topan en el máximo posible hoy.</div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
         <span class="sl" style="margin:0">Ver</span>
         <select id="stair-scope" onchange="renderEscalonado()" style="max-width:280px;padding:8px 12px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-size:12.5px;font-family:'Inter',sans-serif">
@@ -709,6 +708,8 @@ body.app-ready #landing{opacity:0;visibility:hidden;transform:scale(1.05);pointe
       </div>
       <div id="stair-chart"></div>
     </div>
+
+    <div class="card"><div class="ct">Proyección de ingresos</div><div class="pbox" id="pbox"></div><div class="al ai" style="margin-bottom:12px">Proyección = 85% × pedidos en movimiento. Ingreso neto = (Valor − Flete − Costo proveedor) × 0.85</div><div class="tw2"><table><thead><tr><th>ID</th><th>Cliente</th><th>Producto</th><th>Estado</th><th>Valor</th><th>Costo prov.</th><th>Flete</th><th>Ingreso neto estimado</th></tr></thead><tbody id="tb-proy"></tbody></table></div></div>
   </div>
 
   <!-- TAB 5: SIN MOVIMIENTO -->
@@ -3800,7 +3801,7 @@ function renderEscalonado(){
         </div>
       </div>`
     +data.steps.map(s=>{
-      const nota=s.yaSuperado?'ya superado hoy':s.excedeTecho?`techo real: ${data.techo.toFixed(1)}%`:`+${s.extra} entregas`;
+      const nota=s.yaSuperado?'ya superado hoy':s.excedeTecho?`<span style="color:var(--amber);font-weight:700">⚠ techo real ${data.techo.toFixed(1)}%</span>`:`+${s.extra} entregas`;
       return`
       <div class="stair-step">
         <div class="stair-pct">${s.pctStep}%<small>${nota}</small></div>

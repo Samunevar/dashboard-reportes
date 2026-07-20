@@ -497,6 +497,20 @@ Variables globales nuevas para sostener este cálculo fuera de `fetchAll()`:
 valor que `metaData.tot`), `gProdsFin` (array de `calcProductosFinanciero`, vacío si no hay
 `dProd`). Se guardan al final de `fetchAll()`, después de `renderRes`.
 
+**Aclaración de UX (2026-07-20):** cuando el "techo alcanzable" del negocio/producto (ver
+fórmula de `techo` arriba) queda por debajo de varios escalones seguidos (ej. techo=74.4% y
+escalones 75/85/95%), esos escalones muestran **exactamente el mismo valor** — es el
+comportamiento correcto (todos topan en el máximo posible con los pedidos que quedan en
+movimiento), no un bug, pero visualmente podía confundirse con uno. Se hizo más visible: la
+nota de esos escalones ahora es `⚠ techo real X%` en color ámbar y negrita (antes era texto
+plano del mismo color que "ya superado hoy"/"+N entregas"), y el párrafo explicativo de la
+tarjeta menciona explícitamente por qué pasa esto.
+
+**Orden en el tab Proyección (2026-07-20):** esta tarjeta (el simulador) ahora aparece
+**primero**, antes de la tarjeta "Proyección de ingresos" (la tabla de pedidos en movimiento
+con su ingreso neto estimado) — a petición del usuario, para ver primero el simulador de
+utilidad y después el detalle pedido por pedido.
+
 ---
 
 ## 18. Pauta diaria REAL (extracción automática desde el informe de Meta/TikTok) (2026-07-13)
@@ -883,3 +897,21 @@ colores sólidos (sin alpha), sin `backdrop-filter`.
 el de correo), ignorando el CSS del sitio. Se agregó la regla estándar
 `input:-webkit-autofill{-webkit-box-shadow:0 0 0 1000px var(--bg3) inset!important;...}` para
 que el autocompletado respete el tema oscuro.
+
+---
+
+## 31. Desplegables nativos en tema claro + reordenar tab Proyección (2026-07-20)
+
+**Desplegables (`<select>`) con fondo blanco:** aunque cada `<option>` ya tenía
+`background:var(--bg3);color:var(--text)` inline, el panel emergente que el navegador dibuja al
+abrir un `<select>` es en parte control nativo del sistema operativo y algunos navegadores
+ignoran ese CSS para ese panel específico, mostrándolo con los colores claros por defecto del
+SO. Se agregó `color-scheme:dark;` en `:root` — le indica a Chrome/Edge que todos los controles
+nativos de formulario (el panel de `<select>`, checkboxes, scrollbars, selector de fecha) deben
+dibujarse en su variante oscura por defecto, sin depender de que cada control tenga su propio
+CSS.
+
+**Orden del tab Proyección:** la tarjeta "Utilidad según cuánto entregues..." (el simulador
+escalonado, sección 17) ahora aparece **antes** que "Proyección de ingresos" (la tabla de
+pedidos en movimiento) — antes era al revés. Cambio puramente de orden en el HTML, sin tocar
+ningún cálculo.
