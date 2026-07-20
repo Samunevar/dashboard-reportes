@@ -33,39 +33,3 @@ create policy "pedidos_dropi_propios" on pedidos_dropi
   for all
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
-
--- ============================================================================
--- informes_dropi — reemplaza a pedidos_dropi como fuente de verdad (2026-07-16)
--- ----------------------------------------------------------------------------
--- pedidos_dropi (arriba) guarda un estado YA FUSIONADO por pedido — una vez que un
--- pedido se sobrescribe, no queda ningún rastro de qué informe lo trajo ni de cuál
--- era su valor antes. Eso hace imposible "borrar solo el informe del día 2" sin tocar
--- los demás. informes_dropi guarda cada SUBIDA completa tal cual llegó (sus filas
--- crudas), y el estado acumulado que ve el dashboard se recalcula reproduciendo todos
--- los informes en orden cronológico cada vez que hace falta — el pedido que aparece en
--- varios informes toma el valor del informe MÁS RECIENTE que lo mencione. Si se borra
--- un informe, sus pedidos simplemente dejan de estar en esa reproducción: vuelven al
--- valor de un informe anterior si alguno lo mencionaba, o desaparecen si no.
---
--- pedidos_dropi NO se borra (por si acaso), pero deja de recibir escrituras nuevas —
--- el dashboard la usa una sola vez, automáticamente, para migrar cualquier dato que ya
--- se haya guardado con el sistema anterior a un único informe "Historial previo".
--- ============================================================================
-
-create table if not exists informes_dropi (
-  id          uuid primary key default gen_random_uuid(),
-  user_id     uuid not null references auth.users(id) on delete cascade,
-  creado_en   timestamptz not null default now(),
-  fecha_desde date,
-  fecha_hasta date,
-  num_pedidos int not null default 0,
-  ord         jsonb not null default '[]',  -- filas crudas de dOrd de ESTA subida, tal cual
-  productos   jsonb not null default '[]'   -- filas crudas de dProd de ESTA subida, tal cual
-);
-
-alter table informes_dropi enable row level security;
-
-create policy "informes_dropi_propios" on informes_dropi
-  for all
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
