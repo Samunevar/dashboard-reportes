@@ -918,36 +918,41 @@ ningún cálculo.
 
 ---
 
-## 32. Rediseño visual completo + CSS externo + doble tema (2026-07-21)
+## 32. Reestructuración visual v2 — app-shell con sidebar (2026-07-21)
 
-Rediseño de TODA la capa visual desde cero (estilo premium tipo Linear/Stripe), **sin tocar una
-sola línea de la lógica de negocio**. Todo lo descrito en las secciones 1–31 (fórmulas,
-proyecciones, login, acumulación, calendarios, etc.) sigue idéntico.
+Toda la capa visual se rehízo **desde cero** con una estructura nueva (no un recoloreo), **sin
+tocar una sola línea de la lógica de negocio**. Todo lo de las secciones 1–29 (fórmulas,
+proyecciones, login, acumulación, calendarios, etc.) sigue idéntico. Las notas de diseño
+anteriores quedan superseded por esta.
 
-**Qué cambió y qué NO:**
-- **CSS externalizado:** el bloque `<style>` inline (antes ~420 líneas dentro de `index.html`)
-  se movió a un archivo aparte **`styles.css`**, enlazado con `<link rel="stylesheet">`. El
-  `<script>` con toda la lógica quedó intacto. Esto es solo modularidad — el sitio sigue siendo
-  100% estático, sin build, desplegado igual en GitHub Pages.
-- **El contrato JS↔HTML se preservó al 100%:** ningún `id` se renombró ni eliminó, la estructura
-  de tabs por posición (`.tp`/`.tab` + `st(i)`) quedó igual, y **todos** los nombres de clase que
-  el JS inyecta con `innerHTML` (barras, tablas, mapa, modales, ranking, ciudad-detalle,
-  simulador escalonado, etc.) siguen existiendo con el mismo nombre en `styles.css`. Por eso el
-  cambio es puramente estético y no puede romper ningún cálculo.
-- **Doble tema (claro/oscuro) con interruptor:** el tema se controla con
-  `document.documentElement[data-theme]` (`dark` por defecto). Un script mínimo en el `<head>`
-  fija el tema desde `localStorage` **antes de pintar** (evita el "flash"), expone
-  `window.toggleTheme()` y actualiza el ícono ☀️/🌙 de los botones `.theme-toggle` (uno en el
-  header, otro fijo en el landing). Todos los colores son variables CSS que se redefinen bajo
-  `:root` (oscuro) y `:root[data-theme="light"]` (claro).
-- **Identidad de color:** el acento pasó de naranja a **índigo "tech"** (`#818cf8` oscuro /
-  `#6366f1` claro), y verde/ámbar/rojo quedaron **reservados solo para estado** (entrega buena /
-  alerta / devolución). Se retiraron los efectos pesados de "glow/aurora" por un acabado plano y
-  minimalista.
+**Regla que hizo posible rehacer TODO el visual sin romper cálculos:** el JS está acoplado al
+HTML por (a) los `id` que lee, (b) la activación de tabs **por posición** (`st(i)` sobre
+`.tab`/`.tp`, no por id) y (c) los nombres de clase que inyecta con `innerHTML`. Rehacer "todo
+el diseño" = reescribir el CSS y reestructurar el markup **conservando ese contrato**: ningún
+`id` renombrado, los 9 `.tab` y 9 `.tp` en el mismo orden, y todas las clases que el JS pinta
+siguen existiendo en `styles.css`. Por eso el cambio es 100% estético y no puede alterar ningún
+número.
+
+**Estructura nueva (lo que cambió de verdad):**
+- **CSS en archivo aparte `styles.css`** (ya no hay bloque `<style>` en `index.html`; se enlaza
+  con `<link>`). El `<script>` con toda la lógica quedó intacto. Sitio sigue 100% estático, sin
+  build, mismo despliegue en GitHub Pages.
+- **Navegación en SIDEBAR vertical** (antes barra de pestañas horizontal): el contenedor `.tabs`
+  y los paneles `.tp` se envolvieron en `<div class="results-shell">` (grid `sidebar + contenido`)
+  con `<div class="tp-wrap">` alrededor de los paneles. `st(i)` no cambió: sigue operando por
+  posición sobre `.tab`/`.tp`. En móvil el sidebar colapsa a una barra horizontal con scroll.
+- **Barra de aplicación** sticky arriba (header con logo, badge, sesión y toggle de tema).
+- **KPIs como tiles con borde** y números en **Sora** (antes celdas sin caja con barra de acento
+  a la izquierda). **Tarjetas planas editoriales** con título en mayúsculas + línea fina (antes
+  tarjetas elevadas con barra de acento). **Botones rectos** (radio 10px, no pastilla).
+- **Doble tema claro/oscuro** con `data-theme` + toggle persistente en `localStorage`, init sin
+  "flash" en el `<head>`, íconos ☀️/🌙. Acento **índigo tech**; verde/ámbar/rojo reservados solo
+  para estado. Todos los colores son variables CSS redefinidas bajo `:root` (oscuro) y
+  `:root[data-theme="light"]`.
 - **Detalle técnico (bug evitado):** NO se transiciona `background`/`color` en `<html>`/`<body>`
-  al cambiar de tema — animar una propiedad cuyo valor viene de una custom property se atasca en
-  Chromium y deja el color viejo. El cambio de tema es instantáneo (como Linear/Stripe).
+  al cambiar de tema — animar un valor que viene de una custom property se atasca en Chromium.
+  El cambio de tema es instantáneo.
 
-**Para trabajar el visual de ahora en adelante:** editar `styles.css`, NO buscar CSS dentro de
-`index.html` (ya no hay bloque `<style>` ahí). Las reglas siguen respetando la regla de oro:
-no renombrar ni quitar los `id`/clases que el JS usa.
+**Para trabajar el visual de ahora en adelante:** editar `styles.css` (todo el diseño vive ahí),
+respetando la regla de oro: no renombrar/quitar `id` ni clases que el JS use, ni alterar el
+orden de los 9 `.tab`/`.tp`.
