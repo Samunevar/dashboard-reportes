@@ -915,3 +915,39 @@ CSS.
 escalonado, sección 17) ahora aparece **antes** que "Proyección de ingresos" (la tabla de
 pedidos en movimiento) — antes era al revés. Cambio puramente de orden en el HTML, sin tocar
 ningún cálculo.
+
+---
+
+## 32. Rediseño visual completo + CSS externo + doble tema (2026-07-21)
+
+Rediseño de TODA la capa visual desde cero (estilo premium tipo Linear/Stripe), **sin tocar una
+sola línea de la lógica de negocio**. Todo lo descrito en las secciones 1–31 (fórmulas,
+proyecciones, login, acumulación, calendarios, etc.) sigue idéntico.
+
+**Qué cambió y qué NO:**
+- **CSS externalizado:** el bloque `<style>` inline (antes ~420 líneas dentro de `index.html`)
+  se movió a un archivo aparte **`styles.css`**, enlazado con `<link rel="stylesheet">`. El
+  `<script>` con toda la lógica quedó intacto. Esto es solo modularidad — el sitio sigue siendo
+  100% estático, sin build, desplegado igual en GitHub Pages.
+- **El contrato JS↔HTML se preservó al 100%:** ningún `id` se renombró ni eliminó, la estructura
+  de tabs por posición (`.tp`/`.tab` + `st(i)`) quedó igual, y **todos** los nombres de clase que
+  el JS inyecta con `innerHTML` (barras, tablas, mapa, modales, ranking, ciudad-detalle,
+  simulador escalonado, etc.) siguen existiendo con el mismo nombre en `styles.css`. Por eso el
+  cambio es puramente estético y no puede romper ningún cálculo.
+- **Doble tema (claro/oscuro) con interruptor:** el tema se controla con
+  `document.documentElement[data-theme]` (`dark` por defecto). Un script mínimo en el `<head>`
+  fija el tema desde `localStorage` **antes de pintar** (evita el "flash"), expone
+  `window.toggleTheme()` y actualiza el ícono ☀️/🌙 de los botones `.theme-toggle` (uno en el
+  header, otro fijo en el landing). Todos los colores son variables CSS que se redefinen bajo
+  `:root` (oscuro) y `:root[data-theme="light"]` (claro).
+- **Identidad de color:** el acento pasó de naranja a **índigo "tech"** (`#818cf8` oscuro /
+  `#6366f1` claro), y verde/ámbar/rojo quedaron **reservados solo para estado** (entrega buena /
+  alerta / devolución). Se retiraron los efectos pesados de "glow/aurora" por un acabado plano y
+  minimalista.
+- **Detalle técnico (bug evitado):** NO se transiciona `background`/`color` en `<html>`/`<body>`
+  al cambiar de tema — animar una propiedad cuyo valor viene de una custom property se atasca en
+  Chromium y deja el color viejo. El cambio de tema es instantáneo (como Linear/Stripe).
+
+**Para trabajar el visual de ahora en adelante:** editar `styles.css`, NO buscar CSS dentro de
+`index.html` (ya no hay bloque `<style>` ahí). Las reglas siguen respetando la regla de oro:
+no renombrar ni quitar los `id`/clases que el JS usa.
