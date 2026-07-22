@@ -956,3 +956,37 @@ número.
 **Para trabajar el visual de ahora en adelante:** editar `styles.css` (todo el diseño vive ahí),
 respetando la regla de oro: no renombrar/quitar `id` ni clases que el JS use, ni alterar el
 orden de los 9 `.tab`/`.tp`.
+
+---
+
+## 33. Fix: sesión nueva se quedaba atascada en el landing (2026-07-21)
+
+**Síntoma:** al iniciar sesión (o crear cuenta) en una cuenta **sin historial guardado todavía**,
+la persona se quedaba viendo la pantalla de bienvenida — no pasaba al dashboard ni para subir un
+archivo nuevo.
+
+**Causa:** `onSesionActiva()` traía el historial guardado y, si estaba vacío (`Object.keys(
+ordPorId).length===0`), hacía `return` inmediatamente — nunca llegaba a la línea `entrarApp()`.
+Esto tenía sentido cuando se escribió (evitar "vaciar" la pantalla si no hay nada que mostrar),
+pero como consecuencia dejaba a cualquier cuenta nueva sin forma de llegar al panel de subida de
+archivos. El flujo de "Crear cuenta" (cuando Supabase no exige confirmar el correo) tenía el
+mismo problema: solo llamaba `actualizarUISesion()`, sin `entrarApp()`.
+
+**Corrección:**
+- `onSesionActiva()` ahora **siempre** llama `entrarApp()`. Si había historial guardado, además
+  se carga automáticamente (`fetchAll()`, igual que antes). Si no había historial, entra al
+  dashboard limpio, listo para subir el primer archivo.
+- El flujo de "Crear cuenta" con sesión ya activa ahora llama `onSesionActiva()` en vez de solo
+  `actualizarUISesion()` — mismo comportamiento que iniciar sesión.
+- Efecto colateral corregido de paso: si alguien cierra sesión y entra con **otra cuenta** sin
+  recargar la página, antes se podía seguir viendo el reporte de la cuenta anterior (`dOrd`/
+  `dProd`/`#results` no se limpiaban). Ahora, cuando la cuenta nueva no tiene historial, se
+  resetean `dOrd`/`dProd` y se oculta `#results`.
+
+**Verificado con un cliente Supabase simulado** (mismo patrón de las secciones anteriores, con
+`upsert` real sobre `pedidos_dropi`): login en cuenta sin historial → entra al dashboard con el
+panel de subida visible (`app-ready`, landing con `opacity:0`/`pointer-events:none`, `#results`
+oculto). Login en cuenta con 10 pedidos guardados → entra y el reporte carga solo (`#results`
+visible, fechas ajustadas al rango real). Cerrar sesión y crear cuenta nueva en la misma pestaña
+→ no arrastra los datos de la cuenta anterior. Sin sesión / sin Supabase configurado, el
+comportamiento (subir archivo → generar reporte) sigue idéntico. Sin errores de consola.

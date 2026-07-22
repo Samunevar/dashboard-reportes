@@ -708,7 +708,7 @@ async function lgAuthSubmit(){
       }else{
         sesionActual={id:data.user.id,email:data.user.email};
         msg.className='lg-auth-msg ok';msg.textContent='¡Cuenta creada! Ya puedes generar tu primer reporte.';
-        actualizarUISesion();
+        await onSesionActiva();
       }
     }
   }catch(err){
@@ -806,13 +806,24 @@ async function guardarPedidosNuevos(nuevosOrd,nuevosProdPorId){
 async function onSesionActiva(){
   actualizarUISesion();
   const{ordPorId,prodPorId}=await cargarPedidosGuardados();
-  if(!Object.keys(ordPorId).length)return; // cuenta nueva, sin datos aún — landing normal
-  dOrd=Object.values(ordPorId);
-  dProd=Object.values(prodPorId).flat();
-  const fechas=dOrd.map(r=>parseFecha(r['FECHA'])).filter(f=>/^\d{4}-\d{2}-\d{2}$/.test(f)).sort();
-  if(fechas.length){$('date-from').value=fechas[0];$('date-to').value=fechas[fechas.length-1];}
+  const hayHistorial=Object.keys(ordPorId).length>0;
+  if(hayHistorial){
+    dOrd=Object.values(ordPorId);
+    dProd=Object.values(prodPorId).flat();
+    const fechas=dOrd.map(r=>parseFecha(r['FECHA'])).filter(f=>/^\d{4}-\d{2}-\d{2}$/.test(f)).sort();
+    if(fechas.length){$('date-from').value=fechas[0];$('date-to').value=fechas[fechas.length-1];}
+  }else{
+    // Sin esto, si alguien cierra sesión y entra con OTRA cuenta sin recargar la página, se
+    // seguiría viendo el reporte de la cuenta anterior en pantalla.
+    dOrd=[];dProd=[];
+    $('results').style.display='none';
+  }
+  // Siempre se entra al dashboard al iniciar sesión — antes, si la cuenta no tenía historial
+  // guardado, esta función se detenía aquí y la persona se quedaba atascada en el landing sin
+  // poder ni siquiera subir un archivo nuevo. Ahora entra siempre; si había historial, además
+  // se carga automáticamente.
   entrarApp();
-  await fetchAll();
+  if(hayHistorial)await fetchAll();
 }
 async function verificarSesionInicial(){
   if(!sb)return;
