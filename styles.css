@@ -168,8 +168,14 @@ input[type=date]::-webkit-calendar-picker-indicator{cursor:pointer;opacity:.55;}
 .uz p{font-size:12px;color:var(--muted);position:relative;}
 .uz strong{color:var(--text);}
 .uz input{display:none;}
-.fok{background:var(--gd);border:1px solid var(--green);border-radius:var(--r);padding:10px 14px;font-size:12.5px;color:var(--green);display:flex;align-items:center;gap:8px;margin-top:8px;}
-.fok button{margin-left:auto;background:none;border:none;cursor:pointer;color:var(--muted);font-size:13px;}
+/* flex-wrap:wrap es la pieza clave: si el nombre del archivo es largo y no cabe en una sola
+   línea junto al botón "×", el botón pasa a su propia línea (visible y clickeable) en vez de
+   quedar empujado fuera del recuadro por el resto del contenido (que es lo que pasaba con
+   flex-wrap:nowrap — el botón terminaba renderizado por fuera del área visible). */
+.fok{background:var(--gd);border:1px solid var(--green);border-radius:var(--r);padding:10px 14px;font-size:12.5px;color:var(--green);display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;margin-top:8px;}
+.fok>strong{word-break:break-all;}
+.fok button{margin-left:auto;background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px;line-height:1;flex-shrink:0;padding:3px 6px;border-radius:6px;transition:background .15s,color .15s;}
+.fok button:hover{background:var(--hover);color:var(--red);}
 .sl{font-size:10px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--hint);margin-bottom:10px;display:block;}
 
 /* ===== App-shell de resultados: SIDEBAR + contenido ===== */
